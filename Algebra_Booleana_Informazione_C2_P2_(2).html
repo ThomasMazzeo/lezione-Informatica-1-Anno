@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitolo 2: Algebra Booleana e Multimedia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        dark: '#0f172a',
+                        primary: '#6366f1', // Indigo (Logic)
+                        accent: '#0ea5e9', // Sky (Data)
+                        success: '#10b981', // Emerald (Multimedia)
+                        warning: '#f59e0b', // Amber (Tasks)
+                        danger: '#ef4444' // Red
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        
+        /* Gestione Slide */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0.5s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 4rem 8%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; overflow-y: auto;}
+
+        /* Animazioni base slide */
+        .anim-item { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide.active .anim-item.show { opacity: 1; transform: translateY(0); }
+        .delay-100 { transition-delay: 0.1s; } .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; } .delay-400 { transition-delay: 0.4s; }
+
+        /* SISTEMA ANIMAZIONE PASSO-PASSO */
+        .step-item { 
+            opacity: 0; 
+            transform: translateX(-20px); 
+            transition: all 0.4s ease-out; 
+        }
+        .step-item.show-step { 
+            opacity: 1; 
+            transform: translateX(0); 
+        }
+        .step-container { margin-top: 1rem;}
+        
+        /* Varianti step per le tabelle (fade-in dal basso invece che da sinistra) */
+        tr.step-item { transform: translateY(10px); }
+        tr.step-item.show-step { transform: translateY(0); }
+
+        /* UI Controls */
+        .nav-btn {
+            position: fixed; top: 50%; transform: translateY(-50%); z-index: 50;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6); width: 60px; height: 60px; border-radius: 50%;
+            cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+        }
+        .nav-btn:hover { background: rgba(99, 102, 241, 0.2); color: white; border-color: rgba(99, 102, 241, 0.5); transform: translateY(-50%) scale(1.1); }
+        #prev-btn { left: 20px; }
+        #next-btn { right: 20px; }
+        
+        #progress-bar { position: fixed; bottom: 0; left: 0; height: 4px; background: linear-gradient(90deg, #6366f1, #10b981); width: 0%; transition: width 0.3s; z-index: 50;}
+        #slide-counter { position: fixed; bottom: 15px; right: 20px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #94a3b8; }
+        #step-indicator { position: fixed; top: 20px; right: 20px; z-index: 50; font-size: 0.9rem; color: #6366f1; font-weight: bold; background: rgba(99, 102, 241, 0.1); padding: 5px 15px; border-radius: 20px; display: none; opacity:0; transition: opacity 0.3s; border: 1px solid rgba(99,102,241,0.3);}
+        #step-indicator.active { display: block; opacity: 1; animation: pulse 2s infinite;}
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
+
+        /* Componenti Visivi */
+        .glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        .math-box { font-family: 'JetBrains Mono', monospace; background: rgba(15, 23, 42, 0.8); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        .task-box { border-left: 4px solid #f59e0b; background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%); padding: 1.5rem; border-radius: 0 0.5rem 0.5rem 0; }
+        
+        /* CSS Art per Multimedialità */
+        .pixel-grid { display: grid; grid-template-columns: repeat(11, 1fr); gap: 1px; background: #334155; border: 2px solid #475569; width: fit-content; margin: 0 auto; padding: 1px;}
+        .pixel-cell { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-family: 'JetBrains Mono'; font-weight: bold;}
+        .px-white { background: #f8fafc; color: #94a3b8; }
+        .px-black { background: #0f172a; color: #475569; }
+
+        .sound-wave { display: flex; align-items: center; justify-content: center; gap: 4px; height: 100px; }
+        .bar { width: 8px; background: #10b981; border-radius: 4px; animation: sound 1s infinite alternate ease-in-out; }
+        .bar:nth-child(1) { height: 20%; animation-delay: 0.1s; }
+        .bar:nth-child(2) { height: 50%; animation-delay: 0.2s; }
+        .bar:nth-child(3) { height: 90%; animation-delay: 0.3s; }
+        .bar:nth-child(4) { height: 40%; animation-delay: 0.4s; }
+        .bar:nth-child(5) { height: 70%; animation-delay: 0.5s; }
+        .bar:nth-child(6) { height: 30%; animation-delay: 0.6s; }
+        .bar:nth-child(7) { height: 100%; animation-delay: 0.7s; }
+        .bar:nth-child(8) { height: 60%; animation-delay: 0.8s; }
+        .bar:nth-child(9) { height: 20%; animation-delay: 0.9s; }
+        
+        @keyframes sound { 0% { transform: scaleY(0.5); opacity: 0.5; } 100% { transform: scaleY(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <button id="prev-btn" onclick="prevAction()"><i class="fas fa-chevron-left"></i></button>
+    <button id="next-btn" onclick="nextAction()"><i class="fas fa-chevron-right"></i></button>
+    <div id="progress-bar"></div>
+    <div id="slide-counter"></div>
+    <div id="step-indicator"><i class="fas fa-mouse-pointer mr-2"></i>Premi Avanti per rivelare</div>
+
+    <!-- ==============================================
+         INIZIO SLIDE
+    =============================================== -->
+
+    <!-- SLIDE 1: COPERTINA -->
+    <div class="slide active">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="anim-item show inline-block px-4 py-1 rounded-full border border-primary text-primary mb-6 font-semibold tracking-widest text-sm uppercase">Capitolo 2 • Parte 2</div>
+            <h1 class="anim-item show delay-100 text-5xl md:text-7xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-success tracking-tighter leading-tight">L'Algebra Booleana e la <br>Codifica dell'Informazione</h1>
+            <p class="anim-item show delay-200 text-2xl text-slate-400 font-light max-w-2xl mx-auto mb-12">Logica proposizionale, bit, byte ed elaborazione multimediale (immagini, suoni e video).</p>
+            <div class="anim-item show delay-300 flex justify-center gap-8 text-4xl text-slate-600">
+                <i class="fas fa-project-diagram"></i>
+                <i class="fas fa-database"></i>
+                <i class="fas fa-photo-video"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: ALGEBRA BOOLEANA INTRO -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-5xl font-bold mb-10 border-b border-slate-700 pb-4"><span class="text-primary">2.5</span> L'Algebra Booleana</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="anim-item delay-100 glass-card">
+                    <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-3xl text-primary mb-6"><i class="fas fa-calculator"></i></div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Che cos'è?</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4">È una parte della matematica che si occupa di un insieme contenente solo due elementi: <strong>0 (falso)</strong> e <strong>1 (vero)</strong>.</p>
+                    <p class="text-slate-300 leading-relaxed">Su questo insieme sono definite tre operazioni fondamentali (connettivi logici): <strong class="text-white">AND, OR, NOT</strong>.</p>
+                </div>
+
+                <div class="anim-item delay-200 glass-card border-t-4 border-slate-500 bg-slate-800/50">
+                    <h3 class="text-xl font-bold text-white mb-2"><i class="fas fa-book-open text-slate-400 mr-2"></i> George Boole (1847)</h3>
+                    <p class="text-sm text-slate-300 font-light leading-relaxed mb-4">Introdusse questa algebra per descrivere in forma matematica la <strong>logica proposizionale</strong>.</p>
+                    
+                    <h4 class="font-bold text-white text-sm uppercase tracking-widest mt-4 mb-2 text-primary">Le Proposizioni</h4>
+                    <ul class="text-sm text-slate-300 space-y-2">
+                        <li><strong>Elementari:</strong> Un solo predicato di cui si può stabilire con certezza se è VERO o FALSO.</li>
+                        <li><strong>Composte:</strong> Più proposizioni elementari collegate dai connettivi logici.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: VALORE DI VERITÀ -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-item text-4xl font-bold mb-8">Il Valore di Verità</h2>
+            
+            <div class="anim-item delay-100 glass-card mb-10 border-l-4 border-primary text-left">
+                <p class="text-xl text-slate-200 font-light italic leading-relaxed">
+                    "Il valore di verità delle proposizioni composte dipende <strong class="text-white not-italic">solo</strong> dal valore di verità delle proposizioni elementari che la compongono e dai connettivi utilizzati."
+                </p>
+            </div>
+
+            <div class="anim-item delay-200 grid grid-cols-1 gap-4 text-left">
+                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 flex flex-col md:flex-row items-center gap-4 justify-between">
+                    <div>
+                        <div class="text-sm text-slate-400 font-bold mb-1">Proposizione Elementare A</div>
+                        <div class="text-lg text-white">"Roma è la capitale d'Italia"</div>
+                    </div>
+                    <div class="px-4 py-2 bg-success/20 text-success font-bold rounded border border-success/50">VERO (1)</div>
+                </div>
+                
+                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 flex flex-col md:flex-row items-center gap-4 justify-between">
+                    <div>
+                        <div class="text-sm text-slate-400 font-bold mb-1">Proposizione Elementare B</div>
+                        <div class="text-lg text-white">"Roma si trova in Umbria"</div>
+                    </div>
+                    <div class="px-4 py-2 bg-danger/20 text-danger font-bold rounded border border-danger/50">FALSO (0)</div>
+                </div>
+
+                <div class="bg-primary/20 p-6 rounded-lg border border-primary/50 flex flex-col md:flex-row items-center gap-4 justify-between mt-4">
+                    <div>
+                        <div class="text-sm text-primary font-bold mb-1 uppercase tracking-widest">Proposizione Composta (A e B)</div>
+                        <div class="text-xl text-white font-bold">"Roma è la capitale d'Italia <span class="text-primary underline underline-offset-4">E</span> Roma si trova in Umbria"</div>
+                    </div>
+                    <div class="text-3xl"><i class="fas fa-arrow-right text-slate-400 mx-4"></i></div>
+                    <div class="px-6 py-3 bg-danger text-white font-black rounded-lg shadow-lg shadow-danger/50">FALSO (0)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: I CONNETTIVI (AND, OR, NOT) -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-10 text-center">I Connettivi Logici e le Tavole di Verità</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- AND -->
+                <div class="anim-item delay-100 glass-card p-6 border-t-4 border-blue-500 flex flex-col">
+                    <h3 class="text-2xl font-black text-blue-400 mb-2">AND</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest mb-4">Prodotto Logico / Congiunzione</p>
+                    <p class="text-sm text-slate-300 mb-6 flex-grow">Vale 1 (vero) <strong>SOLO SE</strong> sia A sia B valgono 1. Altrimenti vale 0.</p>
+                    
+                    <table class="w-full text-center border-collapse text-sm font-mono">
+                        <tr class="bg-slate-800 text-blue-300">
+                            <th class="p-2 border border-slate-700 w-1/3">A</th>
+                            <th class="p-2 border border-slate-700 w-1/3">B</th>
+                            <th class="p-2 border border-slate-700 w-1/3">A AND B</th>
+                        </tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700 text-danger font-bold">0</td></tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-danger font-bold">0</td></tr>
+                        <tr><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700 text-danger font-bold">0</td></tr>
+                        <tr class="bg-blue-900/30"><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-success font-black text-lg">1</td></tr>
+                    </table>
+                </div>
+
+                <!-- OR -->
+                <div class="anim-item delay-200 glass-card p-6 border-t-4 border-green-500 flex flex-col">
+                    <h3 class="text-2xl font-black text-green-400 mb-2">OR</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest mb-4">Somma Logica / Disgiunzione</p>
+                    <p class="text-sm text-slate-300 mb-6 flex-grow">Vale 0 (falso) <strong>SOLO SE</strong> sia A sia B valgono 0. Se almeno uno è 1, vale 1.</p>
+                    
+                    <table class="w-full text-center border-collapse text-sm font-mono">
+                        <tr class="bg-slate-800 text-green-300">
+                            <th class="p-2 border border-slate-700 w-1/3">A</th>
+                            <th class="p-2 border border-slate-700 w-1/3">B</th>
+                            <th class="p-2 border border-slate-700 w-1/3">A OR B</th>
+                        </tr>
+                        <tr class="bg-danger/20"><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700 text-danger font-black text-lg">0</td></tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-success font-bold">1</td></tr>
+                        <tr><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700 text-success font-bold">1</td></tr>
+                        <tr><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-success font-bold">1</td></tr>
+                    </table>
+                </div>
+
+                <!-- NOT -->
+                <div class="anim-item delay-300 glass-card p-6 border-t-4 border-red-500 flex flex-col">
+                    <h3 class="text-2xl font-black text-red-400 mb-2">NOT</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest mb-4">Negazione / Complemento</p>
+                    <p class="text-sm text-slate-300 mb-6 flex-grow">Inverte il valore di verità. Se A è 0 diventa 1, se A è 1 diventa 0.</p>
+                    
+                    <table class="w-full text-center border-collapse text-sm font-mono mt-auto">
+                        <tr class="bg-slate-800 text-red-300">
+                            <th class="p-2 border border-slate-700 w-1/2">A</th>
+                            <th class="p-2 border border-slate-700 w-1/2">NOT A</th>
+                        </tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700 text-success font-bold text-lg">1</td></tr>
+                        <tr><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-danger font-bold text-lg">0</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: PRECEDENZA E TAVOLE (TEORIA) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-8">Costruire Tavole per Proposizioni Composte</h2>
+            
+            <div class="anim-item delay-100 glass-card bg-slate-800/80 mb-8 border-l-4 border-primary">
+                <h3 class="font-bold text-white mb-4"><i class="fas fa-list-ol mr-2 text-primary"></i> Il Procedimento</h3>
+                <ul class="list-decimal list-inside text-slate-300 space-y-3 font-light">
+                    <li>Individuare il numero di proposizioni semplici (es. n=2 per A e B).</li>
+                    <li>Creare le prime colonne con tutte le combinazioni possibili (sono <strong>2<sup>n</sup></strong>).</li>
+                    <li>Aggiungere una colonna per ogni operatore intermedio, seguendo l'ordine corretto.</li>
+                </ul>
+            </div>
+
+            <div class="anim-item delay-200 p-6 bg-warning/10 border border-warning/30 rounded-xl flex items-center gap-6">
+                <i class="fas fa-exclamation-triangle text-4xl text-warning"></i>
+                <div>
+                    <h4 class="font-bold text-warning mb-2 text-lg">Ordine delle Operazioni</h4>
+                    <p class="text-slate-300">Come nell'algebra tradizionale esistono le parentesi. In loro assenza, le regole di precedenza sono:</p>
+                    <div class="font-mono text-xl font-bold text-white mt-3 bg-black p-3 rounded inline-block">
+                        <span class="text-red-400">NOT</span> &gt; <span class="text-blue-400">AND</span> &gt; <span class="text-green-400">OR</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: TAVOLA DI VERITÀ (ESEMPIO PRATICO) -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full text-center">
+            <h2 class="text-3xl font-bold mb-6">Costruiamo la Tavola: <span class="text-primary font-mono tracking-widest">(A AND B) OR (NOT B)</span></h2>
+            
+            <div class="glass-card overflow-x-auto step-container">
+                <table class="w-full text-center border-collapse font-mono text-lg">
+                    <thead>
+                        <tr class="bg-slate-800 border-b-2 border-slate-600">
+                            <th class="p-4 border-r border-slate-700 w-1/5 text-slate-400">A</th>
+                            <th class="p-4 border-r border-slate-700 w-1/5 text-slate-400">B</th>
+                            <th class="p-4 border-r border-slate-700 w-1/5 text-blue-400">A AND B</th>
+                            <th class="p-4 border-r border-slate-700 w-1/5 text-red-400">NOT B</th>
+                            <th class="p-4 w-1/5 text-primary">(A AND B) OR (NOT B)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Combinazione 1 -->
+                        <tr class="border-b border-slate-700 step-item">
+                            <td class="p-4 border-r border-slate-700">0</td>
+                            <td class="p-4 border-r border-slate-700">0</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">0</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">1</td>
+                            <td class="p-4 font-bold text-white step-item bg-primary/10">1</td>
+                        </tr>
+                        <!-- Combinazione 2 -->
+                        <tr class="border-b border-slate-700 step-item">
+                            <td class="p-4 border-r border-slate-700">0</td>
+                            <td class="p-4 border-r border-slate-700">1</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">0</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">0</td>
+                            <td class="p-4 font-bold text-white step-item bg-primary/10">0</td>
+                        </tr>
+                        <!-- Combinazione 3 -->
+                        <tr class="border-b border-slate-700 step-item">
+                            <td class="p-4 border-r border-slate-700">1</td>
+                            <td class="p-4 border-r border-slate-700">0</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">0</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">1</td>
+                            <td class="p-4 font-bold text-white step-item bg-primary/10">1</td>
+                        </tr>
+                        <!-- Combinazione 4 -->
+                        <tr class="step-item">
+                            <td class="p-4 border-r border-slate-700">1</td>
+                            <td class="p-4 border-r border-slate-700">1</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">1</td>
+                            <td class="p-4 border-r border-slate-700 text-slate-500 step-item">0</td>
+                            <td class="p-4 font-bold text-white step-item bg-primary/10">1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: EQUIVALENZA E PROPRIETÀ -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-8">Equivalenza e Proprietà degli Operatori</h2>
+            
+            <div class="anim-item delay-100 p-4 border border-primary/50 bg-primary/10 rounded-lg mb-8 text-center">
+                <i class="fas fa-equals text-primary mr-2"></i> Due proposizioni composte si dicono <strong class="text-white">equivalenti</strong> se assumono lo stesso valore di verità <em>qualunque sia</em> il valore delle proposizioni elementari (cioè, hanno la stessa colonna finale nella tavola di verità).
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Proprietà Base -->
+                <div class="anim-item delay-200 glass-card p-6">
+                    <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-600 pb-2">Proprietà Fondamentali</h3>
+                    <table class="w-full text-sm font-mono text-slate-300">
+                        <tr class="border-b border-slate-700"><td class="py-2 text-slate-400">Commutativa AND</td><td class="py-2">A AND B = B AND A</td></tr>
+                        <tr class="border-b border-slate-700"><td class="py-2 text-slate-400">Commutativa OR</td><td class="py-2">A OR B = B OR A</td></tr>
+                        <tr class="border-b border-slate-700"><td class="py-2 text-slate-400">Associativa AND</td><td class="py-2">A AND (B AND C) = (A AND B) AND C</td></tr>
+                        <tr class="border-b border-slate-700"><td class="py-2 text-slate-400">Associativa OR</td><td class="py-2">A OR (B OR C) = (A OR B) OR C</td></tr>
+                        <tr class="border-b border-slate-700"><td class="py-2 text-slate-400">Distr. AND su OR</td><td class="py-2">A AND (B OR C) = (A AND B) OR (A AND C)</td></tr>
+                        <tr><td class="py-2 text-slate-400">Distr. OR su AND</td><td class="py-2">A OR (B AND C) = (A OR B) AND (A OR C)</td></tr>
+                    </table>
+                </div>
+
+                <!-- Teoremi De Morgan & Tasks -->
+                <div class="flex flex-col gap-6">
+                    <div class="anim-item delay-300 glass-card p-6 border-l-4 border-accent">
+                        <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-600 pb-2">Teoremi di De Morgan</h3>
+                        <p class="font-mono text-sm text-slate-300 mb-2">NOT (A AND B) = (NOT A) OR (NOT B)</p>
+                        <p class="font-mono text-sm text-slate-300">NOT (A OR B) = (NOT A) AND (NOT B)</p>
+                    </div>
+
+                    <div class="anim-item delay-400 task-box p-6 flex-grow">
+                        <h4 class="font-bold text-warning mb-4"><i class="fas fa-pencil-alt mr-2"></i>Ora prova tu!</h4>
+                        <ul class="text-sm text-slate-300 space-y-4">
+                            <li><strong>1. Scrivi la tavola:</strong> "Il quadrato di 3 è 9" (A) AND/OR "9 è divisibile per 2" (B).</li>
+                            <li><strong>2. Verifica l'equivalenza:</strong> (A AND B) OR (NOT B) equivale a A AND B OR NOT B? <em>(Usa le precedenze)</em></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: LOGICA NEL MONDO REALE -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-3xl font-bold mb-6 text-primary">Logica nel Mondo Reale: Criteri di Divisibilità</h2>
+            <div class="bg-slate-800 p-4 rounded border border-slate-600 mb-6 font-light italic text-slate-300">
+                "Un numero è divisibile per 3 e per 5 se <strong class="text-white">la somma delle sue cifre è un multiplo di 3 E la sua ultima cifra è 0 OPPURE 5</strong>."
+            </div>
+            
+            <div class="step-container">
+                <div class="step-item grid grid-cols-3 gap-4 mb-6 text-sm">
+                    <div class="bg-blue-900/30 p-3 rounded border border-blue-500/30"><strong class="text-blue-400">A:</strong> Somma cifre multiplo di 3</div>
+                    <div class="bg-green-900/30 p-3 rounded border border-green-500/30"><strong class="text-green-400">B:</strong> Ultima cifra è 0</div>
+                    <div class="bg-green-900/30 p-3 rounded border border-green-500/30"><strong class="text-green-400">C:</strong> Ultima cifra è 5</div>
+                </div>
+                
+                <div class="step-item text-center font-mono text-2xl text-white mb-8 bg-black py-2 rounded">
+                    <span class="text-blue-400">A</span> AND (<span class="text-green-400">B</span> OR <span class="text-green-400">C</span>)
+                </div>
+
+                <div class="step-item flex flex-col md:flex-row gap-8 items-start">
+                    <table class="w-full md:w-1/2 text-center border-collapse font-mono text-xs sm:text-sm">
+                        <tr class="bg-slate-800"><th class="p-2 border border-slate-700">A</th><th class="p-2 border border-slate-700">B</th><th class="p-2 border border-slate-700">C</th><th class="p-2 border border-slate-700 text-green-400">B OR C</th><th class="p-2 border border-slate-700 text-primary font-bold">A AND (B OR C)</th></tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700 text-danger">0</td></tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-danger">0</td></tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-danger">0</td></tr>
+                        <tr><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-danger">0</td></tr>
+                        <tr class="bg-blue-900/30 step-item"><td class="p-2 border border-slate-700 font-bold">1</td><td class="p-2 border border-slate-700 font-bold">0</td><td class="p-2 border border-slate-700 font-bold">0</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700 text-danger font-bold">0 <span class="text-xs font-sans text-slate-400 block">(Es: 33)</span></td></tr>
+                        <tr class="step-item"><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-success font-bold">1 <span class="text-xs font-sans text-slate-400 block">(Es: 45)</span></td></tr>
+                        <tr class="bg-green-900/30 step-item"><td class="p-2 border border-slate-700 font-bold">1</td><td class="p-2 border border-slate-700 font-bold">1</td><td class="p-2 border border-slate-700 font-bold">0</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-success font-bold text-lg">1 <span class="text-xs font-sans text-slate-400 block">(Es: 60)</span></td></tr>
+                        <tr class="step-item"><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700">1</td><td class="p-2 border border-slate-700 text-success font-bold">1</td></tr>
+                    </table>
+
+                    <div class="w-full md:w-1/2 task-box step-item mt-0">
+                        <h4 class="font-bold text-warning mb-2"><i class="fas fa-briefcase mr-2"></i>Ora prova tu! Il Bonus Aziendale</h4>
+                        <p class="text-sm text-slate-300 mb-2 font-light">L'azienda Spider eroga un bonus se:<br> "PC venduti > anno prec." (A) <strong>OPPURE</strong><br> ["PC venduti < anno prec." (B) <strong>E</strong> "Fatturato >= +20%" (C)]</p>
+                        <p class="text-sm font-bold text-white mt-4">In quali condizioni il reparto NON riceve il bonus? Costruisci la tavola per A OR (B AND C).</p>
+                    </div>
+                </div>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: CODIFICA DELL'INFORMAZIONE E MULTIPLI -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-5xl font-bold mb-10 border-b border-slate-700 pb-4"><span class="text-accent">2.6</span> Codifica dell'Informazione</h2>
+            
+            <div class="anim-item delay-100 flex items-center gap-6 glass-card mb-10 border-l-4 border-accent">
+                <div class="text-4xl text-accent"><i class="fas fa-boxes"></i></div>
+                <div>
+                    <h3 class="text-2xl font-bold text-white">Il Byte</h3>
+                    <p class="text-slate-300">Una successione di <strong>8 bit</strong>. L'unità pratica per misurare le memorie.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="anim-item delay-200 glass-card">
+                    <h3 class="font-bold text-white mb-4"><i class="fas fa-globe mr-2 text-slate-400"></i>Prefissi Decimali (Sistema Internazionale)</h3>
+                    <p class="text-sm text-slate-300 mb-4 font-light">Basati sulle potenze del 10.</p>
+                    <table class="w-full text-sm font-mono text-slate-300 border-collapse">
+                        <tr><td class="p-2 border border-slate-700">Kilo (KB)</td><td class="p-2 border border-slate-700">10<sup>3</sup> = 1.000 byte</td></tr>
+                        <tr><td class="p-2 border border-slate-700">Mega (MB)</td><td class="p-2 border border-slate-700">10<sup>6</sup> = 1.000.000 byte</td></tr>
+                        <tr><td class="p-2 border border-slate-700">Giga (GB)</td><td class="p-2 border border-slate-700">10<sup>9</sup> = 1.000.000.000 byte</td></tr>
+                    </table>
+                </div>
+
+                <div class="anim-item delay-300 glass-card border-t-4 border-accent">
+                    <h3 class="font-bold text-white mb-4"><i class="fas fa-microchip mr-2 text-accent"></i>Prefissi Binari (Norma IEC 2000)</h3>
+                    <p class="text-sm text-slate-300 mb-4 font-light">Basati sulle potenze del 2. Introdotti per evitare ambiguità nell'informatica.</p>
+                    <table class="w-full text-sm font-mono text-slate-300 border-collapse">
+                        <tr class="bg-accent/10"><td class="p-2 border border-slate-700 font-bold text-accent">Kibi (KiB)</td><td class="p-2 border border-slate-700">2<sup>10</sup> = 1.024 byte</td><td class="p-2 border border-slate-700 text-danger text-xs">Err: 2.4%</td></tr>
+                        <tr><td class="p-2 border border-slate-700 font-bold text-accent">Mebi (MiB)</td><td class="p-2 border border-slate-700">2<sup>20</sup> = 1.048.576 byte</td><td class="p-2 border border-slate-700 text-danger text-xs">Err: 4.86%</td></tr>
+                        <tr><td class="p-2 border border-slate-700 font-bold text-accent">Gibi (GiB)</td><td class="p-2 border border-slate-700">2<sup>30</sup> = 1.073.741.824 B</td><td class="p-2 border border-slate-700 text-danger text-xs font-bold">Err: 7.37%</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 10: DISCREPANZA MEMORIA E BITRATE -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-8 text-accent">Calcoli: Memoria e Trasmissione</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Capacità Memoria -->
+                <div class="glass-card">
+                    <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-600 pb-2"><i class="fas fa-hdd mr-2 text-slate-400"></i>Capacità Hard Disk: GB vs GiB</h3>
+                    <p class="text-sm text-slate-300 mb-6 font-light">Un produttore vende un disco da <strong>150 GB</strong>. Qual è la vera capienza in formato binario (GiB)?</p>
+                    
+                    <div class="step-container">
+                        <div class="step-item text-sm font-mono text-slate-400 mb-2">Venduto (SI): 150 × 10<sup>9</sup> = <span class="text-white">150.000.000.000 byte</span></div>
+                        <div class="step-item text-sm font-mono text-slate-400 mb-4">Reale (Bin): 150 × 2<sup>30</sup> = <span class="text-white">161.061.273.600 byte</span></div>
+                        <div class="step-item bg-danger/20 border border-danger p-3 rounded text-sm text-white">
+                            Il computer legge in binario, quindi vedrà il disco più piccolo di 150 GiB! <br><strong class="text-danger">La differenza è di oltre 11 GB.</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bitrate -->
+                <div class="glass-card">
+                    <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-600 pb-2"><i class="fas fa-network-wired mr-2 text-slate-400"></i>Velocità di Rete: Il Bitrate</h3>
+                    <p class="text-sm text-slate-300 mb-4 font-light">Bit trasferiti in un'unità di tempo. Unità: <strong>bit/s (bps)</strong>.</p>
+                    <div class="math-box text-center mb-6">bitrate = N° bit / tempo(s)</div>
+                    
+                    <div class="step-container">
+                        <div class="step-item text-sm text-slate-300 mb-2">Nelle reti si usano i prefissi decimali (SI).</div>
+                        <div class="step-item font-mono text-sm mb-2">Connessione "500 Megabit" = 500 × 10<sup>6</sup> bit/s</div>
+                        <div class="step-item font-mono text-sm mb-4 text-accent">Se fosse binaria (Mebi) = 500 × 2<sup>20</sup> = 524 × 10<sup>6</sup> bit/s</div>
+                        <div class="step-item task-box p-3 mt-0 text-xs">
+                            <strong class="text-warning">Prova tu:</strong> Calcola l'errore percentuale tra 524.288.000 e 500.000.000.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 11: ORGANIZZAZIONE LOGICA E COMPRESSIONE -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-8">Organizzazione Dati e Compressione</h2>
+            
+            <div class="anim-item delay-100 glass-card mb-8">
+                <h3 class="text-xl font-bold text-white mb-3"><i class="fas fa-file-alt mr-2 text-slate-400"></i>I File</h3>
+                <p class="text-slate-300 font-light mb-4">Informazioni codificate e organizzate in sequenze di byte. Sono identificati da: <strong>Nome, Estensione (formato) e Percorso</strong>.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="anim-item delay-200 glass-card border-t-4 border-blue-500 bg-slate-800/80">
+                    <h3 class="text-xl font-bold text-white mb-3">Lossless (Senza perdita)</h3>
+                    <p class="text-sm text-slate-300 font-light mb-4">Elimina le ripetizioni nei dati inserendo istruzioni ricostruttive. Decomprimendo, si torna all'esatto file originale.</p>
+                    <div class="flex gap-4 font-bold text-blue-400 font-mono">
+                        <span class="bg-black px-3 py-1 rounded border border-slate-700">.ZIP</span>
+                        <span class="bg-black px-3 py-1 rounded border border-slate-700">.RAR</span>
+                    </div>
+                </div>
+
+                <div class="anim-item delay-300 glass-card border-t-4 border-danger bg-slate-800/80">
+                    <h3 class="text-xl font-bold text-white mb-3">Lossy (Con perdita)</h3>
+                    <p class="text-sm text-slate-300 font-light mb-4">Compressione irreversibile. Si scartano informazioni non percepibili per ridurre drasticamente il peso. Impossibile tornare all'originale.</p>
+                    <div class="flex gap-4 font-bold text-danger font-mono">
+                        <span class="bg-black px-3 py-1 rounded border border-slate-700">.JPEG</span>
+                        <span class="bg-black px-3 py-1 rounded border border-slate-700">.MP3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 12: MULTIMEDIALITÀ E SUONO -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-5xl font-bold mb-10 border-b border-slate-700 pb-4"><span class="text-success">Multimedia:</span> Il Suono</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                <div class="anim-item delay-100">
+                    <p class="text-lg text-slate-300 font-light mb-6">Mentre i caratteri di testo sono discreti, suoni e immagini sono <strong>grandezze analogiche</strong> (continue nel tempo e nello spazio).</p>
+                    <div class="glass-card border-l-4 border-success p-6 mb-6">
+                        <h3 class="font-bold text-white mb-2">Campionamento Audio</h3>
+                        <p class="text-sm text-slate-300 font-light mb-4">L'onda sonora (pressione) viene divisa in intervalli di tempo uguali. Il valore di ampiezza in ogni intervallo viene misurato e tradotto in binario.</p>
+                        <p class="text-sm text-slate-300 font-bold"><i class="fas fa-file-audio text-success mr-2"></i> Un file audio è solo una lunghissima lista di numeri binari!</p>
+                    </div>
+                </div>
+                
+                <div class="anim-item delay-200 glass-card bg-slate-900 flex flex-col items-center justify-center p-8 border border-slate-600">
+                    <!-- Animazione CSS Onda Sonora -->
+                    <div class="sound-wave mb-6">
+                        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                    </div>
+                    
+                    <h4 class="font-bold text-white mb-2 text-center mt-4">Frequenza di Campionamento (Hz)</h4>
+                    <p class="text-xs text-slate-400 text-center mb-4">Campioni misurati e digitalizzati al secondo.</p>
+                    
+                    <table class="w-full text-xs font-mono text-slate-300 border-collapse mt-4">
+                        <tr class="border-b border-slate-700"><td class="py-2">Voce Umana</td><td class="py-2 text-right">8 - 11 kHz</td></tr>
+                        <tr class="border-b border-slate-700"><td class="py-2">Musica Pop</td><td class="py-2 text-right">22 kHz</td></tr>
+                        <tr><td class="py-2">Musica Classica</td><td class="py-2 text-right text-success font-bold">44 - 48 kHz</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 13: IMMAGINI B/N E PIXEL -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-item text-4xl font-bold mb-8 text-success">Le Immagini: Griglia e Pixel</h2>
+            <p class="anim-item delay-100 text-lg text-slate-300 font-light mb-8 max-w-4xl mx-auto">Per le immagini, il campionamento avviene <strong>nello spazio</strong>. L'immagine è suddivisa in una griglia di elementi chiamati <strong>PIXEL</strong>.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                <!-- Spiegazione -->
+                <div class="anim-item delay-200 text-left">
+                    <div class="glass-card mb-6">
+                        <h3 class="font-bold text-white mb-2"><i class="fas fa-compress text-slate-400 mr-2"></i>Risoluzione e Quantizzazione</h3>
+                        <p class="text-sm text-slate-300 font-light mb-4">La dimensione della griglia definisce la <strong>risoluzione</strong>. Assegnare un valore numerico a ogni pixel si chiama <strong>quantizzazione</strong>.</p>
+                        <p class="text-sm text-slate-300 font-light">Nel caso più semplice (Bianco e Nero), basta 1 bit per pixel:</p>
+                        <ul class="font-mono text-lg mt-3 bg-slate-900 p-3 rounded">
+                            <li><span class="inline-block w-4 h-4 bg-white border border-slate-500 mr-2 align-middle"></span> = <strong class="text-slate-400">0</strong> (Bianco)</li>
+                            <li><span class="inline-block w-4 h-4 bg-black border border-slate-500 mr-2 align-middle"></span> = <strong class="text-white">1</strong> (Nero)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Griglia CSS 11x11 -->
+                <div class="anim-item delay-300 glass-card bg-slate-800">
+                    <div class="text-sm text-slate-400 mb-4 font-bold uppercase tracking-widest">Matrice 11x11 (121 bit)</div>
+                    <div class="pixel-grid shadow-lg shadow-black/50">
+                        <!-- R1 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                        <!-- R2 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                        <!-- R3 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                        <!-- R4 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div>
+                        <!-- R5 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div>
+                        <!-- R6 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div>
+                        <!-- R7 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                        <!-- R8 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                        <!-- R9 --> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                        <!-- R10--> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-black">1</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                        <!-- R11--> <div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div><div class="pixel-cell px-white">0</div>
+                    </div>
+                    <div class="mt-4 text-[0.6rem] font-mono text-slate-500 break-all leading-tight">
+                        0000000000000000000000011000110001111011110011111111100111111111000111111100000111110000000111000000000100000000000000000
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 14: IL COLORE RGB -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-8 text-center">La Qualità: Colore e RGB</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
+                <div class="anim-item delay-100 flex flex-col justify-between glass-card">
+                    <div>
+                        <h3 class="font-bold text-white mb-4 border-b border-slate-600 pb-2">Profondità di Colore</h3>
+                        <p class="text-sm text-slate-300 font-light mb-4">Se associamo a ogni pixel più bit, possiamo rappresentare sfumature.</p>
+                        <ul class="space-y-3 mb-6">
+                            <li class="flex items-center gap-3 bg-slate-800 p-2 rounded border border-slate-700"><span class="font-mono text-slate-400">8 bit</span> <i class="fas fa-arrow-right"></i> <span class="text-white font-bold">256</span> sfumature (Scala di grigi)</li>
+                            <li class="flex items-center gap-3 bg-slate-800 p-2 rounded border border-slate-700"><span class="font-mono text-slate-400">24 bit</span> <i class="fas fa-arrow-right"></i> <span class="text-white font-bold">16.7 Mln</span> di colori (RGB)</li>
+                        </ul>
+                    </div>
+                    <div class="task-box p-4">
+                        <h4 class="font-bold text-warning mb-1 text-sm">Prova tu!</h4>
+                        <p class="text-xs text-slate-300">Usa un foglio a quadretti, disegna e quantizza in binario una figura a tua scelta.</p>
+                    </div>
+                </div>
+
+                <div class="anim-item delay-200 glass-card border-t-4 border-success flex flex-col justify-center">
+                    <h3 class="font-bold text-white mb-4 text-center">Codifica RGB (Red, Green, Blue)</h3>
+                    <p class="text-sm text-slate-300 font-light mb-6 text-center">3 Byte (24 bit) per pixel, solitamente espressi in compatta notazione Esadecimale a 6 cifre.</p>
+                    
+                    <div class="grid grid-cols-3 gap-4 font-mono text-center text-sm">
+                        <!-- Rosso -->
+                        <div class="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                            <div class="w-full h-8 bg-[#FF0000] rounded mb-2 shadow-lg shadow-red-500/20"></div>
+                            <div class="text-white font-bold">Rosso Puro</div>
+                            <div class="mt-2 flex justify-between px-2 text-xs text-slate-400"><span>R:255</span><span>G:0</span><span>B:0</span></div>
+                            <div class="mt-2 text-lg text-red-400 font-black tracking-widest bg-black rounded">FF0000</div>
+                        </div>
+                        <!-- Verde -->
+                        <div class="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                            <div class="w-full h-8 bg-[#00FF00] rounded mb-2 shadow-lg shadow-green-500/20"></div>
+                            <div class="text-white font-bold">Verde Puro</div>
+                            <div class="mt-2 flex justify-between px-2 text-xs text-slate-400"><span>R:0</span><span>G:255</span><span>B:0</span></div>
+                            <div class="mt-2 text-lg text-green-400 font-black tracking-widest bg-black rounded">00FF00</div>
+                        </div>
+                        <!-- Blu -->
+                        <div class="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                            <div class="w-full h-8 bg-[#0000FF] rounded mb-2 shadow-lg shadow-blue-500/20"></div>
+                            <div class="text-white font-bold">Blu Puro</div>
+                            <div class="mt-2 flex justify-between px-2 text-xs text-slate-400"><span>R:0</span><span>G:0</span><span>B:255</span></div>
+                            <div class="mt-2 text-lg text-blue-400 font-black tracking-widest bg-black rounded">0000FF</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 15: RASTER VS VECTOR -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-10 text-center">Grafica: Raster vs Vettoriale</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <!-- Raster -->
+                <div class="anim-item delay-100 glass-card">
+                    <h3 class="text-2xl font-bold text-white mb-4 border-b border-slate-600 pb-2">Raster (Bitmap)</h3>
+                    <p class="text-slate-300 font-light mb-4">Composta da una griglia di pixel. Molto "pesante" in memoria, richiede compressione.</p>
+                    <ul class="text-sm space-y-2 mb-6 text-slate-400">
+                        <li><strong class="text-white">Formati:</strong> PNG (Lossless/Lossy), JPEG (Lossy), JPEG2000.</li>
+                        <li class="text-danger font-bold mt-4"><i class="fas fa-search-plus mr-2"></i>Sgranano se ingrandite!</li>
+                    </ul>
+                    <!-- Esempio Sgranato CSS -->
+                    <div class="w-24 h-24 bg-white text-black font-serif italic font-bold text-8xl flex items-center justify-center mx-auto" style="image-rendering: pixelated; filter: blur(1px) contrast(5);">a</div>
+                </div>
+
+                <!-- Vettoriale -->
+                <div class="anim-item delay-200 glass-card border-t-4 border-accent">
+                    <h3 class="text-2xl font-bold text-white mb-4 border-b border-slate-600 pb-2">Vettoriale</h3>
+                    <p class="text-slate-300 font-light mb-4">Codificata mediante elementi geometrici (punti, linee, cerchi, curve matematiche).</p>
+                    <ul class="text-sm space-y-2 mb-6 text-slate-400">
+                        <li><strong class="text-white">Uso:</strong> Loghi, font, illustrazioni tecniche.</li>
+                        <li class="text-success font-bold mt-4"><i class="fas fa-expand-arrows-alt mr-2"></i>Scalabili all'infinito senza perdere qualità!</li>
+                    </ul>
+                    <!-- Esempio Vettoriale -->
+                    <div class="w-24 h-24 bg-white text-black font-serif italic font-bold text-8xl flex items-center justify-center mx-auto">a</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 16: CALCOLO PESO IMMAGINE -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-8 text-warning"><i class="fas fa-weight-hanging mr-3"></i>Calcoliamo il "peso" di un'immagine</h2>
+            <p class="text-lg text-slate-300 mb-6 font-light">Una vecchia immagine a colori occupa spazio. Risoluzione: <strong class="text-white">640 × 480 pixel</strong> a <strong class="text-white">16 milioni di colori</strong>. Quanto pesa realmente in Byte/KB?</p>
+            
+            <div class="glass-card bg-slate-800/80 mb-8 border border-warning/50">
+                <div class="step-container">
+                    <div class="step-item mb-6">
+                        <h4 class="font-bold text-warning mb-2">Passo 1: Bit per pixel</h4>
+                        <p class="text-sm text-slate-300 mb-2">Quanti bit occorrono per 16 milioni di colori (16 × 10<sup>6</sup>)?</p>
+                        <div class="math-box inline-block text-white">2<sup>24</sup> = 16.777.216 &rarr; Servono <strong class="text-primary">24 bit</strong> (ossia <strong class="text-success">3 byte</strong>) per pixel.</div>
+                    </div>
+                    
+                    <div class="step-item mb-6 border-t border-slate-700 pt-4">
+                        <h4 class="font-bold text-warning mb-2">Passo 2: Totale dei pixel</h4>
+                        <div class="math-box inline-block text-white">640 × 480 = <strong class="text-accent">307.200 pixel</strong> totali.</div>
+                    </div>
+                    
+                    <div class="step-item border-t border-slate-700 pt-4">
+                        <h4 class="font-bold text-warning mb-2">Passo 3: Peso totale in Byte e KB</h4>
+                        <div class="math-box text-white mb-2">307.200 pixel × 3 byte/pixel = <strong class="text-success text-2xl">921.600 Byte</strong></div>
+                        <p class="text-sm text-slate-400 mt-2">Dividendo per 1024 otteniamo i Kilobyte:</p>
+                        <div class="math-box text-white text-xl border-warning/50">921.600 / 1024 = <strong class="text-warning">900 KB</strong> <span class="text-sm text-slate-400 font-sans ml-2">(Poco meno di 1 MB!)</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE FINE -->
+    <div class="slide">
+        <div class="max-w-4xl mx-auto text-center h-full flex flex-col justify-center items-center">
+            <div class="anim-item text-8xl text-primary mb-8"><i class="fas fa-flag-checkered drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"></i></div>
+            <h2 class="anim-item delay-100 text-6xl font-black mb-6">Fine del Capitolo 2</h2>
+            <p class="anim-item delay-200 text-2xl text-slate-400 font-light mb-12 max-w-2xl mx-auto">Hai appreso i fondamenti della logica booleana e i principi matematici della codifica multimediale.</p>
+            <button onclick="location.reload()" class="anim-item delay-300 px-8 py-4 bg-primary hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50 text-xl"><i class="fas fa-redo mr-2"></i>Riavvia la Presentazione</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        const stepIndicator = document.getElementById('step-indicator');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        function updateUI() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progress}%`;
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            checkStepIndicator();
+        }
+
+        function checkStepIndicator() {
+            const currentSlideEl = slides[currentSlide];
+            const hasHiddenSteps = currentSlideEl.querySelectorAll('.step-item:not(.show-step)').length > 0;
+            const hasStepsMarker = currentSlideEl.querySelector('.has-steps');
+            
+            if (hasHiddenSteps && hasStepsMarker) {
+                stepIndicator.classList.add('active');
+            } else {
+                stepIndicator.classList.remove('active');
+            }
+        }
+
+        function triggerSlideAnimations(slideIndex) {
+            const current = slides[currentSlide];
+            const animElements = current.querySelectorAll('.anim-item');
+            
+            animElements.forEach(el => el.classList.remove('show'));
+            
+            // Reset degli step matematici al cambio slide
+            const stepElements = current.querySelectorAll('.step-item');
+            stepElements.forEach(el => el.classList.remove('show-step'));
+
+            setTimeout(() => {
+                animElements.forEach(el => el.classList.add('show'));
+                checkStepIndicator();
+            }, 50);
+        }
+
+        function showSlide(index) {
+            if (index < 0 || index >= totalSlides) return;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            currentSlide = index;
+            updateUI();
+            triggerSlideAnimations(currentSlide);
+        }
+
+        function nextAction() {
+            const currentSlideEl = slides[currentSlide];
+            const hiddenSteps = currentSlideEl.querySelectorAll('.step-item:not(.show-step)');
+            
+            if (hiddenSteps.length > 0) {
+                hiddenSteps[0].classList.add('show-step');
+                checkStepIndicator();
+            } else {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function prevAction() {
+            showSlide(currentSlide - 1);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextAction();
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevAction();
+            }
+        });
+
+        window.onload = () => {
+            updateUI();
+            triggerSlideAnimations(currentSlide);
+        };
+    </script>
+</body>
+</html>
