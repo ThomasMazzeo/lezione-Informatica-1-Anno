@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
-    <!-- FontAwesome per Icone -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
@@ -27,61 +27,73 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
         
-        /* Gestione Slide */
+        /* Gestione Slide: Aggiunto Scrolling Verticale per Mobile */
         .slide {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
-            opacity: 0; visibility: hidden; transition: opacity 0.6s ease-in-out, visibility 0.6s;
-            display: flex; flex-direction: column; justify-content: center;
-            padding: 4rem 10%; box-sizing: border-box;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; visibility: hidden; transition: opacity 0.5s ease-in-out, visibility 0.5s;
+            overflow-y: auto; overflow-x: hidden; /* Permette scrolling su mobile */
             background: radial-gradient(circle at top right, #1e293b, #0f172a);
         }
         .slide.active { opacity: 1; visibility: visible; z-index: 10; }
 
-        /* Sistema di Animazioni (Senza Immagini) */
-        .anim-fade-up { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-        .anim-scale-in { opacity: 0; transform: scale(0.9); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        /* Wrapper interno per centrare i contenuti se la slide è corta, o farli scorrere se lunga */
+        .slide-content {
+            min-height: 100%; display: flex; flex-direction: column; justify-content: center;
+            padding: 3rem 1.5rem 5rem 1.5rem; /* Padding mobile */
+        }
+        @media (min-width: 768px) {
+            .slide-content { padding: 4rem 10%; } /* Padding Desktop */
+        }
+
+        /* Sistema di Animazioni */
+        .anim-fade-up { opacity: 0; transform: translateY(30px); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-scale-in { opacity: 0; transform: scale(0.95); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
         
         .slide.active .anim-fade-up.show { opacity: 1; transform: translateY(0); }
         .slide.active .anim-scale-in.show { opacity: 1; transform: scale(1); }
         
-        /* Ritardi per la cascata */
-        .delay-100 { transition-delay: 0.1s; }
-        .delay-200 { transition-delay: 0.2s; }
-        .delay-300 { transition-delay: 0.3s; }
-        .delay-400 { transition-delay: 0.4s; }
-        .delay-500 { transition-delay: 0.5s; }
-        .delay-600 { transition-delay: 0.6s; }
+        /* Ritardi */
+        .delay-100 { transition-delay: 0.1s; } .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; } .delay-400 { transition-delay: 0.4s; }
+        .delay-500 { transition-delay: 0.5s; } .delay-600 { transition-delay: 0.6s; }
 
-        /* Animazione specifica per le barre del grafico */
         .stat-bar { width: 0%; transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1) 0.5s; }
         .slide.active .stat-bar { width: var(--target-w); }
 
-        /* UI Controls */
+        /* Controlli UI - Adattati per Mobile */
         .nav-btn {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 50;
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.5); width: 60px; height: 60px; border-radius: 50%;
+            position: fixed; top: auto; bottom: 20px; z-index: 50;
+            background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8); width: 45px; height: 45px; border-radius: 50%;
             cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(8px);
-            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+            display: flex; justify-content: center; align-items: center; font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .nav-btn:hover { background: rgba(59, 130, 246, 0.2); color: white; border-color: rgba(59, 130, 246, 0.5); transform: translateY(-50%) scale(1.05); }
-        #prev-btn { left: 30px; }
-        #next-btn { right: 30px; }
+        .nav-btn:hover { background: rgba(59, 130, 246, 0.5); color: white; transform: scale(1.1); }
+        #prev-btn { left: 20px; }
+        #next-btn { right: 20px; }
 
-        #progress-container {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 4px;
-            background: rgba(255,255,255,0.05); z-index: 50;
+        @media (min-width: 768px) {
+            .nav-btn { top: 50%; bottom: auto; transform: translateY(-50%); width: 60px; height: 60px; font-size: 1.5rem; background: rgba(255,255,255,0.05); }
+            .nav-btn:hover { transform: translateY(-50%) scale(1.1); }
+            #prev-btn { left: 30px; }
+            #next-btn { right: 30px; }
         }
+
+        #progress-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); z-index: 50; }
         #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); width: 0%; transition: width 0.4s ease-out; }
         
-        #slide-counter { position: absolute; bottom: 20px; right: 30px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #64748b; letter-spacing: 2px; }
+        #slide-counter { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 50; font-size: 0.8rem; font-weight: 600; color: #94a3b8; letter-spacing: 2px; }
         
-        /* Stili Card e Elementi Visivi */
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.25rem; padding: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transition: transform 0.3s ease, border-color 0.3s ease; }
-        .glass-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-5px); }
+        /* Glass Card - Padding ridotto su mobile */
+        .glass-card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.25rem; padding: 1.5rem; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5); }
+        @media (min-width: 768px) { .glass-card { padding: 2.5rem; } }
         
-        .huge-year { font-size: 8rem; line-height: 1; font-weight: 900; color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,0.1); }
-        .history-icon-wrapper { width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: rgba(15, 23, 42, 0.8); border: 2px solid; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+        .huge-year { font-size: 5rem; line-height: 1; font-weight: 900; color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,0.1); }
+        @media (min-width: 768px) { .huge-year { font-size: 8rem; } }
+        
+        .history-icon-wrapper { width: 80px; height: 80px; font-size: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); border: 2px solid; margin: 0 auto 1rem auto; }
+        @media (min-width: 768px) { .history-icon-wrapper { width: 120px; height: 120px; font-size: 3rem; margin: 0; } }
     </style>
 </head>
 <body>
@@ -98,21 +110,22 @@
 
     <!-- Slide 1: Copertina -->
     <div class="slide active">
-        <div class="max-w-5xl mx-auto text-center">
-            <div class="anim-fade-up show inline-flex items-center gap-3 px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700 text-brand-primary font-semibold tracking-widest uppercase mb-8 text-sm">
+        <div class="slide-content max-w-5xl mx-auto text-center">
+            <div class="anim-fade-up show inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-slate-800/50 border border-slate-700 text-brand-primary font-semibold tracking-widest uppercase mb-6 md:mb-8 text-xs md:text-sm">
                 <i class="fas fa-book-open"></i> Sezione 1 • Capitolo 1
             </div>
-            <h1 class="anim-fade-up show delay-100 text-7xl font-extrabold mb-6 text-white leading-tight tracking-tight">
+            <h1 class="anim-fade-up show delay-100 text-5xl md:text-7xl font-extrabold mb-4 md:mb-6 text-white leading-tight tracking-tight">
                 Hardware e Software <br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-emerald-400">L'informatica nel mondo di oggi</span>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-emerald-400 text-3xl md:text-6xl">L'informatica nel mondo di oggi</span>
             </h1>
-            <p class="anim-fade-up show delay-200 text-2xl text-slate-400 mb-12 font-light max-w-3xl mx-auto">
-                Un'esplorazione dalle origini dei calcolatori alle tecnologie del futuro, analizzando l'impatto sul mondo del lavoro e sulla nostra cittadinanza digitale.
+            <p class="anim-fade-up show delay-200 text-lg md:text-2xl text-slate-400 mb-10 md:mb-12 font-light max-w-3xl mx-auto px-4 md:px-0">
+                Dalle origini dei calcolatori alle tecnologie del futuro, l'impatto sul lavoro e la cittadinanza digitale.
             </p>
             <div class="anim-scale-in show delay-300 inline-flex flex-col items-center">
-                <div class="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-300 backdrop-blur-sm">
-                    <i class="fas fa-keyboard text-xl mb-2 block text-brand-primary"></i>
-                    <span class="text-sm uppercase tracking-widest font-semibold">Usa le frecce per navigare</span>
+                <div class="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-slate-300 backdrop-blur-sm text-center">
+                    <i class="fas fa-hand-pointer text-xl mb-1 text-brand-primary hidden md:block"></i>
+                    <i class="fas fa-arrows-alt-h text-xl mb-1 text-brand-primary md:hidden"></i>
+                    <span class="text-xs md:text-sm uppercase tracking-widest font-semibold block">Usa le frecce <span class="md:hidden">o fai Swipe</span></span>
                 </div>
             </div>
         </div>
@@ -120,35 +133,32 @@
 
     <!-- Slide 2: Obiettivi del Capitolo -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full">
-            <h2 class="anim-fade-up text-5xl font-bold mb-16 text-center tracking-tight">Obiettivi di Apprendimento</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="slide-content max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-8 md:mb-16 text-center tracking-tight">Obiettivi di Apprendimento</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <div class="anim-fade-up delay-100 glass-card border-t-4 border-t-blue-500 relative overflow-hidden">
-                    <i class="fas fa-brain absolute -bottom-6 -right-6 text-9xl opacity-5 text-blue-500"></i>
-                    <h3 class="text-2xl font-bold text-blue-400 mb-6 flex items-center gap-3"><i class="fas fa-database text-white/50 p-2 bg-white/5 rounded-lg"></i> Conoscenze</h3>
-                    <ul class="space-y-4 text-slate-300 font-light text-lg">
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-blue-500 mt-1 text-sm"></i> <span>Architettura e componenti di un computer</span></li>
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-blue-500 mt-1 text-sm"></i> <span>Funzioni del sistema operativo</span></li>
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-blue-500 mt-1 text-sm"></i> <span>Software di utilità e applicativi</span></li>
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-blue-500 mt-1 text-sm"></i> <span>Informazioni, dati e codifica</span></li>
+                    <h3 class="text-xl md:text-2xl font-bold text-blue-400 mb-4 flex items-center gap-3"><i class="fas fa-database text-white/50 p-2 bg-white/5 rounded-lg"></i> Conoscenze</h3>
+                    <ul class="space-y-3 text-slate-300 font-light text-sm md:text-lg">
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-blue-500 mt-1"></i> <span>Architettura e componenti</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-blue-500 mt-1"></i> <span>Funzioni del sistema operativo</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-blue-500 mt-1"></i> <span>Software utilità/applicativi</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-blue-500 mt-1"></i> <span>Informazioni e codifica</span></li>
                     </ul>
                 </div>
                 <div class="anim-fade-up delay-200 glass-card border-t-4 border-t-emerald-500 relative overflow-hidden">
-                    <i class="fas fa-tools absolute -bottom-6 -right-6 text-9xl opacity-5 text-emerald-500"></i>
-                    <h3 class="text-2xl font-bold text-emerald-400 mb-6 flex items-center gap-3"><i class="fas fa-cogs text-white/50 p-2 bg-white/5 rounded-lg"></i> Abilità</h3>
-                    <ul class="space-y-4 text-slate-300 font-light text-lg">
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-emerald-500 mt-1 text-sm"></i> <span>Riconoscere le funzioni del computer (calcolo, comunicazione)</span></li>
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-emerald-500 mt-1 text-sm"></i> <span>Utilizzare le basi di un sistema operativo</span></li>
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-emerald-500 mt-1 text-sm"></i> <span>Raccogliere e rappresentare info</span></li>
+                    <h3 class="text-xl md:text-2xl font-bold text-emerald-400 mb-4 flex items-center gap-3"><i class="fas fa-cogs text-white/50 p-2 bg-white/5 rounded-lg"></i> Abilità</h3>
+                    <ul class="space-y-3 text-slate-300 font-light text-sm md:text-lg">
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-emerald-500 mt-1"></i> <span>Riconoscere le funzioni hardware</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-emerald-500 mt-1"></i> <span>Utilizzare le basi di un OS</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-emerald-500 mt-1"></i> <span>Raccogliere e rappresentare info</span></li>
                     </ul>
                 </div>
                 <div class="anim-fade-up delay-300 glass-card border-t-4 border-t-purple-500 relative overflow-hidden">
-                    <i class="fas fa-star absolute -bottom-6 -right-6 text-9xl opacity-5 text-purple-500"></i>
-                    <h3 class="text-2xl font-bold text-purple-400 mb-6 flex items-center gap-3"><i class="fas fa-chart-line text-white/50 p-2 bg-white/5 rounded-lg"></i> Competenze</h3>
-                    <ul class="space-y-4 text-slate-300 font-light text-lg">
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-purple-500 mt-1 text-sm"></i> <span>Comprendere i fondamenti teorici dell'informazione</span></li>
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-purple-500 mt-1 text-sm"></i> <span>Padronanza degli strumenti IT</span></li>
-                        <li class="flex items-start gap-3"><i class="fas fa-check text-purple-500 mt-1 text-sm"></i> <span>Consapevolezza dell'impatto sociale</span></li>
+                    <h3 class="text-xl md:text-2xl font-bold text-purple-400 mb-4 flex items-center gap-3"><i class="fas fa-chart-line text-white/50 p-2 bg-white/5 rounded-lg"></i> Competenze</h3>
+                    <ul class="space-y-3 text-slate-300 font-light text-sm md:text-lg">
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-purple-500 mt-1"></i> <span>Fondamenti teorici</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-purple-500 mt-1"></i> <span>Padronanza strumenti IT</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-purple-500 mt-1"></i> <span>Consapevolezza impatto sociale</span></li>
                     </ul>
                 </div>
             </div>
@@ -157,31 +167,30 @@
 
     <!-- Slide 3: Il salto prestazionale -->
     <div class="slide">
-        <div class="text-center max-w-6xl mx-auto w-full">
-            <h2 class="anim-fade-up text-5xl font-bold mb-16 tracking-tight">Un'evoluzione vertiginosa della potenza</h2>
-            <div class="flex flex-col md:flex-row justify-center items-stretch gap-8">
+        <div class="slide-content text-center max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-8 md:mb-16 tracking-tight">L'evoluzione della potenza</h2>
+            <div class="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8">
                 <div class="anim-scale-in delay-100 flex-1 glass-card text-center flex flex-col justify-center items-center">
-                    <div class="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mb-6 text-3xl text-slate-400 border border-slate-600"><i class="fas fa-rocket"></i></div>
-                    <h3 class="text-2xl font-bold text-white mb-2">1969 - Apollo 11</h3>
-                    <p class="text-slate-400 mb-8">Apollo Guidance Computer</p>
-                    <div class="text-6xl font-black text-slate-300 mb-2">41,6</div>
-                    <p class="text-xs uppercase tracking-widest text-slate-500 font-bold">Istruzioni / Secondo</p>
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-slate-800 flex items-center justify-center mb-4 text-2xl md:text-3xl text-slate-400 border border-slate-600"><i class="fas fa-rocket"></i></div>
+                    <h3 class="text-xl md:text-2xl font-bold text-white mb-1">1969 - Apollo 11</h3>
+                    <p class="text-sm md:text-base text-slate-400 mb-6">Apollo Guidance Computer</p>
+                    <div class="text-5xl md:text-6xl font-black text-slate-300 mb-1">41,6</div>
+                    <p class="text-[10px] md:text-xs uppercase tracking-widest text-slate-500 font-bold">Istruzioni / Secondo</p>
                 </div>
                 
-                <div class="anim-fade-up delay-200 flex items-center justify-center">
-                    <div class="bg-brand-primary/10 border border-brand-primary/30 rounded-3xl p-6 text-center backdrop-blur-md">
-                        <div class="text-sm uppercase tracking-widest text-brand-primary font-bold mb-2">Fattore di scala</div>
-                        <div class="text-5xl font-black text-white"><i class="fas fa-times text-3xl mr-2 text-slate-500"></i>80 Milioni</div>
+                <div class="anim-fade-up delay-200 flex items-center justify-center py-4 md:py-0">
+                    <div class="bg-brand-primary/10 border border-brand-primary/30 rounded-2xl p-4 md:p-6 text-center">
+                        <div class="text-[10px] md:text-sm uppercase tracking-widest text-brand-primary font-bold mb-1">Fattore di scala</div>
+                        <div class="text-3xl md:text-5xl font-black text-white"><i class="fas fa-times text-xl md:text-3xl mr-1 md:mr-2 text-slate-500"></i>80 Milioni</div>
                     </div>
                 </div>
 
                 <div class="anim-scale-in delay-300 flex-1 glass-card text-center border-brand-primary/50 flex flex-col justify-center items-center relative overflow-hidden">
-                    <div class="absolute inset-0 bg-brand-primary/5"></div>
-                    <div class="w-20 h-20 rounded-full bg-brand-primary/20 flex items-center justify-center mb-6 text-3xl text-brand-primary border border-brand-primary/50 relative z-10"><i class="fas fa-mobile-alt"></i></div>
-                    <h3 class="text-2xl font-bold text-white mb-2 relative z-10">Oggi - Smartphone</h3>
-                    <p class="text-slate-400 mb-8 relative z-10">Esempio: iPhone 6</p>
-                    <div class="text-6xl font-black text-brand-primary mb-2 relative z-10">3,36 <span class="text-4xl">Mld</span></div>
-                    <p class="text-xs uppercase tracking-widest text-brand-primary/70 font-bold relative z-10">Istruzioni / Secondo</p>
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-brand-primary/20 flex items-center justify-center mb-4 text-2xl md:text-3xl text-brand-primary border border-brand-primary/50"><i class="fas fa-mobile-alt"></i></div>
+                    <h3 class="text-xl md:text-2xl font-bold text-white mb-1">Oggi - Smartphone</h3>
+                    <p class="text-sm md:text-base text-slate-400 mb-6">Esempio: iPhone 6</p>
+                    <div class="text-5xl md:text-6xl font-black text-brand-primary mb-1">3,36 <span class="text-2xl md:text-4xl">Mld</span></div>
+                    <p class="text-[10px] md:text-xs uppercase tracking-widest text-brand-primary/70 font-bold">Istruzioni / Secondo</p>
                 </div>
             </div>
         </div>
@@ -189,27 +198,26 @@
 
     <!-- Slide 4: Convergenza Tecnologica -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div>
-                    <h2 class="anim-fade-up text-5xl font-bold mb-8 tracking-tight text-white">Convergenza <br><span class="text-brand-primary">Tecnologica</span></h2>
-                    <div class="anim-fade-up delay-100 text-xl text-slate-300 leading-relaxed space-y-6">
-                        <p>Solo 15 anni fa, per scattare una fotografia, scrivere una lettera, registrare un audio o cercare un'indicazione stradale servivano strumenti fisicamente distinti e ingombranti.</p>
-                        <div class="p-6 border-l-4 border-brand-primary bg-white/5 rounded-r-xl">
-                            <p class="font-semibold text-white">Oggi, il processo di miniaturizzazione e la potenza software permettono di racchiudere tutte queste funzionalità in un unico dispositivo tascabile.</p>
+        <div class="slide-content max-w-6xl mx-auto w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 items-center">
+                <div class="text-center lg:text-left">
+                    <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-6 tracking-tight text-white">Convergenza <span class="text-brand-primary block md:inline">Tecnologica</span></h2>
+                    <div class="anim-fade-up delay-100 text-base md:text-xl text-slate-300 leading-relaxed space-y-4 md:space-y-6">
+                        <p>Solo 15 anni fa, per scattare foto, scrivere lettere, o cercare indicazioni servivano strumenti fisicamente distinti e ingombranti.</p>
+                        <div class="p-4 md:p-6 border-l-4 border-brand-primary bg-white/5 rounded-r-xl text-left">
+                            <p class="font-semibold text-white">Oggi, la miniaturizzazione permette di racchiudere tutte queste funzionalità in un unico dispositivo tascabile.</p>
                         </div>
                     </div>
                 </div>
-                <div class="anim-scale-in delay-200 grid grid-cols-3 gap-4">
-                    <div class="glass-card p-6 flex flex-col items-center justify-center text-center gap-3 hover:bg-white/10 group"><i class="fas fa-camera text-3xl text-slate-500 group-hover:text-blue-400 transition-colors"></i><span class="text-sm font-semibold">Fotografia</span></div>
-                    <div class="glass-card p-6 flex flex-col items-center justify-center text-center gap-3 hover:bg-white/10 group"><i class="fas fa-envelope text-3xl text-slate-500 group-hover:text-blue-400 transition-colors"></i><span class="text-sm font-semibold">Comunicazione</span></div>
-                    <div class="glass-card p-6 flex flex-col items-center justify-center text-center gap-3 hover:bg-white/10 group"><i class="fas fa-microphone text-3xl text-slate-500 group-hover:text-blue-400 transition-colors"></i><span class="text-sm font-semibold">Audio</span></div>
-                    <div class="glass-card p-6 flex flex-col items-center justify-center text-center gap-3 hover:bg-white/10 group"><i class="fas fa-video text-3xl text-slate-500 group-hover:text-blue-400 transition-colors"></i><span class="text-sm font-semibold">Video</span></div>
-                    <div class="glass-card p-6 flex flex-col items-center justify-center text-center gap-3 hover:bg-white/10 group"><i class="fas fa-map-marked-alt text-3xl text-slate-500 group-hover:text-blue-400 transition-colors"></i><span class="text-sm font-semibold">Navigazione</span></div>
-                    <div class="glass-card p-6 flex flex-col items-center justify-center text-center gap-3 bg-brand-primary/20 border-brand-primary/50 text-white relative overflow-hidden">
-                        <div class="absolute inset-0 bg-brand-primary/10 animate-pulse"></div>
-                        <i class="fas fa-mobile-alt text-4xl mb-1 relative z-10 text-brand-primary"></i>
-                        <span class="text-sm font-bold relative z-10">Tutto in 1</span>
+                <div class="anim-scale-in delay-200 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                    <div class="glass-card p-4 flex flex-col items-center justify-center text-center gap-2"><i class="fas fa-camera text-2xl text-slate-500"></i><span class="text-xs md:text-sm">Fotografia</span></div>
+                    <div class="glass-card p-4 flex flex-col items-center justify-center text-center gap-2"><i class="fas fa-envelope text-2xl text-slate-500"></i><span class="text-xs md:text-sm">Messaggi</span></div>
+                    <div class="glass-card p-4 flex flex-col items-center justify-center text-center gap-2"><i class="fas fa-microphone text-2xl text-slate-500"></i><span class="text-xs md:text-sm">Audio</span></div>
+                    <div class="glass-card p-4 flex flex-col items-center justify-center text-center gap-2"><i class="fas fa-video text-2xl text-slate-500"></i><span class="text-xs md:text-sm">Video</span></div>
+                    <div class="glass-card p-4 flex flex-col items-center justify-center text-center gap-2"><i class="fas fa-map-marked-alt text-2xl text-slate-500"></i><span class="text-xs md:text-sm">Mappe</span></div>
+                    <div class="glass-card p-4 flex flex-col items-center justify-center text-center gap-2 bg-brand-primary/20 border-brand-primary/50 text-white">
+                        <i class="fas fa-mobile-alt text-3xl mb-1 text-brand-primary animate-pulse"></i>
+                        <span class="text-xs md:text-sm font-bold">Tutto in 1</span>
                     </div>
                 </div>
             </div>
@@ -218,35 +226,32 @@
 
     <!-- Slide 5: Cos'è l'Informatica? -->
     <div class="slide">
-        <div class="max-w-4xl mx-auto w-full text-center">
-            <div class="anim-scale-in inline-flex items-center justify-center w-24 h-24 rounded-full bg-brand-primary/20 border-2 border-brand-primary text-brand-primary text-4xl mb-8">
-                <i class="fas fa-laptop-code"></i>
-            </div>
-            <h2 class="anim-fade-up delay-100 text-5xl font-bold mb-10 tracking-tight">Cos'è l'Informatica?</h2>
+        <div class="slide-content max-w-4xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-8 tracking-tight">Cos'è l'Informatica?</h2>
             
-            <div class="anim-fade-up delay-200 p-8 glass-card border-2 border-brand-primary/50 mb-12 shadow-[0_0_30px_rgba(59,130,246,0.15)] relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-4 opacity-10 text-9xl"><i class="fas fa-quote-right"></i></div>
-                <p class="text-3xl font-light leading-relaxed text-slate-200 relative z-10">
-                    La scienza che si occupa di trattare l'informazione utilizzando procedure automatiche.
+            <div class="anim-fade-up delay-100 p-6 md:p-8 glass-card border-2 border-brand-primary/50 mb-8 md:mb-12 relative overflow-hidden">
+                <i class="fas fa-laptop-code absolute -right-4 -bottom-4 text-8xl text-brand-primary/10"></i>
+                <p class="text-xl md:text-3xl font-light leading-relaxed text-slate-200 relative z-10">
+                    Scienza che tratta l'informazione utilizzando procedure automatiche.
                 </p>
-                <div class="mt-8 text-2xl font-bold tracking-widest relative z-10">
+                <div class="mt-6 md:mt-8 text-lg md:text-2xl font-bold tracking-widest relative z-10">
                     <span class="text-brand-primary">INFOR</span>mazione + auto<span class="text-brand-primary">MATICA</span>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-6 text-left">
-                <div class="anim-fade-up delay-300 glass-card p-6 flex items-start gap-4">
-                    <i class="fas fa-microchip text-2xl text-slate-500 mt-1"></i>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 text-left">
+                <div class="anim-fade-up delay-200 glass-card p-5 flex items-start gap-4">
+                    <i class="fas fa-microchip text-2xl text-slate-500 mt-1 shrink-0"></i>
                     <div>
                         <h4 class="font-bold text-white mb-1">Architettura e Codifica</h4>
-                        <p class="text-sm text-slate-400 leading-relaxed">Studia l'hardware dei computer e la codifica binaria, l'unico linguaggio compreso dalle macchine.</p>
+                        <p class="text-xs md:text-sm text-slate-400">Studia l'hardware e la codifica binaria, l'unico linguaggio compreso dalle macchine.</p>
                     </div>
                 </div>
-                <div class="anim-fade-up delay-400 glass-card p-6 flex items-start gap-4">
-                    <i class="fas fa-layer-group text-2xl text-slate-500 mt-1"></i>
+                <div class="anim-fade-up delay-300 glass-card p-5 flex items-start gap-4">
+                    <i class="fas fa-layer-group text-2xl text-slate-500 mt-1 shrink-0"></i>
                     <div>
                         <h4 class="font-bold text-white mb-1">Software e Sistemi</h4>
-                        <p class="text-sm text-slate-400 leading-relaxed">Analizza la struttura del sistema operativo e le componenti che permettono l'esecuzione delle operazioni.</p>
+                        <p class="text-xs md:text-sm text-slate-400">Analizza i sistemi operativi e le componenti software applicative.</p>
                     </div>
                 </div>
             </div>
@@ -255,41 +260,41 @@
 
     <!-- Slide 6: Attività di Riflessione -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full">
-            <h2 class="anim-fade-up text-5xl font-bold mb-6 text-center tracking-tight">Riflessione Personale</h2>
-            <p class="anim-fade-up delay-100 text-center text-slate-400 mb-12 text-xl font-light">Prima di iniziare lo studio, analizza le tue conoscenze pregresse completando mentalmente queste aree concettuali.</p>
+        <div class="slide-content max-w-5xl mx-auto w-full">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-4 md:mb-6 text-center tracking-tight">Riflessione Personale</h2>
+            <p class="anim-fade-up delay-100 text-center text-slate-400 mb-8 md:mb-12 text-sm md:text-xl font-light px-4">Analizza le tue conoscenze pregresse completando mentalmente queste aree concettuali.</p>
             
-            <div class="grid grid-cols-2 gap-8">
-                <div class="anim-scale-in delay-200 glass-card p-8 border-l-4 border-emerald-500 group hover:bg-slate-800/80">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fas fa-project-diagram"></i></div>
-                        <h3 class="text-2xl font-bold text-white">Informatica</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                <div class="anim-scale-in delay-200 glass-card p-5 md:p-8 border-l-4 border-emerald-500">
+                    <div class="flex items-center gap-3 md:gap-4 mb-2 md:mb-4">
+                        <i class="fas fa-project-diagram text-emerald-400 text-xl md:text-2xl"></i>
+                        <h3 class="text-lg md:text-2xl font-bold text-white">Informatica</h3>
                     </div>
-                    <p class="text-slate-300 font-light">Quali parole, concetti o tecnologie ti vengono in mente quando senti questa parola?</p>
+                    <p class="text-xs md:text-sm text-slate-300 font-light">Quali parole o concetti ti vengono in mente quando senti questa parola?</p>
                 </div>
                 
-                <div class="anim-scale-in delay-300 glass-card p-8 border-l-4 border-blue-500 group hover:bg-slate-800/80">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fas fa-laptop-code"></i></div>
-                        <h3 class="text-2xl font-bold text-white">Cosa so fare</h3>
+                <div class="anim-scale-in delay-300 glass-card p-5 md:p-8 border-l-4 border-blue-500">
+                    <div class="flex items-center gap-3 md:gap-4 mb-2 md:mb-4">
+                        <i class="fas fa-laptop-code text-blue-400 text-xl md:text-2xl"></i>
+                        <h3 class="text-lg md:text-2xl font-bold text-white">Cosa so fare</h3>
                     </div>
-                    <p class="text-slate-300 font-light">Elenca le attività pratiche che sei già in grado di svolgere autonomamente con un dispositivo.</p>
+                    <p class="text-xs md:text-sm text-slate-300 font-light">Elenca le attività pratiche che sei già in grado di svolgere.</p>
                 </div>
                 
-                <div class="anim-scale-in delay-400 glass-card p-8 border-l-4 border-orange-500 group hover:bg-slate-800/80">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fas fa-globe"></i></div>
-                        <h3 class="text-2xl font-bold text-white">Dove si usa</h3>
+                <div class="anim-scale-in delay-400 glass-card p-5 md:p-8 border-l-4 border-orange-500">
+                    <div class="flex items-center gap-3 md:gap-4 mb-2 md:mb-4">
+                        <i class="fas fa-globe text-orange-400 text-xl md:text-2xl"></i>
+                        <h3 class="text-lg md:text-2xl font-bold text-white">Dove si usa</h3>
                     </div>
-                    <p class="text-slate-300 font-light">In quali settori della società, del lavoro o della vita quotidiana trovi applicazione per l'informatica?</p>
+                    <p class="text-xs md:text-sm text-slate-300 font-light">In quali settori della società trovi applicazione per l'informatica?</p>
                 </div>
                 
-                <div class="anim-scale-in delay-500 glass-card p-8 border-l-4 border-purple-500 group hover:bg-slate-800/80">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform"><i class="fas fa-lightbulb"></i></div>
-                        <h3 class="text-2xl font-bold text-white">Le mie aspettative</h3>
+                <div class="anim-scale-in delay-500 glass-card p-5 md:p-8 border-l-4 border-purple-500">
+                    <div class="flex items-center gap-3 md:gap-4 mb-2 md:mb-4">
+                        <i class="fas fa-lightbulb text-purple-400 text-xl md:text-2xl"></i>
+                        <h3 class="text-lg md:text-2xl font-bold text-white">Aspettative</h3>
                     </div>
-                    <p class="text-slate-300 font-light">Cosa speri di imparare, comprendere o saper fare al termine di questo percorso di studio?</p>
+                    <p class="text-xs md:text-sm text-slate-300 font-light">Cosa speri di imparare al termine di questo percorso di studio?</p>
                 </div>
             </div>
         </div>
@@ -297,25 +302,23 @@
 
     <!-- Slide 7: Storia - Pascalina -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-xl text-slate-500 font-bold tracking-widest uppercase mb-12">Breve Storia dei Calcolatori (1/7)</h2>
-            <div class="flex flex-col items-center justify-center gap-10">
-                <div class="anim-scale-in huge-year relative">
+        <div class="slide-content max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-xs md:text-xl text-slate-500 font-bold tracking-widest uppercase mb-6 md:mb-12">Storia dei Calcolatori (1/7)</h2>
+            <div class="flex flex-col items-center justify-center gap-6 md:gap-10">
+                <div class="anim-scale-in huge-year relative text-slate-600/50">
                     1642
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1 bg-gradient-to-r from-transparent via-brand-primary to-transparent opacity-30"></div>
                 </div>
                 
-                <div class="anim-fade-up delay-200 glass-card max-w-3xl w-full text-left p-10 flex flex-col md:flex-row items-center gap-10 border-t-4 border-slate-600">
-                    <div class="history-icon-wrapper border-slate-500 text-slate-400 shrink-0">
-                        <i class="fas fa-calculator"></i>
-                    </div>
+                <div class="anim-fade-up delay-200 glass-card max-w-3xl w-full text-left p-6 md:p-10 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 border-t-4 border-slate-600 text-center md:text-left">
+                    <div class="history-icon-wrapper border-slate-500 text-slate-400 shrink-0"><i class="fas fa-calculator"></i></div>
                     <div>
-                        <h3 class="text-4xl font-bold text-white mb-4">La Pascalina</h3>
-                        <p class="text-xl text-slate-300 mb-6 font-light">Lo scienziato francese <strong>Blaise Pascal</strong> costruisce una macchina in grado di svolgere calcoli automatizzati.</p>
-                        <ul class="space-y-3 text-slate-400">
-                            <li class="flex items-center gap-3"><i class="fas fa-check-circle text-slate-600"></i> Considerata il precursore delle moderne calcolatrici.</li>
-                            <li class="flex items-center gap-3"><i class="fas fa-check-circle text-slate-600"></i> Effettua addizioni e sottrazioni tramite meccanismi fisici.</li>
-                            <li class="flex items-center gap-3"><i class="fas fa-check-circle text-slate-600"></i> In grado di operare con numeri fino a 12 cifre.</li>
+                        <h3 class="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">La Pascalina</h3>
+                        <p class="text-sm md:text-xl text-slate-300 mb-4 md:mb-6 font-light">Lo scienziato francese <strong>Blaise Pascal</strong> costruisce una macchina per calcoli automatizzati.</p>
+                        <ul class="space-y-2 text-xs md:text-base text-slate-400 text-left">
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-slate-600 mt-1"></i> Precursore delle calcolatrici.</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-slate-600 mt-1"></i> Effettua addizioni e sottrazioni tramite meccanismi fisici.</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-slate-600 mt-1"></i> Opera con numeri fino a 12 cifre.</li>
                         </ul>
                     </div>
                 </div>
@@ -325,26 +328,23 @@
 
     <!-- Slide 8: Storia - Zuse Z1 -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-xl text-slate-500 font-bold tracking-widest uppercase mb-12">Breve Storia dei Calcolatori (2/7)</h2>
-            <div class="flex flex-col items-center justify-center gap-10">
-                <div class="anim-scale-in huge-year relative text-cyan-500/20">
+        <div class="slide-content max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-xs md:text-xl text-slate-500 font-bold tracking-widest uppercase mb-6 md:mb-12">Storia dei Calcolatori (2/7)</h2>
+            <div class="flex flex-col items-center justify-center gap-6 md:gap-10">
+                <div class="anim-scale-in huge-year relative text-cyan-500/30">
                     1936
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-30"></div>
                 </div>
                 
-                <div class="anim-fade-up delay-200 glass-card max-w-3xl w-full text-left p-10 flex flex-col md:flex-row-reverse items-center gap-10 border-t-4 border-cyan-500">
-                    <div class="history-icon-wrapper border-cyan-500 text-cyan-400 shrink-0">
-                        <i class="fas fa-cogs"></i>
-                    </div>
+                <div class="anim-fade-up delay-200 glass-card max-w-3xl w-full text-left p-6 md:p-10 flex flex-col md:flex-row-reverse items-center md:items-start gap-6 md:gap-10 border-t-4 border-cyan-500 text-center md:text-left">
+                    <div class="history-icon-wrapper border-cyan-500 text-cyan-400 shrink-0"><i class="fas fa-cogs"></i></div>
                     <div>
-                        <h3 class="text-4xl font-bold text-white mb-4">Konrad Zuse Z1</h3>
-                        <p class="text-xl text-slate-300 mb-6 font-light">L'ingegnere tedesco <strong>Konrad Zuse</strong> progetta e realizza lo Z1, introducendo concetti fondamentali.</p>
-                        <ul class="space-y-3 text-slate-400">
-                            <li class="flex items-center gap-3"><i class="fas fa-check-circle text-cyan-600"></i> Primo calcolatore ad utilizzare il <strong>sistema binario</strong>.</li>
-                            <li class="flex items-center gap-3"><i class="fas fa-check-circle text-cyan-600"></i> Macchina meccanica ad azionamento elettrico.</li>
-                            <li class="flex items-center gap-3"><i class="fas fa-check-circle text-cyan-600"></i> Legge istruzioni in sequenza da schede perforate.</li>
-                            <li class="flex items-center gap-3"><i class="fas fa-check-circle text-cyan-600"></i> Capace di registrare i risultati in una memoria primitiva.</li>
+                        <h3 class="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">Konrad Zuse Z1</h3>
+                        <p class="text-sm md:text-xl text-slate-300 mb-4 md:mb-6 font-light">L'ingegnere tedesco <strong>Konrad Zuse</strong> progetta lo Z1, introducendo concetti fondamentali.</p>
+                        <ul class="space-y-2 text-xs md:text-base text-slate-400 text-left">
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-cyan-600 mt-1"></i> Primo calcolatore a usare il <strong>sistema binario</strong>.</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-cyan-600 mt-1"></i> Macchina meccanica ad azionamento elettrico.</li>
+                            <li class="flex items-start gap-2"><i class="fas fa-check text-cyan-600 mt-1"></i> Legge istruzioni da schede perforate e registra risultati in memoria.</li>
                         </ul>
                     </div>
                 </div>
@@ -354,31 +354,25 @@
 
     <!-- Slide 9: Storia - Turing -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-xl text-slate-500 font-bold tracking-widest uppercase mb-10">Breve Storia dei Calcolatori (3/7)</h2>
-            <div class="anim-scale-in huge-year text-emerald-500/20 mb-8">1936 / WWII</div>
+        <div class="slide-content max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-xs md:text-xl text-slate-500 font-bold tracking-widest uppercase mb-4 md:mb-10">Storia dei Calcolatori (3/7)</h2>
+            <div class="anim-scale-in text-3xl md:text-6xl font-black text-emerald-500/30 mb-6 md:mb-8 tracking-widest">1936 / WWII</div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                <div class="anim-fade-up delay-100 glass-card p-8 border-l-4 border-emerald-500">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center text-2xl text-emerald-400"><i class="fas fa-brain"></i></div>
-                        <h3 class="text-3xl font-bold text-white">Alan Turing</h3>
-                    </div>
-                    <p class="text-lg text-slate-300 mb-6 font-light">Nel 1936 formula il modello teorico di una macchina capace di risolvere qualsiasi problema computabile: la <strong>Macchina di Turing</strong>.</p>
-                    <div class="p-4 bg-slate-800/50 rounded-lg text-sm text-slate-400">
-                        Durante la Seconda Guerra Mondiale è a capo di un gruppo di esperti per interpretare i messaggi segreti intercettati ai tedeschi (macchina Enigma).
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 text-left">
+                <div class="anim-fade-up delay-100 glass-card p-5 md:p-8 border-l-4 border-emerald-500">
+                    <h3 class="text-xl md:text-3xl font-bold text-white mb-3 md:mb-6"><i class="fas fa-brain text-emerald-400 mr-2"></i> Alan Turing</h3>
+                    <p class="text-sm md:text-lg text-slate-300 mb-4 font-light">Formula il modello teorico di una macchina capace di risolvere qualsiasi problema computabile: la <strong>Macchina di Turing</strong>.</p>
+                    <div class="p-3 bg-slate-800/50 rounded-lg text-xs md:text-sm text-slate-400">
+                        Durante la Seconda Guerra Mondiale guida il gruppo per decifrare i messaggi segreti tedeschi (Enigma).
                     </div>
                 </div>
                 
-                <div class="anim-fade-up delay-200 glass-card p-8 border-l-4 border-yellow-500 flex flex-col justify-center">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-14 h-14 rounded-full bg-yellow-500/20 flex items-center justify-center text-2xl text-yellow-400"><i class="fas fa-unlock-alt"></i></div>
-                        <h3 class="text-3xl font-bold text-white">Colossus</h3>
-                    </div>
-                    <p class="text-lg text-slate-300 mb-6 font-light">Dalle sue teorie viene sviluppato un enorme calcolatore usato per decifrare i codici segreti nemici.</p>
-                    <div class="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm text-yellow-200/80">
-                        <i class="fas fa-info-circle mt-1"></i>
-                        <p>L'esito della guerra è stato influenzato da questo lavoro. Le macchine furono distrutte (segreto di stato) a fine conflitto.</p>
+                <div class="anim-fade-up delay-200 glass-card p-5 md:p-8 border-l-4 border-yellow-500">
+                    <h3 class="text-xl md:text-3xl font-bold text-white mb-3 md:mb-6"><i class="fas fa-unlock-alt text-yellow-400 mr-2"></i> Colossus</h3>
+                    <p class="text-sm md:text-lg text-slate-300 mb-4 font-light">Enorme calcolatore, nato dalle sue teorie, usato per decifrare i codici segreti nemici.</p>
+                    <div class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-xs md:text-sm text-yellow-200/80 flex gap-2 items-start">
+                        <i class="fas fa-info-circle mt-0.5"></i>
+                        <p>L'esito della guerra fu influenzato da questo lavoro. Le macchine furono distrutte a fine conflitto per segreto di stato.</p>
                     </div>
                 </div>
             </div>
@@ -387,24 +381,22 @@
 
     <!-- Slide 10: Storia - Von Neumann -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-xl text-slate-500 font-bold tracking-widest uppercase mb-12">Breve Storia dei Calcolatori (4/7)</h2>
-            <div class="flex flex-col items-center justify-center gap-10">
-                <div class="anim-scale-in huge-year text-purple-500/20 relative">
+        <div class="slide-content max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-xs md:text-xl text-slate-500 font-bold tracking-widest uppercase mb-6 md:mb-12">Storia dei Calcolatori (4/7)</h2>
+            <div class="flex flex-col items-center justify-center gap-6 md:gap-10">
+                <div class="anim-scale-in huge-year relative text-purple-500/30">
                     1945
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-30"></div>
                 </div>
                 
-                <div class="anim-fade-up delay-200 glass-card max-w-3xl w-full text-left p-10 flex flex-col md:flex-row items-center gap-10 border-t-4 border-purple-500">
-                    <div class="history-icon-wrapper border-purple-500 text-purple-400 shrink-0">
-                        <i class="fas fa-sitemap"></i>
-                    </div>
+                <div class="anim-fade-up delay-200 glass-card max-w-3xl w-full p-6 md:p-10 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 border-t-4 border-purple-500 text-center md:text-left">
+                    <div class="history-icon-wrapper border-purple-500 text-purple-400 shrink-0"><i class="fas fa-sitemap"></i></div>
                     <div>
-                        <h3 class="text-4xl font-bold text-white mb-4">John von Neumann</h3>
-                        <p class="text-xl text-slate-300 mb-6 font-light">Considerato uno dei più grandi matematici del XX secolo, fornisce il massimo contributo alla realizzazione fisica delle teorie di Turing.</p>
-                        <div class="p-6 bg-purple-900/20 border border-purple-500/30 rounded-xl">
-                            <p class="text-white font-semibold leading-relaxed">
-                                Progetta un modello teorico di calcolatore programmabile. La sua <span class="text-purple-400 font-bold text-xl uppercase tracking-wider mx-1">Architettura</span> è ancora oggi il riferimento assoluto dei moderni computer.
+                        <h3 class="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">John von Neumann</h3>
+                        <p class="text-sm md:text-xl text-slate-300 mb-4 md:mb-6 font-light">Considerato uno dei più grandi matematici del XX secolo, dà il massimo contributo alla realizzazione fisica delle teorie di Turing.</p>
+                        <div class="p-4 md:p-6 bg-purple-900/20 border border-purple-500/30 rounded-xl text-left">
+                            <p class="text-white font-semibold text-sm md:text-base leading-relaxed">
+                                Progetta un modello teorico di calcolatore programmabile. La sua <span class="text-purple-400 font-bold uppercase tracking-wider mx-1">Architettura</span> è ancora oggi il riferimento dei moderni computer.
                             </p>
                         </div>
                     </div>
@@ -415,34 +407,33 @@
 
     <!-- Slide 11: Storia - Valvole / ENIAC -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-xl text-slate-500 font-bold tracking-widest uppercase mb-10">Breve Storia dei Calcolatori (5/7)</h2>
-            <div class="anim-scale-in huge-year text-brand-alert/20 mb-10 text-7xl tracking-tighter">1944-1951</div>
+        <div class="slide-content max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-xs md:text-xl text-slate-500 font-bold tracking-widest uppercase mb-4 md:mb-10">Storia dei Calcolatori (5/7)</h2>
+            <div class="anim-scale-in text-4xl md:text-7xl font-black text-brand-alert/30 mb-6 md:mb-10 tracking-tighter">1944-1951</div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
-                <div class="anim-fade-up delay-100 p-8">
-                    <h3 class="text-3xl font-bold text-white mb-6">Valvole Termoioniche</h3>
-                    <p class="text-lg text-slate-300 mb-8 font-light">I primi calcolatori, realizzati a fini bellici, si basavano su questa tecnologia con enormi limitazioni fisiche.</p>
-                    <div class="grid gap-4">
-                        <div class="glass-card p-4 flex items-center gap-4"><i class="fas fa-glass-martini text-2xl text-slate-500 w-8 text-center"></i><span class="text-slate-300">Estremamente fragili.</span></div>
-                        <div class="glass-card p-4 flex items-center gap-4"><i class="fas fa-expand-arrows-alt text-2xl text-slate-500 w-8 text-center"></i><span class="text-slate-300">Molto ingombranti (occupavano intere stanze).</span></div>
-                        <div class="glass-card p-4 flex items-center gap-4"><i class="fas fa-bolt text-2xl text-brand-alert w-8 text-center"></i><span class="text-slate-300 font-bold">Enorme dispendio energetico.</span></div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 text-left">
+                <div class="anim-fade-up delay-100">
+                    <h3 class="text-2xl md:text-3xl font-bold text-white mb-3 md:mb-6 text-center md:text-left">Valvole Termoioniche</h3>
+                    <p class="text-sm md:text-lg text-slate-300 mb-4 font-light">I primi calcolatori, nati per fini bellici, si basavano su questa tecnologia con enormi limiti.</p>
+                    <ul class="space-y-2 md:space-y-4 text-xs md:text-sm text-slate-300">
+                        <li class="glass-card p-3 md:p-4 flex items-center gap-3"><i class="fas fa-glass-martini text-slate-500"></i> Estremamente fragili.</li>
+                        <li class="glass-card p-3 md:p-4 flex items-center gap-3"><i class="fas fa-expand-arrows-alt text-slate-500"></i> Molto ingombranti (intere stanze).</li>
+                        <li class="glass-card p-3 md:p-4 flex items-center gap-3 border-l-2 border-brand-alert"><i class="fas fa-bolt text-brand-alert"></i> Enorme dispendio energetico.</li>
+                    </ul>
                 </div>
                 
-                <div class="anim-fade-up delay-200 glass-card p-10 border-2 border-brand-alert/50 flex flex-col justify-center relative overflow-hidden">
-                    <i class="fas fa-industry absolute -bottom-10 -right-10 text-[10rem] opacity-5 text-brand-alert"></i>
-                    <h4 class="text-2xl font-bold text-brand-alert mb-2 relative z-10">L'ENIAC (1946)</h4>
-                    <p class="text-slate-300 mb-8 relative z-10">Primo calcolatore interamente elettronico della storia.</p>
-                    <div class="flex items-center gap-6 mb-8 relative z-10 border-b border-slate-700 pb-8">
-                        <div class="text-5xl text-brand-alert bg-brand-alert/10 p-4 rounded-xl"><i class="fas fa-lightbulb"></i></div>
+                <div class="anim-fade-up delay-200 glass-card p-6 md:p-10 border-2 border-brand-alert/50 flex flex-col justify-center">
+                    <h4 class="text-xl md:text-2xl font-bold text-brand-alert mb-1 md:mb-2">L'ENIAC (1946)</h4>
+                    <p class="text-xs md:text-sm text-slate-300 mb-4 md:mb-6">Primo calcolatore interamente elettronico.</p>
+                    <div class="flex items-center gap-4 mb-4 md:mb-6 pb-4 border-b border-slate-700">
+                        <div class="text-3xl md:text-5xl text-brand-alert"><i class="fas fa-lightbulb"></i></div>
                         <div>
-                            <div class="text-4xl font-black text-white">17.468</div>
-                            <div class="text-sm text-slate-400 uppercase tracking-widest">Tubi contenuti</div>
+                            <div class="text-2xl md:text-4xl font-black text-white">17.468</div>
+                            <div class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest">Tubi contenuti</div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 text-white relative z-10">
-                        <i class="fas fa-exclamation-triangle text-2xl text-yellow-500"></i>
+                    <div class="flex items-start md:items-center gap-3 text-white text-xs md:text-sm">
+                        <i class="fas fa-exclamation-triangle text-lg text-yellow-500 shrink-0"></i>
                         <p class="font-light">Solo per restare acceso consumava l'equivalente di <strong>80 forni elettrici</strong>.</p>
                     </div>
                 </div>
@@ -452,35 +443,32 @@
 
     <!-- Slide 12: Storia - Transistor -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-xl text-slate-500 font-bold tracking-widest uppercase mb-10">Breve Storia dei Calcolatori (6/7)</h2>
-            <div class="flex flex-col md:flex-row items-center gap-12 text-left">
-                <div class="w-1/3">
-                    <div class="anim-scale-in huge-year text-blue-500/20 text-8xl mb-6">1959</div>
-                    <h3 class="anim-fade-up delay-100 text-4xl font-bold text-white mb-6">L'era dei Transistor</h3>
-                    <p class="anim-fade-up delay-200 text-lg text-slate-300 font-light leading-relaxed">Le valvole termoioniche vengono mandate in pensione, sostituite da un componente rivoluzionario che cambia la storia.</p>
+        <div class="slide-content max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-xs md:text-xl text-slate-500 font-bold tracking-widest uppercase mb-4 md:mb-10">Storia dei Calcolatori (6/7)</h2>
+            <div class="flex flex-col md:flex-row items-center gap-6 md:gap-12 text-left">
+                <div class="w-full md:w-1/3 text-center md:text-left">
+                    <div class="anim-scale-in text-5xl md:text-7xl font-black text-blue-500/30 mb-2 md:mb-6">1959</div>
+                    <h3 class="anim-fade-up delay-100 text-2xl md:text-4xl font-bold text-white mb-3">L'era dei Transistor</h3>
+                    <p class="anim-fade-up delay-200 text-sm md:text-lg text-slate-300 font-light mb-6 md:mb-0">Le valvole vengono sostituite da un componente rivoluzionario e molto più efficiente.</p>
                 </div>
                 
-                <div class="w-2/3 grid grid-cols-2 gap-6">
-                    <div class="anim-fade-up delay-300 glass-card p-6 border-t-2 border-blue-400">
-                        <i class="fas fa-compress-alt text-3xl text-blue-400 mb-4 block"></i>
-                        <h4 class="font-bold text-white mb-2">Dimensioni ridotte</h4>
-                        <p class="text-sm text-slate-400">Macchine nettamente meno ingombranti e più gestibili.</p>
+                <div class="w-full md:w-2/3 grid grid-cols-2 gap-3 md:gap-6">
+                    <div class="anim-fade-up delay-300 glass-card p-4 md:p-6 border-t-2 border-blue-400 text-center md:text-left">
+                        <i class="fas fa-compress-alt text-2xl text-blue-400 mb-2"></i>
+                        <h4 class="font-bold text-white mb-1 text-sm md:text-base">Più piccoli</h4>
                     </div>
-                    <div class="anim-fade-up delay-400 glass-card p-6 border-t-2 border-emerald-400">
-                        <i class="fas fa-leaf text-3xl text-emerald-400 mb-4 block"></i>
-                        <h4 class="font-bold text-white mb-2">Bassi Consumi</h4>
-                        <p class="text-sm text-slate-400">Richiedono frazioni della potenza rispetto alle valvole.</p>
+                    <div class="anim-fade-up delay-400 glass-card p-4 md:p-6 border-t-2 border-emerald-400 text-center md:text-left">
+                        <i class="fas fa-leaf text-2xl text-emerald-400 mb-2"></i>
+                        <h4 class="font-bold text-white mb-1 text-sm md:text-base">Meno energia</h4>
                     </div>
-                    <div class="anim-fade-up delay-500 glass-card p-6 border-t-2 border-yellow-400">
-                        <i class="fas fa-coins text-3xl text-yellow-400 mb-4 block"></i>
-                        <h4 class="font-bold text-white mb-2">Economici</h4>
-                        <p class="text-sm text-slate-400">Abbassamento dei costi di produzione e manutenzione.</p>
+                    <div class="anim-fade-up delay-500 glass-card p-4 md:p-6 border-t-2 border-yellow-400 text-center md:text-left">
+                        <i class="fas fa-coins text-2xl text-yellow-400 mb-2"></i>
+                        <h4 class="font-bold text-white mb-1 text-sm md:text-base">Più economici</h4>
                     </div>
-                    <div class="anim-fade-up delay-600 glass-card p-6 border-t-2 border-orange-400 relative overflow-hidden bg-slate-800">
-                        <i class="fas fa-industry text-3xl text-orange-400 mb-4 block relative z-10"></i>
-                        <h4 class="font-bold text-white mb-2 relative z-10">ELEA 9003</h4>
-                        <p class="text-sm text-slate-400 relative z-10">L'eccellenza italiana: prodotto dalla <strong>Olivetti</strong>.</p>
+                    <div class="anim-fade-up delay-600 glass-card p-4 md:p-6 border-t-2 border-orange-400 bg-slate-800 text-center md:text-left">
+                        <i class="fas fa-industry text-2xl text-orange-400 mb-2"></i>
+                        <h4 class="font-bold text-white mb-1 text-sm md:text-base">ELEA 9003</h4>
+                        <p class="text-[10px] md:text-xs text-slate-400">Eccellenza Italiana (Olivetti).</p>
                     </div>
                 </div>
             </div>
@@ -489,27 +477,27 @@
 
     <!-- Slide 13: Storia - VLSI -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-xl text-slate-500 font-bold tracking-widest uppercase mb-12">Breve Storia dei Calcolatori (7/7)</h2>
-            <div class="flex flex-col items-center justify-center gap-10">
-                <div class="anim-scale-in huge-year text-brand-primary/20 relative">
+        <div class="slide-content max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-xs md:text-xl text-slate-500 font-bold tracking-widest uppercase mb-6 md:mb-12">Storia dei Calcolatori (7/7)</h2>
+            <div class="flex flex-col items-center justify-center gap-6 md:gap-10">
+                <div class="anim-scale-in text-5xl md:text-7xl font-black text-brand-primary/30 relative">
                     1970+
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1 bg-gradient-to-r from-transparent via-brand-primary to-transparent opacity-30"></div>
                 </div>
                 
-                <div class="anim-fade-up delay-200 glass-card max-w-4xl w-full text-left p-10 flex flex-col items-center gap-10 border-t-4 border-brand-primary">
-                    <div class="flex items-center gap-8 w-full border-b border-slate-700 pb-8">
-                        <i class="fas fa-microchip text-7xl text-brand-primary"></i>
+                <div class="anim-fade-up delay-200 glass-card max-w-4xl w-full text-left p-6 md:p-10 border-t-4 border-brand-primary">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 border-b border-slate-700 pb-6 md:pb-8 mb-6 text-center md:text-left">
+                        <i class="fas fa-microchip text-5xl md:text-7xl text-brand-primary"></i>
                         <div>
-                            <h3 class="text-3xl font-bold text-white mb-2">Circuiti Integrati & VLSI</h3>
-                            <p class="text-slate-400">L'introduzione dei chip in silicio trasforma l'informatica.</p>
+                            <h3 class="text-xl md:text-3xl font-bold text-white mb-2">Circuiti Integrati & VLSI</h3>
+                            <p class="text-sm md:text-base text-slate-400">L'introduzione dei chip in silicio trasforma il mondo.</p>
                         </div>
                     </div>
-                    <div class="w-full">
-                        <h4 class="text-xl font-bold text-white mb-4">Very Large Scale Integration (VLSI)</h4>
-                        <p class="text-lg text-slate-300 mb-6 font-light leading-relaxed">Sviluppo della capacità di integrare un numero elevatissimo di transistor e componenti all'interno di una minuscola piastrina (chip).</p>
-                        <div class="bg-brand-primary/10 p-6 rounded-xl border border-brand-primary/20 text-center">
-                            <span class="text-xl font-bold text-white">↓ Costi + ↓ Dimensioni + ↑ Prestazioni = <span class="text-brand-primary">L'Era del PC moderno</span></span>
+                    <div>
+                        <h4 class="text-lg md:text-xl font-bold text-white mb-2 md:mb-4">Very Large Scale Integration</h4>
+                        <p class="text-sm md:text-lg text-slate-300 mb-6 font-light">Capacità di integrare un numero elevatissimo di transistor e componenti all'interno di una minuscola piastrina (chip).</p>
+                        <div class="bg-brand-primary/10 p-4 rounded-xl border border-brand-primary/20 text-center text-sm md:text-base">
+                            <span class="font-bold text-white">↓ Costi + ↓ Dimensioni + ↑ Prestazioni <br class="md:hidden"><span class="text-brand-primary ml-2">= Era del PC</span></span>
                         </div>
                     </div>
                 </div>
@@ -519,44 +507,44 @@
 
     <!-- Slide 14: Il Futuro -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-6xl font-black mb-16 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 tracking-tight">E il futuro cosa ci riserva?</h2>
+        <div class="slide-content max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-4xl md:text-6xl font-black mb-8 md:mb-16 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 tracking-tight">E il futuro?</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center text-left">
-                <div class="anim-scale-in delay-100 flex flex-col items-center justify-center p-10 glass-card relative overflow-hidden min-h-[300px]">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center text-left">
+                <div class="anim-scale-in delay-100 flex flex-col items-center justify-center p-8 glass-card relative overflow-hidden min-h-[200px] md:min-h-[300px]">
                     <div class="absolute inset-0 bg-radial-gradient from-emerald-500/10 to-transparent"></div>
-                    <div class="w-32 h-32 rounded-full border-4 border-slate-700 flex items-center justify-center relative z-10 mb-6">
+                    <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-slate-700 flex items-center justify-center relative z-10 mb-4">
                         <div class="w-2 h-2 bg-emerald-400 rounded-full shadow-[0_0_20px_10px_rgba(52,211,153,0.5)]"></div>
                         <div class="absolute inset-0 border-2 border-emerald-500 rounded-full animate-ping opacity-20"></div>
                     </div>
-                    <div class="text-5xl font-black text-emerald-400 mb-2 relative z-10">0,3 mm</div>
-                    <p class="text-slate-400 uppercase tracking-widest text-sm relative z-10 font-bold">Il computer più piccolo</p>
-                    <p class="text-xs text-slate-500 mt-4 relative z-10">Università del Michigan (2018)</p>
+                    <div class="text-3xl md:text-5xl font-black text-emerald-400 mb-1 relative z-10">0,3 mm</div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[10px] md:text-sm font-bold relative z-10">Il computer più piccolo</p>
+                    <p class="text-[10px] md:text-xs text-slate-500 mt-2 relative z-10 text-center">Univ. del Michigan (2018)</p>
                 </div>
                 
                 <div class="anim-fade-up delay-200">
-                    <h3 class="text-3xl font-bold text-white mb-8 border-b border-slate-700 pb-4">Nuovi Orizzonti Scientifici</h3>
-                    <p class="text-lg text-slate-300 font-light mb-6">Dispositivi di dimensioni sub-millimetriche aprono possibilità inimmaginabili, specialmente in campo medico:</p>
-                    <ul class="space-y-6">
-                        <li class="flex items-start gap-4">
-                            <div class="bg-blue-500/20 text-blue-400 p-3 rounded-lg"><i class="fas fa-eye text-xl"></i></div>
+                    <h3 class="text-2xl md:text-3xl font-bold text-white mb-4 border-b border-slate-700 pb-2">Nuovi Orizzonti</h3>
+                    <p class="text-sm md:text-base text-slate-300 font-light mb-6">Dispositivi sub-millimetriche aprono possibilità inimmaginabili in campo medico:</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <div class="bg-blue-500/20 text-blue-400 p-2 rounded-lg shrink-0"><i class="fas fa-eye"></i></div>
                             <div>
-                                <h4 class="font-bold text-white">Microsensori oculari</h4>
-                                <p class="text-sm text-slate-400">Rilevamento costante della pressione all'interno dell'occhio.</p>
+                                <h4 class="font-bold text-white text-sm">Microsensori oculari</h4>
+                                <p class="text-xs text-slate-400">Rilevamento pressione interna.</p>
                             </div>
                         </li>
-                        <li class="flex items-start gap-4">
-                            <div class="bg-purple-500/20 text-purple-400 p-3 rounded-lg"><i class="fas fa-dna text-xl"></i></div>
+                        <li class="flex items-start gap-3">
+                            <div class="bg-purple-500/20 text-purple-400 p-2 rounded-lg shrink-0"><i class="fas fa-dna"></i></div>
                             <div>
-                                <h4 class="font-bold text-white">Studi oncologici</h4>
-                                <p class="text-sm text-slate-400">Analisi localizzata e monitoraggio avanzato sui tumori.</p>
+                                <h4 class="font-bold text-white text-sm">Studi oncologici</h4>
+                                <p class="text-xs text-slate-400">Analisi localizzata sui tumori.</p>
                             </div>
                         </li>
-                        <li class="flex items-start gap-4">
-                            <div class="bg-emerald-500/20 text-emerald-400 p-3 rounded-lg"><i class="fas fa-heartbeat text-xl"></i></div>
+                        <li class="flex items-start gap-3">
+                            <div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-lg shrink-0"><i class="fas fa-heartbeat"></i></div>
                             <div>
-                                <h4 class="font-bold text-white">Biomonitoraggio</h4>
-                                <p class="text-sm text-slate-400">Controllo in tempo reale di processi biochimici cellulari.</p>
+                                <h4 class="font-bold text-white text-sm">Biomonitoraggio</h4>
+                                <p class="text-xs text-slate-400">Controllo processi biochimici.</p>
                             </div>
                         </li>
                     </ul>
@@ -567,55 +555,45 @@
 
     <!-- Slide 15: Velocità di Diffusione -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full">
-            <h2 class="anim-fade-up text-5xl font-bold text-center mb-6 tracking-tight">La Velocità dell'Evoluzione</h2>
-            <p class="anim-fade-up delay-100 text-center text-slate-400 mb-12 text-xl font-light">Anni necessari per raggiungere <strong class="text-white">50 milioni di utenti</strong> nel mondo:</p>
+        <div class="slide-content max-w-5xl mx-auto w-full">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold text-center mb-4 tracking-tight">Velocità d'Evoluzione</h2>
+            <p class="anim-fade-up delay-100 text-center text-slate-400 mb-8 text-sm md:text-xl font-light">Anni per raggiungere <strong class="text-white">50 milioni di utenti</strong>:</p>
             
-            <div class="anim-fade-up delay-200 space-y-5 glass-card p-10 font-mono text-sm">
-                <!-- Bars with custom CSS variable for target width -->
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-slate-500 font-bold group-hover:text-white transition-colors">Aereo</div><div class="bg-slate-700/50 h-8 rounded-r-lg stat-bar" style="--target-w: 100%"></div><span class="ml-4 text-slate-400 w-20">68 anni</span></div>
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-slate-500 font-bold group-hover:text-white transition-colors">Auto</div><div class="bg-slate-600/60 h-8 rounded-r-lg stat-bar" style="--target-w: 91%"></div><span class="ml-4 text-slate-400 w-20">62 anni</span></div>
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-slate-500 font-bold group-hover:text-white transition-colors">Telefono</div><div class="bg-slate-600/80 h-8 rounded-r-lg stat-bar" style="--target-w: 73%"></div><span class="ml-4 text-slate-400 w-20">50 anni</span></div>
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-slate-400 font-bold group-hover:text-white transition-colors">Elettricità</div><div class="bg-slate-500 h-8 rounded-r-lg stat-bar" style="--target-w: 67%"></div><span class="ml-4 text-slate-300 w-20">46 anni</span></div>
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-slate-400 font-bold group-hover:text-white transition-colors">TV</div><div class="bg-blue-900 h-8 rounded-r-lg stat-bar" style="--target-w: 32%"></div><span class="ml-4 text-slate-300 w-20">22 anni</span></div>
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-blue-400 font-bold group-hover:text-white transition-colors">Computer</div><div class="bg-blue-600 h-8 rounded-r-lg stat-bar relative overflow-hidden" style="--target-w: 20%"><div class="absolute inset-0 bg-gradient-to-r from-transparent to-white/20"></div></div><span class="ml-4 text-white font-bold w-20">14 anni</span></div>
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-blue-400 font-bold group-hover:text-white transition-colors">Cellulare</div><div class="bg-blue-500 h-8 rounded-r-lg stat-bar relative overflow-hidden" style="--target-w: 17%"><div class="absolute inset-0 bg-gradient-to-r from-transparent to-white/20"></div></div><span class="ml-4 text-white font-bold w-20">12 anni</span></div>
-                <div class="flex items-center group"><div class="w-32 text-right pr-6 text-brand-primary font-bold group-hover:text-white transition-colors text-lg">Internet</div><div class="bg-brand-primary h-8 rounded-r-lg stat-bar shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="--target-w: 10%"></div><span class="ml-4 text-white font-black text-lg w-20">7 anni</span></div>
-                <div class="flex items-center group mt-6 pt-6 border-t border-slate-700/50"><div class="w-32 text-right pr-6 text-brand-alert font-bold group-hover:text-white transition-colors text-xl">Pokémon Go</div><div class="bg-brand-alert h-8 rounded-r-lg stat-bar shadow-[0_0_20px_rgba(244,63,94,0.8)]" style="--target-w: 2%"></div><span class="ml-4 text-brand-alert font-black text-2xl w-40 whitespace-nowrap">19 GIORNI!</span></div>
+            <div class="anim-fade-up delay-200 space-y-3 glass-card p-4 md:p-10 text-[10px] md:text-sm overflow-x-hidden">
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-slate-500 font-bold truncate">Aereo</div><div class="bg-slate-700/50 h-5 md:h-8 rounded-r stat-bar" style="--target-w: 100%"></div><span class="ml-2 text-slate-400 w-12 md:w-20 shrink-0">68 a.</span></div>
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-slate-500 font-bold truncate">Auto</div><div class="bg-slate-600/60 h-5 md:h-8 rounded-r stat-bar" style="--target-w: 91%"></div><span class="ml-2 text-slate-400 w-12 md:w-20 shrink-0">62 a.</span></div>
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-slate-500 font-bold truncate">Telefono</div><div class="bg-slate-600/80 h-5 md:h-8 rounded-r stat-bar" style="--target-w: 73%"></div><span class="ml-2 text-slate-400 w-12 md:w-20 shrink-0">50 a.</span></div>
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-slate-400 font-bold truncate">Elettricità</div><div class="bg-slate-500 h-5 md:h-8 rounded-r stat-bar" style="--target-w: 67%"></div><span class="ml-2 text-slate-300 w-12 md:w-20 shrink-0">46 a.</span></div>
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-slate-400 font-bold truncate">TV</div><div class="bg-blue-900 h-5 md:h-8 rounded-r stat-bar" style="--target-w: 32%"></div><span class="ml-2 text-slate-300 w-12 md:w-20 shrink-0">22 a.</span></div>
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-blue-400 font-bold truncate">Computer</div><div class="bg-blue-600 h-5 md:h-8 rounded-r stat-bar" style="--target-w: 20%"></div><span class="ml-2 text-white font-bold w-12 md:w-20 shrink-0">14 a.</span></div>
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-blue-400 font-bold truncate">Cellulare</div><div class="bg-blue-500 h-5 md:h-8 rounded-r stat-bar" style="--target-w: 17%"></div><span class="ml-2 text-white font-bold w-12 md:w-20 shrink-0">12 a.</span></div>
+                <div class="flex items-center"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-brand-primary font-bold truncate text-xs md:text-lg">Internet</div><div class="bg-brand-primary h-5 md:h-8 rounded-r stat-bar shadow-[0_0_10px_rgba(59,130,246,0.6)]" style="--target-w: 10%"></div><span class="ml-2 text-white font-black text-xs md:text-lg w-12 md:w-20 shrink-0">7 a.</span></div>
+                <div class="flex items-center mt-4 pt-4 border-t border-slate-700/50"><div class="w-16 md:w-24 text-right pr-2 md:pr-4 text-brand-alert font-bold truncate text-xs md:text-xl">Pokémon</div><div class="bg-brand-alert h-5 md:h-8 rounded-r stat-bar shadow-[0_0_15px_rgba(244,63,94,0.8)]" style="--target-w: 2%"></div><span class="ml-2 text-brand-alert font-black text-xs md:text-xl shrink-0">19 GIORNI</span></div>
             </div>
         </div>
     </div>
 
     <!-- Slide 16: Linguaggio Tecnico -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full">
-            <h2 class="anim-fade-up text-5xl font-bold mb-6 tracking-tight text-center">Il Linguaggio Tecnico</h2>
-            <p class="anim-fade-up delay-100 text-xl text-slate-400 mb-12 text-center max-w-3xl mx-auto font-light">Padroneggiare i termini settoriali è fondamentale per comunicare accuratamente in contesti globali e professionali.</p>
+        <div class="slide-content max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-4 md:mb-6 tracking-tight text-center">Linguaggio Tecnico</h2>
+            <p class="anim-fade-up delay-100 text-sm md:text-xl text-slate-400 mb-8 md:mb-12 text-center max-w-3xl mx-auto font-light">Padroneggiare i termini è fondamentale in contesti globali.</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="anim-fade-up delay-200 glass-card border-l-4 border-brand-primary hover:bg-slate-800 transition-colors">
-                    <div class="flex items-center gap-4 mb-4">
-                        <i class="fas fa-network-wired text-3xl text-brand-primary"></i>
-                        <h3 class="text-2xl font-bold text-white">ICT</h3>
-                    </div>
-                    <p class="text-sm font-semibold text-brand-primary mb-2">Information and Communications Technology</p>
-                    <p class="text-slate-300 font-light leading-relaxed">Tecniche e metodi utilizzati per trasmettere, ricevere ed elaborare dati. I dati, se messi in relazione, generano <strong>nuova informazione</strong>.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                <div class="anim-fade-up delay-200 glass-card border-l-4 border-brand-primary p-4 md:p-6">
+                    <h3 class="text-lg md:text-2xl font-bold text-white mb-1"><i class="fas fa-network-wired text-brand-primary mr-2"></i> ICT</h3>
+                    <p class="text-[10px] md:text-sm font-semibold text-brand-primary mb-2">Info. and Communications Tech.</p>
+                    <p class="text-xs md:text-base text-slate-300 font-light">Tecniche per trasmettere ed elaborare dati per generare <strong>nuova informazione</strong>.</p>
                 </div>
                 
-                <div class="anim-fade-up delay-300 glass-card border-l-4 border-emerald-500 hover:bg-slate-800 transition-colors">
-                    <div class="flex items-center gap-4 mb-4">
-                        <i class="fas fa-code text-3xl text-emerald-400"></i>
-                        <h3 class="text-2xl font-bold text-white">Software</h3>
-                    </div>
-                    <p class="text-slate-300 font-light leading-relaxed">L'insieme delle procedure e delle istruzioni all'interno di un sistema di elaborazione dati, tradotte in un linguaggio interpretabile dalle macchine.</p>
+                <div class="anim-fade-up delay-300 glass-card border-l-4 border-emerald-500 p-4 md:p-6">
+                    <h3 class="text-lg md:text-2xl font-bold text-white mb-2"><i class="fas fa-code text-emerald-400 mr-2"></i> Software</h3>
+                    <p class="text-xs md:text-base text-slate-300 font-light">L'insieme delle procedure e istruzioni in un sistema, tradotte in linguaggio macchina.</p>
                 </div>
                 
-                <div class="anim-fade-up delay-400 glass-card border-l-4 border-orange-500 hover:bg-slate-800 transition-colors md:col-span-2">
-                    <div class="flex items-center gap-4 mb-4">
-                        <i class="fas fa-server text-3xl text-orange-400"></i>
-                        <h3 class="text-2xl font-bold text-white">Hardware</h3>
-                    </div>
-                    <p class="text-slate-300 font-light leading-relaxed max-w-3xl">L'insieme tangibile delle parti fisiche che compongono un dispositivo informatico (circuiti stampati, memorie di massa, alimentatori, periferiche di input/output).</p>
+                <div class="anim-fade-up delay-400 glass-card border-l-4 border-orange-500 p-4 md:p-6 md:col-span-2">
+                    <h3 class="text-lg md:text-2xl font-bold text-white mb-2"><i class="fas fa-server text-orange-400 mr-2"></i> Hardware</h3>
+                    <p class="text-xs md:text-base text-slate-300 font-light max-w-3xl">L'insieme tangibile delle parti fisiche che compongono un dispositivo informatico (circuiti, memorie, periferiche).</p>
                 </div>
             </div>
         </div>
@@ -623,29 +601,27 @@
 
     <!-- Slide 17: VR vs AR -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full text-center h-full flex flex-col justify-center">
-            <h2 class="anim-fade-up text-5xl font-bold mb-16 tracking-tight">Le Nuove Frontiere Digitali</h2>
+        <div class="slide-content max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-8 md:mb-12 tracking-tight">Frontiere Digitali</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div class="anim-scale-in delay-100 glass-card p-10 border-t-8 border-purple-500 flex flex-col relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none"></div>
-                    <i class="fas fa-vr-cardboard text-7xl text-purple-400 mb-8 relative z-10 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]"></i>
-                    <h3 class="text-3xl font-black text-white mb-4 relative z-10">Realtà Virtuale (VR)</h3>
-                    <p class="text-lg text-slate-300 mb-8 font-light flex-1 relative z-10">Genera mondi <strong>totalmente artificiali</strong>. Isola l'utente e permette di visualizzare e interagire con un ambiente completamente differente da quello fisico circostante.</p>
-                    <div class="bg-slate-900/80 p-5 rounded-xl text-sm text-slate-400 text-left relative z-10 border border-purple-500/30">
-                        <strong class="text-purple-300 uppercase tracking-widest block mb-2 text-xs">Ambiti di utilizzo:</strong>
-                        Videogiochi immersivi, simulazioni per l'addestramento (es. astronauti), tour virtuali di monumenti storici perduti.
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 text-left">
+                <div class="anim-scale-in delay-100 glass-card p-6 md:p-10 border-t-4 border-purple-500 text-center md:text-left">
+                    <i class="fas fa-vr-cardboard text-4xl md:text-7xl text-purple-400 mb-4 md:mb-6"></i>
+                    <h3 class="text-xl md:text-3xl font-black text-white mb-2">Realtà Virtuale (VR)</h3>
+                    <p class="text-xs md:text-lg text-slate-300 mb-4 md:mb-8 font-light">Genera mondi <strong>totalmente artificiali</strong>. Isola l'utente dall'ambiente fisico circostante.</p>
+                    <div class="bg-slate-900/80 p-3 md:p-5 rounded text-xs md:text-sm text-slate-400 text-left border border-purple-500/30">
+                        <strong class="text-purple-300 uppercase tracking-widest block mb-1">Esempi:</strong>
+                        Videogiochi, simulatori spaziali, tour storici.
                     </div>
                 </div>
                 
-                <div class="anim-scale-in delay-200 glass-card p-10 border-t-8 border-emerald-500 flex flex-col relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent pointer-events-none"></div>
-                    <i class="fas fa-glasses text-7xl text-emerald-400 mb-8 relative z-10 drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]"></i>
-                    <h3 class="text-3xl font-black text-white mb-4 relative z-10">Realtà Aumentata (AR)</h3>
-                    <p class="text-lg text-slate-300 mb-8 font-light flex-1 relative z-10">Combina il mondo reale con elementi virtuali. Sovrappone oggetti o informazioni digitali all'ambiente fisico in cui ci si trova tramite visori trasparenti o fotocamere.</p>
-                    <div class="bg-slate-900/80 p-5 rounded-xl text-sm text-slate-400 text-left relative z-10 border border-emerald-500/30">
-                        <strong class="text-emerald-300 uppercase tracking-widest block mb-2 text-xs">Ambiti di utilizzo:</strong>
-                        App di arredamento (testare mobili in stanza), chirurgia assistita (dati vitali sovrapposti al paziente), manutenzione industriale guidata.
+                <div class="anim-scale-in delay-200 glass-card p-6 md:p-10 border-t-4 border-emerald-500 text-center md:text-left">
+                    <i class="fas fa-glasses text-4xl md:text-7xl text-emerald-400 mb-4 md:mb-6"></i>
+                    <h3 class="text-xl md:text-3xl font-black text-white mb-2">Realtà Aumentata (AR)</h3>
+                    <p class="text-xs md:text-lg text-slate-300 mb-4 md:mb-8 font-light">Combina il mondo reale con elementi virtuali. Sovrappone info digitali all'ambiente.</p>
+                    <div class="bg-slate-900/80 p-3 md:p-5 rounded text-xs md:text-sm text-slate-400 text-left border border-emerald-500/30">
+                        <strong class="text-emerald-300 uppercase tracking-widest block mb-1">Esempi:</strong>
+                        App d'arredo, chirurgia assistita (dati vitali a vista).
                     </div>
                 </div>
             </div>
@@ -654,87 +630,71 @@
 
     <!-- Slide 18: Internet delle Cose (IoT) -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full">
-            <div class="flex flex-col lg:flex-row gap-16 items-center">
-                <div class="lg:w-1/2">
-                    <div class="anim-fade-up inline-flex items-center gap-3 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold tracking-widest uppercase mb-6 text-sm">
+        <div class="slide-content max-w-6xl mx-auto w-full">
+            <div class="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
+                <div class="w-full md:w-1/2">
+                    <div class="anim-fade-up inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold tracking-widest uppercase mb-4 text-xs">
                         <i class="fas fa-wifi"></i> IoT
                     </div>
-                    <h2 class="anim-fade-up delay-100 text-5xl font-black mb-6 text-white leading-tight">Internet of Things</h2>
-                    <h3 class="anim-fade-up delay-200 text-2xl text-slate-400 mb-8 font-light">L'Internet delle Cose</h3>
+                    <h2 class="anim-fade-up delay-100 text-3xl md:text-5xl font-black mb-2 text-white">Internet of Things</h2>
+                    <h3 class="anim-fade-up delay-200 text-lg md:text-2xl text-slate-400 mb-4 md:mb-6 font-light">L'Internet delle Cose</h3>
                     
-                    <p class="anim-fade-up delay-300 text-lg text-slate-300 mb-8 leading-relaxed font-light">
-                        Una rete globale in cui dispositivi fisici di uso comune sono dotati di sensori, software e connessione di rete, permettendo loro di raccogliere e scambiare dati autonomamente.
+                    <p class="anim-fade-up delay-300 text-sm md:text-lg text-slate-300 mb-6 font-light leading-relaxed">
+                        Dispositivi fisici dotati di sensori e connessione, capaci di raccogliere e scambiare dati autonomamente.
                     </p>
                     
-                    <div class="anim-fade-up delay-400 bg-slate-800/80 p-6 rounded-2xl border-l-4 border-blue-500 shadow-xl backdrop-blur-md">
-                        <h4 class="text-white font-bold mb-3 text-sm uppercase tracking-widest">Esempi pratici</h4>
-                        <ul class="space-y-3 text-slate-400 text-sm font-light">
-                            <li class="flex items-center gap-3"><i class="fas fa-stopwatch text-blue-400"></i> Orologio che calcola il traffico e anticipa la sveglia.</li>
-                            <li class="flex items-center gap-3"><i class="fas fa-home text-blue-400"></i> Termostato smart attivato a distanza prima del rientro.</li>
-                            <li class="flex items-center gap-3"><i class="fas fa-parking text-blue-400"></i> Auto connessa che individua posteggi liberi in tempo reale.</li>
+                    <div class="anim-fade-up delay-400 bg-slate-800/80 p-4 md:p-6 rounded-xl border-l-4 border-blue-500 text-xs md:text-sm">
+                        <ul class="space-y-2 text-slate-400 font-light">
+                            <li><i class="fas fa-stopwatch text-blue-400 w-5"></i> Orologio sveglia via traffico.</li>
+                            <li><i class="fas fa-home text-blue-400 w-5"></i> Termostato smart a distanza.</li>
+                            <li><i class="fas fa-parking text-blue-400 w-5"></i> Auto che trova parcheggi liberi.</li>
                         </ul>
                     </div>
                 </div>
                 
-                <div class="lg:w-1/2 flex justify-center">
-                    <div class="anim-scale-in delay-500 relative w-full max-w-md aspect-square rounded-full border border-slate-700/50 flex items-center justify-center bg-radial-gradient from-blue-900/20 to-transparent">
-                        <div class="absolute inset-0 border border-blue-500/20 rounded-full animate-[spin_10s_linear_infinite]"></div>
-                        <div class="absolute inset-4 border border-emerald-500/20 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
-                        
-                        <!-- Icone satelliti attorno al centro -->
-                        <div class="absolute top-10 text-3xl text-slate-500 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><i class="fas fa-tv"></i></div>
-                        <div class="absolute bottom-10 text-3xl text-slate-500 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><i class="fas fa-car"></i></div>
-                        <div class="absolute left-10 text-3xl text-slate-500 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><i class="fas fa-thermometer-half"></i></div>
-                        <div class="absolute right-10 text-3xl text-slate-500 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><i class="fas fa-lightbulb"></i></div>
-                        
-                        <div class="text-center z-10 glass-card p-8 border-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.2)]">
-                            <div class="text-xs uppercase tracking-widest text-blue-400 font-bold mb-2">Dispositivi connessi</div>
-                            <div class="text-6xl font-black text-white mb-2">62 <span class="text-3xl text-slate-400">Mld</span></div>
-                            <div class="text-sm text-slate-400 font-light">Previsione superata (2024)</div>
-                            <div class="mt-4 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">Più oggetti che persone</div>
-                        </div>
+                <div class="w-full md:w-1/2 flex justify-center py-6 md:py-0">
+                    <div class="anim-scale-in delay-500 glass-card p-8 border-blue-500 text-center w-full max-w-xs md:max-w-sm relative shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+                        <div class="text-[10px] md:text-xs uppercase tracking-widest text-blue-400 font-bold mb-2">Dispositivi connessi</div>
+                        <div class="text-5xl md:text-6xl font-black text-white mb-1">62 <span class="text-2xl md:text-3xl text-slate-400">Mld</span></div>
+                        <div class="text-xs md:text-sm text-slate-400 font-light mb-4">Previsione 2024</div>
+                        <div class="text-[10px] md:text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30 inline-block">Più oggetti che persone</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Slide 19: Dati Digitali e Big Data -->
+    <!-- Slide 19: Dati Digitali -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-5xl font-bold mb-16 tracking-tight">I Dati: Il Nuovo Petrolio</h2>
+        <div class="slide-content max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-8 md:mb-12 tracking-tight">I Dati: Il Nuovo Petrolio</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 text-left items-stretch">
-                <div class="anim-scale-in delay-100 glass-card p-10 flex flex-col justify-between">
-                    <div>
-                        <div class="text-4xl text-blue-400 mb-6"><i class="fas fa-network-wired"></i></div>
-                        <h3 class="text-2xl font-bold text-white mb-4">Decentralizzazione e Blockchain</h3>
-                        <p class="text-slate-300 mb-6 font-light leading-relaxed">
-                            Moltissimi dati (email, foto, finanze) hanno formato digitale. Non possono risiedere su un singolo computer vulnerabile a guasti o attacchi. Vengono memorizzati in modo decentralizzato tramite tecnologie sicure e crittografate come la <strong>Blockchain</strong> (catena di blocchi).
-                        </p>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 text-left">
+                <div class="anim-scale-in delay-100 glass-card p-6 md:p-8">
+                    <div class="text-2xl md:text-4xl text-blue-400 mb-3 md:mb-4"><i class="fas fa-network-wired"></i></div>
+                    <h3 class="text-lg md:text-2xl font-bold text-white mb-2 md:mb-4">Decentralizzazione</h3>
+                    <p class="text-xs md:text-base text-slate-300 font-light leading-relaxed">
+                        I dati (email, foto, finanze) non stanno su un solo computer vulnerabile. Vengono salvati in rete tramite tecnologie crittografate come la <strong>Blockchain</strong>.
+                    </p>
                 </div>
                 
-                <div class="anim-scale-in delay-200 glass-card p-10 bg-slate-800/50 flex flex-col justify-between">
-                    <div>
-                        <div class="text-4xl text-emerald-400 mb-6"><i class="fas fa-chart-pie"></i></div>
-                        <h3 class="text-2xl font-bold text-white mb-4">Big Data (Le 3 V)</h3>
-                        <p class="text-slate-300 mb-6 font-light leading-relaxed">
-                            Masse enormi di dati caratterizzate da <strong>Velocità, Varietà e Volume</strong>. Come il greggio, i dati non elaborati non hanno valore. Devono essere "estratti" e analizzati tramite metodi statistici per trovare correlazioni, comprendere il presente e fare previsioni.
-                        </p>
-                    </div>
+                <div class="anim-scale-in delay-200 glass-card p-6 md:p-8">
+                    <div class="text-2xl md:text-4xl text-emerald-400 mb-3 md:mb-4"><i class="fas fa-chart-pie"></i></div>
+                    <h3 class="text-lg md:text-2xl font-bold text-white mb-2 md:mb-4">Big Data (Le 3 V)</h3>
+                    <p class="text-xs md:text-base text-slate-300 font-light leading-relaxed">
+                        Masse enormi di dati (Velocità, Varietà, Volume). Come il greggio, non hanno valore se non "estratti" e analizzati per trovare correlazioni.
+                    </p>
                 </div>
 
-                <div class="anim-fade-up delay-300 md:col-span-2 glass-card p-8 border-t-4 border-orange-500">
-                    <h4 class="text-xl font-bold text-white mb-6 text-center">Il tracciamento delle abitudini commerciali</h4>
-                    <div class="flex flex-wrap justify-center gap-12 text-5xl mb-6">
-                        <i class="fas fa-film text-red-600 hover:scale-110 transition-transform cursor-help" title="Piattaforme Video/Streaming"></i>
-                        <i class="fas fa-music text-green-500 hover:scale-110 transition-transform cursor-help" title="Piattaforme Audio"></i>
-                        <i class="fas fa-shopping-cart text-orange-400 hover:scale-110 transition-transform cursor-help" title="E-commerce"></i>
+                <div class="anim-fade-up delay-300 md:col-span-2 glass-card p-6 md:p-8 border-t-4 border-orange-500 text-center">
+                    <h4 class="text-base md:text-xl font-bold text-white mb-4">Il tracciamento commerciale</h4>
+                    <div class="flex justify-center gap-6 md:gap-12 text-3xl md:text-5xl mb-4 text-slate-500">
+                        <i class="fas fa-film hover:text-red-500"></i>
+                        <i class="fas fa-music hover:text-green-500"></i>
+                        <i class="fas fa-shopping-cart hover:text-orange-400"></i>
                     </div>
-                    <p class="text-center text-slate-300 font-light max-w-4xl mx-auto">
-                        I servizi che utilizziamo tracciano costantemente le nostre scelte. Analizzando questi Big Data, elaborano profili accurati per suggerire programmazioni o prodotti altamente personalizzati in base alla nostra età, storico e preferenze.
+                    <p class="text-xs md:text-base text-slate-300 font-light max-w-4xl mx-auto">
+                        I servizi tracciano costantemente le nostre scelte per elaborare profili e suggerirci prodotti personalizzati.
                     </p>
                 </div>
             </div>
@@ -743,40 +703,30 @@
 
     <!-- Slide 20: Informatica e Lavoro -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full text-center">
-            <h2 class="anim-fade-up text-5xl font-bold mb-6 tracking-tight">Il Computer nel Mondo del Lavoro</h2>
-            <p class="anim-fade-up delay-100 text-xl text-slate-400 mb-16 font-light max-w-3xl mx-auto">
-                La tecnologia è uno strumento potente che richiede figure professionali formate non solo tecnicamente, ma anche dal punto di vista umano e organizzativo.
+        <div class="slide-content max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-3xl md:text-5xl font-bold mb-4 md:mb-6 tracking-tight">Il Computer nel Lavoro</h2>
+            <p class="anim-fade-up delay-100 text-sm md:text-xl text-slate-400 mb-8 md:mb-12 font-light px-4">
+                La tecnologia richiede professionisti formati tecnicamente e umanamente.
             </p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
-                <div class="anim-scale-in delay-200 glass-card border-t-8 border-blue-500 relative overflow-hidden group">
-                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors"></div>
-                    <div class="flex justify-between items-start mb-6 relative z-10">
-                        <h3 class="text-4xl font-black text-white">Hard Skill</h3>
-                        <i class="fas fa-cog text-4xl text-blue-500/50"></i>
-                    </div>
-                    <p class="text-sm font-bold uppercase tracking-widest text-blue-400 mb-8 relative z-10">Competenze tecniche quantificabili</p>
-                    <ul class="space-y-4 text-slate-300 font-light relative z-10">
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-blue-400"><i class="fas fa-code"></i></div> Saper programmare in linguaggi specifici.</li>
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-blue-400"><i class="fas fa-laptop"></i></div> Utilizzo avanzato di determinati software.</li>
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-blue-400"><i class="fas fa-language"></i></div> Conoscenza accertata di lingue straniere.</li>
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-blue-400"><i class="fas fa-certificate"></i></div> Titoli di studio e certificazioni tecniche.</li>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 text-left">
+                <div class="anim-scale-in delay-200 glass-card p-6 md:p-8 border-t-4 border-blue-500">
+                    <h3 class="text-2xl md:text-4xl font-black text-white mb-1">Hard Skill <i class="fas fa-cog text-blue-500 text-lg md:text-2xl ml-2"></i></h3>
+                    <p class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-blue-400 mb-4 md:mb-6">Competenze quantificabili</p>
+                    <ul class="space-y-3 text-xs md:text-sm text-slate-300 font-light">
+                        <li class="flex items-center gap-3"><i class="fas fa-code text-blue-400 w-4"></i> Programmazione.</li>
+                        <li class="flex items-center gap-3"><i class="fas fa-laptop text-blue-400 w-4"></i> Utilizzo software specifici.</li>
+                        <li class="flex items-center gap-3"><i class="fas fa-language text-blue-400 w-4"></i> Lingue straniere.</li>
                     </ul>
                 </div>
                 
-                <div class="anim-scale-in delay-300 glass-card border-t-8 border-purple-500 relative overflow-hidden group">
-                    <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-colors"></div>
-                    <div class="flex justify-between items-start mb-6 relative z-10">
-                        <h3 class="text-4xl font-black text-white">Soft Skill</h3>
-                        <i class="fas fa-users text-4xl text-purple-500/50"></i>
-                    </div>
-                    <p class="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 relative z-10">Abilità interpersonali e attitudinali</p>
-                    <ul class="space-y-4 text-slate-300 font-light relative z-10">
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-purple-400"><i class="fas fa-comments"></i></div> Capacità comunicativa ed empatia.</li>
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-purple-400"><i class="fas fa-hands-helping"></i></div> Propensione al lavoro di squadra.</li>
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-purple-400"><i class="fas fa-brain"></i></div> Creatività nel problem solving (pensiero critico).</li>
-                        <li class="flex items-center gap-4"><div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-purple-400"><i class="fas fa-sync-alt"></i></div> Flessibilità e gestione dello stress/tempo.</li>
+                <div class="anim-scale-in delay-300 glass-card p-6 md:p-8 border-t-4 border-purple-500">
+                    <h3 class="text-2xl md:text-4xl font-black text-white mb-1">Soft Skill <i class="fas fa-users text-purple-500 text-lg md:text-2xl ml-2"></i></h3>
+                    <p class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-purple-400 mb-4 md:mb-6">Abilità interpersonali</p>
+                    <ul class="space-y-3 text-xs md:text-sm text-slate-300 font-light">
+                        <li class="flex items-center gap-3"><i class="fas fa-comments text-purple-400 w-4"></i> Comunicazione/Empatia.</li>
+                        <li class="flex items-center gap-3"><i class="fas fa-hands-helping text-purple-400 w-4"></i> Lavoro di squadra.</li>
+                        <li class="flex items-center gap-3"><i class="fas fa-brain text-purple-400 w-4"></i> Pensiero critico/Creatività.</li>
                     </ul>
                 </div>
             </div>
@@ -785,40 +735,44 @@
 
     <!-- Slide 21: Focus Soft Skills -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full">
-            <h2 class="anim-fade-up text-4xl font-bold mb-12 text-center text-white"><span class="text-purple-400">Approfondimento:</span> L'importanza delle Soft Skill</h2>
+        <div class="slide-content max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-2xl md:text-4xl font-bold mb-8 md:mb-12 text-center text-white"><span class="text-purple-400">Focus:</span> Soft Skill</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="anim-scale-in delay-100 glass-card p-6 border-t-2 border-purple-500/50 hover:bg-slate-800 transition-colors flex flex-col items-center text-center">
-                    <div class="w-16 h-16 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mb-4"><i class="fas fa-comment-dots"></i></div>
-                    <h3 class="font-bold text-lg text-white mb-3">Comunicazione</h3>
-                    <p class="text-sm text-slate-400 font-light">Sapersi esprimere con chiarezza verbale e scritta, saper ascoltare attivamente e gestire il linguaggio del corpo.</p>
-                </div>
-                
-                <div class="anim-scale-in delay-200 glass-card p-6 border-t-2 border-purple-500/50 hover:bg-slate-800 transition-colors flex flex-col items-center text-center">
-                    <div class="w-16 h-16 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mb-4"><i class="fas fa-users-cog"></i></div>
-                    <h3 class="font-bold text-lg text-white mb-3">Lavoro in gruppo</h3>
-                    <p class="text-sm text-slate-400 font-light">Collaborare e coordinarsi per un fine comune costruendo relazioni basate su fiducia, empatia e mutuo rispetto.</p>
-                </div>
-                
-                <div class="anim-scale-in delay-300 glass-card p-6 border-t-2 border-purple-500/50 hover:bg-slate-800 transition-colors flex flex-col items-center text-center">
-                    <div class="w-16 h-16 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mb-4"><i class="fas fa-chess-knight"></i></div>
-                    <h3 class="font-bold text-lg text-white mb-3">Leadership</h3>
-                    <p class="text-sm text-slate-400 font-light">Prendere decisioni, assumersi responsabilità sotto pressione, delegare efficacemente e motivare i collaboratori.</p>
-                </div>
-                
-                <div class="anim-scale-in delay-400 glass-card p-6 border-t-2 border-purple-500/50 hover:bg-slate-800 transition-colors flex flex-col items-center text-center lg:col-span-2 lg:flex-row lg:text-left gap-6">
-                    <div class="w-16 h-16 shrink-0 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl"><i class="fas fa-lightbulb"></i></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div class="anim-scale-in delay-100 glass-card p-4 md:p-6 border-l-2 border-purple-500 flex items-start gap-4">
+                    <i class="fas fa-comment-dots text-2xl text-purple-400 mt-1"></i>
                     <div>
-                        <h3 class="font-bold text-lg text-white mb-2">Pensiero Critico</h3>
-                        <p class="text-sm text-slate-400 font-light">Affrontare i problemi cercando soluzioni creative, logiche ed efficienti, traendo spunti e intuizioni anche al di fuori del proprio rigido dominio di conoscenza tecnica.</p>
+                        <h3 class="font-bold text-white text-sm md:text-base">Comunicazione</h3>
+                        <p class="text-xs text-slate-400 font-light mt-1">Esprimersi con chiarezza verbale/scritta, saper ascoltare.</p>
                     </div>
                 </div>
-
-                <div class="anim-scale-in delay-500 glass-card p-6 border-t-2 border-purple-500/50 hover:bg-slate-800 transition-colors flex flex-col items-center text-center">
-                    <div class="w-16 h-16 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mb-4"><i class="fas fa-random"></i></div>
-                    <h3 class="font-bold text-lg text-white mb-3">Adattabilità</h3>
-                    <p class="text-sm text-slate-400 font-light">Rendersi disponibili ad accettare i frequenti cambiamenti tecnologici con propensione all'apprendimento continuo.</p>
+                <div class="anim-scale-in delay-200 glass-card p-4 md:p-6 border-l-2 border-purple-500 flex items-start gap-4">
+                    <i class="fas fa-users-cog text-2xl text-purple-400 mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-white text-sm md:text-base">Gruppo</h3>
+                        <p class="text-xs text-slate-400 font-light mt-1">Collaborare costruendo relazioni di fiducia.</p>
+                    </div>
+                </div>
+                <div class="anim-scale-in delay-300 glass-card p-4 md:p-6 border-l-2 border-purple-500 flex items-start gap-4">
+                    <i class="fas fa-chess-knight text-2xl text-purple-400 mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-white text-sm md:text-base">Leadership</h3>
+                        <p class="text-xs text-slate-400 font-light mt-1">Prendere decisioni, delegare, motivare i collaboratori.</p>
+                    </div>
+                </div>
+                <div class="anim-scale-in delay-400 glass-card p-4 md:p-6 border-l-2 border-purple-500 flex items-start gap-4 lg:col-span-2">
+                    <i class="fas fa-lightbulb text-2xl text-purple-400 mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-white text-sm md:text-base">Pensiero Critico</h3>
+                        <p class="text-xs text-slate-400 font-light mt-1">Affrontare i problemi cercando soluzioni logiche ed efficienti anche fuori dal proprio dominio.</p>
+                    </div>
+                </div>
+                <div class="anim-scale-in delay-500 glass-card p-4 md:p-6 border-l-2 border-purple-500 flex items-start gap-4">
+                    <i class="fas fa-random text-2xl text-purple-400 mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-white text-sm md:text-base">Adattabilità</h3>
+                        <p class="text-xs text-slate-400 font-light mt-1">Rendersi disponibili ai cambiamenti tecnologici continui.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -826,40 +780,37 @@
 
     <!-- Slide 22: Opportunità per Settore -->
     <div class="slide">
-        <div class="max-w-5xl mx-auto w-full">
-            <h2 class="anim-fade-up text-4xl font-bold text-center mb-10 tracking-tight">Ambiti e Opportunità Lavorative</h2>
-            <div class="anim-scale-in delay-100 bg-slate-900/80 rounded-2xl overflow-hidden shadow-2xl border border-slate-700 backdrop-blur-md">
-                <table class="w-full text-left text-sm md:text-base">
+        <div class="slide-content max-w-5xl mx-auto w-full">
+            <h2 class="anim-fade-up text-2xl md:text-4xl font-bold text-center mb-6 md:mb-10 tracking-tight">Ambiti Lavorativi</h2>
+            <!-- Wrap table in overflow-x-auto for mobile -->
+            <div class="anim-scale-in delay-100 w-full overflow-x-auto rounded-xl shadow-2xl border border-slate-700 bg-slate-900/80">
+                <table class="w-full text-left text-xs md:text-base min-w-[500px]">
                     <thead class="bg-slate-800 border-b border-slate-600">
                         <tr>
-                            <th class="p-5 text-brand-primary font-bold uppercase tracking-wider w-1/3">Settore</th>
-                            <th class="p-5 text-brand-primary font-bold uppercase tracking-wider w-2/3">Esempi di competenze richieste</th>
+                            <th class="p-3 md:p-5 text-brand-primary font-bold uppercase">Settore</th>
+                            <th class="p-3 md:p-5 text-brand-primary font-bold uppercase">Competenze richieste (Es.)</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-700/50 text-slate-300 font-light">
-                        <tr class="hover:bg-slate-800/50 transition-colors">
-                            <td class="p-5 font-bold text-white"><i class="fas fa-code mr-3 text-slate-500"></i>Informatico</td>
-                            <td class="p-5">Progettazione/sviluppo software e hardware, testing app, sicurezza dati.</td>
+                        <tr>
+                            <td class="p-3 md:p-5 font-bold text-white"><i class="fas fa-code mr-2 text-slate-500"></i>Info</td>
+                            <td class="p-3 md:p-5">Sviluppo software/hardware, sicurezza dati.</td>
                         </tr>
-                        <tr class="hover:bg-slate-800/50 transition-colors">
-                            <td class="p-5 font-bold text-white"><i class="fas fa-cogs mr-3 text-slate-500"></i>Civile / Meccanico</td>
-                            <td class="p-5">Simulazioni grafiche (CAD/3D), calcoli strutturali, programmazione robotica.</td>
+                        <tr>
+                            <td class="p-3 md:p-5 font-bold text-white"><i class="fas fa-cogs mr-2 text-slate-500"></i>Civile</td>
+                            <td class="p-3 md:p-5">Simulazioni CAD, programmazione robotica.</td>
                         </tr>
-                        <tr class="hover:bg-slate-800/50 transition-colors">
-                            <td class="p-5 font-bold text-white"><i class="fas fa-atom mr-3 text-slate-500"></i>Ricerca Scientifica</td>
-                            <td class="p-5">Creazione modelli predittivi, matematica complessa e analisi massiva di dati.</td>
+                        <tr>
+                            <td class="p-3 md:p-5 font-bold text-white"><i class="fas fa-atom mr-2 text-slate-500"></i>Scienza</td>
+                            <td class="p-3 md:p-5">Creazione modelli predittivi, analisi dati.</td>
                         </tr>
-                        <tr class="hover:bg-slate-800/50 transition-colors">
-                            <td class="p-5 font-bold text-white"><i class="fas fa-heartbeat mr-3 text-slate-500"></i>Medico / Sanitario</td>
-                            <td class="p-5">Bioinformatica (analisi genoma), gestione database pazienti, monitoraggio vitali.</td>
+                        <tr>
+                            <td class="p-3 md:p-5 font-bold text-white"><i class="fas fa-heartbeat mr-2 text-slate-500"></i>Sanità</td>
+                            <td class="p-3 md:p-5">Bioinformatica, gestione database pazienti.</td>
                         </tr>
-                        <tr class="hover:bg-slate-800/50 transition-colors">
-                            <td class="p-5 font-bold text-white"><i class="fas fa-chart-line mr-3 text-slate-500"></i>Finanza / Economia</td>
-                            <td class="p-5">Modelli di analisi di mercato, gestione flussi e-commerce, banking online.</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/50 transition-colors">
-                            <td class="p-5 font-bold text-white"><i class="fas fa-graduation-cap mr-3 text-slate-500"></i>Educazione</td>
-                            <td class="p-5">Sviluppo e utilizzo di piattaforme e-learning e software didattici interattivi.</td>
+                        <tr>
+                            <td class="p-3 md:p-5 font-bold text-white"><i class="fas fa-chart-line mr-2 text-slate-500"></i>Finanza</td>
+                            <td class="p-3 md:p-5">Analisi mercato, banking online, e-commerce.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -869,35 +820,32 @@
 
     <!-- Slide 23: Cittadinanza Digitale -->
     <div class="slide">
-        <div class="max-w-6xl mx-auto w-full">
-            <div class="flex flex-col lg:flex-row gap-12 items-center h-full">
-                <div class="lg:w-1/2">
-                    <div class="anim-fade-up w-20 h-20 rounded-2xl bg-brand-primary/20 flex items-center justify-center text-4xl text-brand-primary mb-8">
-                        <i class="fas fa-passport"></i>
-                    </div>
-                    <h2 class="anim-fade-up delay-100 text-5xl font-bold mb-6 tracking-tight">Il Cittadino Digitale</h2>
-                    <p class="anim-fade-up delay-200 text-xl text-slate-300 mb-8 font-light leading-relaxed">
-                        Internet ha rivoluzionato il nostro modo di interagire con i servizi primari. Azioni che prima richiedevano presenza fisica oggi si svolgono interamente in rete:
+        <div class="slide-content max-w-6xl mx-auto w-full">
+            <div class="flex flex-col lg:flex-row gap-8 md:gap-12 items-center">
+                <div class="lg:w-1/2 text-center lg:text-left">
+                    <i class="fas fa-passport text-4xl md:text-6xl text-brand-primary mb-4 md:mb-6 anim-fade-up"></i>
+                    <h2 class="anim-fade-up delay-100 text-3xl md:text-5xl font-bold mb-4 tracking-tight">Cittadino Digitale</h2>
+                    <p class="anim-fade-up delay-200 text-sm md:text-lg text-slate-300 mb-6 font-light">
+                        Internet ha rivoluzionato l'accesso ai servizi. Molte azioni si svolgono ormai solo in rete:
                     </p>
-                    <ul class="anim-fade-up delay-300 space-y-4">
-                        <li class="flex items-center gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 text-slate-300"><i class="fas fa-university text-brand-primary text-xl"></i> Iscrizioni scolastiche e universitarie.</li>
-                        <li class="flex items-center gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 text-slate-300"><i class="fas fa-file-medical text-brand-primary text-xl"></i> Ricezione referti ed esami medici.</li>
-                        <li class="flex items-center gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 text-slate-300"><i class="fas fa-file-invoice-dollar text-brand-primary text-xl"></i> Pagamento tributi via Pubblica Amministrazione.</li>
+                    <ul class="anim-fade-up delay-300 space-y-2 md:space-y-4 text-xs md:text-sm text-left mx-auto max-w-sm lg:max-w-full">
+                        <li class="flex items-center gap-3 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50"><i class="fas fa-university text-brand-primary"></i> Iscrizioni scolastiche.</li>
+                        <li class="flex items-center gap-3 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50"><i class="fas fa-file-medical text-brand-primary"></i> Referti medici online.</li>
+                        <li class="flex items-center gap-3 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50"><i class="fas fa-file-invoice-dollar text-brand-primary"></i> Pagamenti Pubblica Amministrazione.</li>
                     </ul>
                 </div>
                 
-                <div class="lg:w-1/2 w-full">
-                    <div class="anim-scale-in delay-400 glass-card p-10 border-t-8 border-brand-alert relative overflow-hidden">
-                        <div class="absolute -right-10 -bottom-10 opacity-5 text-[15rem] text-brand-alert pointer-events-none"><i class="fas fa-exclamation-triangle"></i></div>
-                        <h3 class="text-3xl font-black text-white mb-6 relative z-10 flex items-center gap-3">
-                            <i class="fas fa-unlink text-brand-alert"></i> Il Digital Divide
+                <div class="lg:w-1/2 w-full mt-6 lg:mt-0">
+                    <div class="anim-scale-in delay-400 glass-card p-6 md:p-10 border-t-4 border-brand-alert relative overflow-hidden">
+                        <h3 class="text-xl md:text-3xl font-black text-white mb-3 flex items-center gap-2">
+                            <i class="fas fa-unlink text-brand-alert"></i> Digital Divide
                         </h3>
-                        <p class="text-lg text-slate-300 mb-6 font-light leading-relaxed relative z-10">
-                            Questa trasformazione radicale crea <strong>profonde disuguaglianze</strong> tra chi possiede le competenze/mezzi per navigare in rete e chi ne è escluso.
+                        <p class="text-xs md:text-lg text-slate-300 mb-4 font-light">
+                            Questa trasformazione crea <strong>profonde disuguaglianze</strong> tra chi ha competenze/mezzi per la rete e chi ne è escluso.
                         </p>
-                        <div class="p-5 bg-brand-alert/10 border border-brand-alert/30 rounded-xl relative z-10">
-                            <p class="text-white font-semibold">
-                                Chi ha un accesso limitato alla tecnologia subisce una pesante riduzione di opportunità sociali e lavorative. È responsabilità etica della società riconoscere e colmare urgentemente questo divario.
+                        <div class="p-3 md:p-5 bg-brand-alert/10 border border-brand-alert/30 rounded-lg">
+                            <p class="text-white font-semibold text-xs md:text-sm">
+                                Chi ha accesso limitato subisce una riduzione di opportunità sociali. È vitale colmare questo divario.
                             </p>
                         </div>
                     </div>
@@ -908,15 +856,15 @@
 
     <!-- Slide 24: Conclusione -->
     <div class="slide">
-        <div class="max-w-4xl mx-auto text-center flex flex-col justify-center items-center h-full">
-            <div class="anim-scale-in w-32 h-32 rounded-full bg-emerald-500/20 border-4 border-emerald-500/50 flex items-center justify-center text-6xl text-emerald-400 mb-10 shadow-[0_0_50px_rgba(16,185,129,0.3)]">
+        <div class="slide-content max-w-4xl mx-auto text-center flex flex-col justify-center items-center">
+            <div class="anim-scale-in w-20 h-20 md:w-32 md:h-32 rounded-full bg-emerald-500/20 border-4 border-emerald-500/50 flex items-center justify-center text-4xl md:text-6xl text-emerald-400 mb-6 md:mb-10 shadow-[0_0_50px_rgba(16,185,129,0.3)]">
                 <i class="fas fa-check"></i>
             </div>
-            <h1 class="anim-fade-up delay-100 text-6xl font-extrabold mb-6 text-white tracking-tight">Capitolo Completato</h1>
-            <p class="anim-fade-up delay-200 text-2xl text-slate-400 mb-12 font-light">Hai esplorato i fondamenti teorici, storici e sociali dell'Informatica moderna.</p>
+            <h1 class="anim-fade-up delay-100 text-4xl md:text-6xl font-extrabold mb-4 md:mb-6 text-white tracking-tight">Capitolo Completato</h1>
+            <p class="anim-fade-up delay-200 text-sm md:text-2xl text-slate-400 mb-8 md:mb-12 font-light">Hai esplorato i fondamenti dell'Informatica moderna.</p>
             <div class="anim-fade-up delay-300">
-               <button onclick="goToSlide(0)" class="px-8 py-4 bg-brand-primary hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 flex items-center gap-3 text-lg">
-                   <i class="fas fa-redo"></i> Torna all'inizio
+               <button onclick="goToSlide(0)" class="px-6 py-3 md:px-8 md:py-4 bg-brand-primary hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 text-sm md:text-lg flex items-center justify-center gap-2">
+                   <i class="fas fa-redo"></i> Ricomincia
                </button>
             </div>
         </div>
@@ -935,37 +883,30 @@
             // Update Progress Bar
             const progress = ((currentSlide + 1) / totalSlides) * 100;
             progressBar.style.width = `${progress}%`;
-            
             // Update Counter
             slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
         }
 
         function triggerAnimations(slideIndex) {
             const current = slides[slideIndex];
-            
-            // Trova tutti gli elementi da animare
             const animElements = current.querySelectorAll('.anim-fade-up, .anim-scale-in');
             
-            // Rimuovi classe show per resettare l'animazione
             animElements.forEach(el => el.classList.remove('show'));
+            void current.offsetWidth; // Force reflow
             
-            // Forza il reflow per far registrare al browser la rimozione della classe
-            void current.offsetWidth; 
-            
-            // Riapplica la classe per far partire le transizioni CSS
             setTimeout(() => {
                 animElements.forEach(el => el.classList.add('show'));
             }, 50);
+            
+            // Azzera scroll all'ingresso di una nuova slide su mobile
+            current.scrollTop = 0;
         }
 
         function showSlide(index) {
-            // Limiti
             if (index < 0) index = 0;
             if (index >= totalSlides) index = totalSlides - 1;
-            
             if (index === currentSlide && document.querySelector('.slide.active')) return;
 
-            // Nascondi slide corrente, mostra nuova
             slides.forEach(slide => slide.classList.remove('active'));
             slides[index].classList.add('active');
             
@@ -978,19 +919,39 @@
         function prevSlide() { showSlide(currentSlide - 1); }
         function goToSlide(index) { showSlide(index); }
 
-        // Navigazione tastiera
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
-                e.preventDefault();
+        // --- GESTIONE SWIPE PER MOBILE ---
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const swipeThreshold = 50; // pixel minimi per riconoscere lo swipe
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            // Se la differenza tra inizio e fine tocco supera la soglia
+            if (touchStartX - touchEndX > swipeThreshold) {
+                // Swipe a sinistra -> Prossima slide
                 nextSlide();
             }
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
+            if (touchEndX - touchStartX > swipeThreshold) {
+                // Swipe a destra -> Slide precedente
                 prevSlide();
             }
+        }
+
+        // --- NAVIGAZIONE TASTIERA ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
         });
 
-        // Inizializzazione
+        // Initialize
         window.onload = () => {
             updateUI();
             triggerAnimations(currentSlide);
