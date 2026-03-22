@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conosciamo il Computer - Lezione 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            overflow: hidden; /* Previene lo scrolling della pagina intera */
+        }
+
+        /* Slide Container & Transitions */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+            transform: scale(0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 10;
+        }
+
+        /* Cascade Animations for internal elements */
+        .slide .cascade {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .slide.active .cascade {
+            animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Delays for the cascade effect */
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+        .delay-4 { animation-delay: 0.8s; }
+
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Progress Bar */
+        #progress-bar {
+            transition: width 0.3s ease;
+        }
+        
+        /* Custom image styling */
+        .img-overlay {
+            background: linear-gradient(to top, rgba(15,23,42,1) 0%, rgba(15,23,42,0) 100%);
+        }
+    </style>
+</head>
+<body class="relative">
+
+    <div class="fixed top-0 left-0 w-full h-1.5 bg-slate-800 z-50">
+        <div id="progress-bar" class="h-full bg-blue-500 w-0"></div>
+    </div>
+
+    <main id="presentation-container">
+
+        <section class="slide active px-12 md:px-24">
+            <div class="max-w-4xl">
+                <p class="text-blue-400 font-semibold tracking-wider uppercase mb-4 cascade delay-1">Introduzione all'Informatica</p>
+                <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight cascade delay-2">Conosciamo <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">il Computer</span></h1>
+                <p class="text-xl text-slate-400 cascade delay-3">Architettura, Memorie e Periferiche: le basi per comprendere le macchine che plasmano il nostro mondo.</p>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-6xl w-full mx-auto">
+                <h2 class="text-4xl font-bold mb-12 border-b border-slate-700 pb-4 cascade delay-1">I Tipi di Computer</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 cascade delay-2">
+                    <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700">
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Desktop / Personal Computer</h3>
+                        <p class="text-slate-300">Progettati per uso stazionario. Offrono elevata potenza di calcolo, facilità di aggiornamento e dissipazione termica ottimale.</p>
+                    </div>
+                    <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700">
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Laptop / Notebook</h3>
+                        <p class="text-slate-300">Dispositivi portatili che integrano schermo, tastiera e batteria. Ottimizzati per il risparmio energetico.</p>
+                    </div>
+                    <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700">
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Server</h3>
+                        <p class="text-slate-300">Computer dedicati a fornire servizi (web, database, storage) ad altri computer su una rete. Progettati per l'affidabilità 24/7.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-6xl w-full mx-auto grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-4xl font-bold mb-6 cascade delay-1">Oltre il Personal Computer</h2>
+                    <ul class="space-y-6 cascade delay-2">
+                        <li class="flex items-start">
+                            <span class="text-emerald-400 mr-4 text-2xl">➔</span>
+                            <div>
+                                <strong class="text-xl block text-white">Mainframe</strong>
+                                <span class="text-slate-400">Sistemi di grandi dimensioni usati da corporazioni per l'elaborazione di enormi volumi di transazioni (es. banche, censimenti).</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-emerald-400 mr-4 text-2xl">➔</span>
+                            <div>
+                                <strong class="text-xl block text-white">Supercomputer</strong>
+                                <span class="text-slate-400">Le macchine più potenti al mondo, utilizzate per calcoli scientifici complessi, simulazioni climatiche e fisica quantistica.</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-emerald-400 mr-4 text-2xl">➔</span>
+                            <div>
+                                <strong class="text-xl block text-white">Sistemi Embedded</strong>
+                                <span class="text-slate-400">Microcomputer dedicati a una singola funzione, integrati all'interno di altri dispositivi (elettrodomestici, automobili, IoT).</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="cascade delay-3 rounded-2xl overflow-hidden relative h-96">
+                    <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=1000" alt="Server Room" class="object-cover w-full h-full">
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24 bg-slate-800">
+            <div class="max-w-4xl text-center mx-auto">
+                <span class="inline-block p-4 rounded-full bg-slate-700 mb-6 cascade delay-1">
+                    <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                </span>
+                <h2 class="text-5xl font-bold mb-6 cascade delay-2">Il Case del Computer</h2>
+                <p class="text-2xl text-slate-300 cascade delay-3">L'involucro protettivo. Non è solo "la scatola": gestisce il flusso d'aria (raffreddamento), fornisce supporto strutturale e scherma dalle interferenze elettromagnetiche.</p>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-5xl mx-auto">
+                <h2 class="text-4xl font-bold mb-8 text-center cascade delay-1">Il Pannello Anteriore</h2>
+                <div class="grid md:grid-cols-2 gap-12 items-center bg-slate-800/50 p-8 rounded-3xl border border-slate-700 cascade delay-2">
+                    <div>
+                        <ul class="space-y-4 text-lg text-slate-300">
+                            <li><strong class="text-white">Pulsante di accensione (Power):</strong> Avvia la sequenza di boot.</li>
+                            <li><strong class="text-white">Pulsante di Reset:</strong> Riavvia forzatamente il sistema interrompendo l'alimentazione hardware.</li>
+                            <li><strong class="text-white">LED di stato:</strong> Indicatori visivi per l'accensione e per l'attività del disco (lettura/scrittura).</li>
+                            <li><strong class="text-white">Porte I/O frontali:</strong> Generalmente USB (Tipo A e Tipo C) e jack audio (cuffie/microfono) per un accesso rapido.</li>
+                        </ul>
+                    </div>
+                    <div class="rounded-xl overflow-hidden border border-slate-600 shadow-2xl">
+                        <img src="https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=800" alt="Front Panel PC" class="w-full h-auto object-cover opacity-80 mix-blend-screen">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-5xl mx-auto">
+                <h2 class="text-4xl font-bold mb-8 text-center cascade delay-1">Il Pannello Posteriore</h2>
+                <p class="text-center text-slate-400 mb-8 text-xl cascade delay-2">Il vero hub di connessione del computer. Qui si interfacciando la scheda madre e le schede di espansione con il mondo esterno.</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 cascade delay-3">
+                    <div class="bg-slate-800 p-6 rounded-xl border border-blue-900 text-center">
+                        <h4 class="font-bold text-blue-400 mb-2">Alimentazione</h4>
+                        <p class="text-sm text-slate-300">Connettore per il cavo di corrente e interruttore dell'alimentatore (PSU).</p>
+                    </div>
+                    <div class="bg-slate-800 p-6 rounded-xl border border-emerald-900 text-center">
+                        <h4 class="font-bold text-emerald-400 mb-2">I/O Scheda Madre</h4>
+                        <p class="text-sm text-slate-300">Tutte le porte saldate direttamente sulla motherboard (USB, Rete, Audio base).</p>
+                    </div>
+                    <div class="bg-slate-800 p-6 rounded-xl border border-purple-900 text-center">
+                        <h4 class="font-bold text-purple-400 mb-2">Slot di Espansione</h4>
+                        <p class="text-sm text-slate-300">Aperture per le porte di schede video dedicate (GPU), schede di rete o audio aggiuntive.</p>
+                    </div>
+                    <div class="bg-slate-800 p-6 rounded-xl border border-orange-900 text-center">
+                        <h4 class="font-bold text-orange-400 mb-2">Ventilazione</h4>
+                        <p class="text-sm text-slate-300">Griglie per l'espulsione dell'aria calda dal case.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-4xl font-bold mb-10 border-b border-slate-700 pb-4 cascade delay-1">Riconoscere le Porte I/O</h2>
+                <div class="grid md:grid-cols-2 gap-x-16 gap-y-8 cascade delay-2 text-lg">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Trasferimento Dati Universale</h3>
+                        <ul class="space-y-3 text-slate-300">
+                            <li><strong class="text-white">USB Type-A:</strong> Lo standard rettangolare classico.</li>
+                            <li><strong class="text-white">USB Type-C:</strong> Reversibile, compatto, supporta dati ad altissima velocità, ricarica e video.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Output Video</h3>
+                        <ul class="space-y-3 text-slate-300">
+                            <li><strong class="text-white">HDMI:</strong> Standard per monitor e TV (trasporta anche audio).</li>
+                            <li><strong class="text-white">DisplayPort:</strong> Molto usato su PC per alte frequenze di aggiornamento e multi-monitor.</li>
+                            <li><strong class="text-slate-500">VGA / DVI (Legacy):</strong> Standard analogici/digitali più vecchi.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Rete e Connettività</h3>
+                        <ul class="space-y-3 text-slate-300">
+                            <li><strong class="text-white">RJ-45 (Ethernet):</strong> Porta per connessioni di rete via cavo (LAN).</li>
+                            <li><strong class="text-white">Connettori Antenna:</strong> Per moduli Wi-Fi/Bluetooth integrati.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300">Audio</h3>
+                        <ul class="space-y-3 text-slate-300">
+                            <li><strong class="text-white">Jack 3.5mm:</strong> Verde (Line Out/Cuffie), Rosa (Microfono), Blu (Line In).</li>
+                            <li><strong class="text-white">S/PDIF:</strong> Uscita audio ottica digitale.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-4xl text-center mx-auto">
+                <h2 class="text-5xl font-bold mb-6 cascade delay-1">Il Modello di Von Neumann</h2>
+                <p class="text-2xl text-slate-300 mb-10 cascade delay-2">Progettato nel 1945 dal matematico John von Neumann, è l'architettura logica su cui si basano ancora oggi quasi tutti i computer moderni.</p>
+                <div class="bg-blue-900/30 border border-blue-500 text-blue-200 p-6 rounded-xl inline-block cascade delay-3">
+                    <p class="text-xl italic font-semibold">"I dati e i programmi (istruzioni) condividono la stessa memoria centrale."</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <h2 class="text-4xl font-bold mb-8 text-center cascade delay-1">I 4 Pilastri di Von Neumann</h2>
+            <div class="max-w-5xl mx-auto grid md:grid-cols-4 gap-6 cascade delay-2">
+                <div class="bg-slate-800 p-6 rounded-xl border-t-4 border-red-500">
+                    <h3 class="text-xl font-bold text-white mb-3">1. CPU</h3>
+                    <p class="text-sm text-slate-300">L'unità centrale di elaborazione. Contiene l'ALU (per i calcoli matematici/logici) e la Control Unit (che coordina le operazioni).</p>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-xl border-t-4 border-blue-500">
+                    <h3 class="text-xl font-bold text-white mb-3">2. Memoria Centrale</h3>
+                    <p class="text-sm text-slate-300">Contiene sia i dati da elaborare sia le istruzioni dei programmi in esecuzione.</p>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-xl border-t-4 border-emerald-500">
+                    <h3 class="text-xl font-bold text-white mb-3">3. Periferiche I/O</h3>
+                    <p class="text-sm text-slate-300">Permettono lo scambio di dati tra il computer (interno) e l'utente/ambiente (esterno).</p>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-xl border-t-4 border-yellow-500">
+                    <h3 class="text-xl font-bold text-white mb-3">4. Bus di Sistema</h3>
+                    <p class="text-sm text-slate-300">I "canali" fisici su cui viaggiano i dati, gli indirizzi e i segnali di controllo tra i vari componenti.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-12 items-center">
+                <div class="md:w-1/2 cascade delay-1">
+                    <h2 class="text-5xl font-bold mb-6">La Motherboard</h2>
+                    <p class="text-xl text-slate-300 mb-6">La Scheda Madre è la "spina dorsale" del computer. È il grande circuito stampato (PCB) che mette in comunicazione tutte le componenti hardware.</p>
+                    <ul class="space-y-4 text-lg text-slate-400 list-disc list-inside">
+                        <li>Fornisce i collegamenti elettrici (le "piste").</li>
+                        <li>Gestisce la distribuzione dell'alimentazione.</li>
+                        <li>Determina il "Form Factor" (le dimensioni del PC, es. ATX, Micro-ATX, Mini-ITX).</li>
+                    </ul>
+                </div>
+                <div class="md:w-1/2 cascade delay-2">
+                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800" alt="Motherboard" class="rounded-2xl shadow-2xl border-2 border-slate-700">
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-4xl font-bold mb-10 text-center cascade delay-1">Sulla Motherboard: Identificare i Componenti</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 cascade delay-2">
+                    <div class="flex gap-4 bg-slate-800 p-6 rounded-xl">
+                        <div class="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center font-bold text-xl flex-shrink-0">CPU</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Socket del Processore</h4>
+                            <p class="text-slate-400 text-sm">L'alloggiamento fisico dove viene installato il "cervello" del PC. Ha migliaia di pin di contatto.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 bg-slate-800 p-6 rounded-xl">
+                        <div class="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center font-bold text-xl flex-shrink-0">RAM</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Slot DIMM</h4>
+                            <p class="text-slate-400 text-sm">Lunghi slot verticali posti vicino alla CPU, dove si inseriscono i banchi di memoria RAM.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 bg-slate-800 p-6 rounded-xl">
+                        <div class="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center font-bold text-xl flex-shrink-0">GPU</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Slot PCIe (PCI Express)</h4>
+                            <p class="text-slate-400 text-sm">Slot orizzontali ad alta velocità utilizzati per schede video, schede di rete e SSD di espansione.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 bg-slate-800 p-6 rounded-xl">
+                        <div class="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center font-bold text-xl flex-shrink-0">ROM</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Chip BIOS/UEFI e Batteria</h4>
+                            <p class="text-slate-400 text-sm">Il chip che contiene il firmware base e la batteria a bottone (CR2032) che mantiene l'orologio di sistema.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+             <div class="max-w-5xl mx-auto text-center">
+                <h2 class="text-4xl font-bold mb-8 cascade delay-1">Gerarchia delle Memorie</h2>
+                <p class="text-xl text-slate-300 mb-8 cascade delay-2">Esiste un compromesso fondamentale in informatica: <strong class="text-white">Velocità vs Capacità vs Costo</strong>.</p>
+                
+                <div class="flex flex-col items-center gap-2 cascade delay-3">
+                    <div class="w-32 py-2 bg-red-600 text-white font-bold rounded-t-lg">Registri CPU</div>
+                    <div class="w-48 py-3 bg-orange-600 text-white font-bold">Memoria Cache (L1, L2, L3)</div>
+                    <div class="w-64 py-4 bg-yellow-600 text-white font-bold">Memoria RAM</div>
+                    <div class="w-96 py-6 bg-emerald-600 text-white font-bold rounded-b-lg">Memoria di Massa (SSD / HDD)</div>
+                </div>
+                
+                <div class="flex justify-between mt-6 max-w-lg mx-auto text-sm text-slate-400 cascade delay-4">
+                    <span>← Più Veloce / Più Costosa</span>
+                    <span>Più Lenta / Più Capiente →</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <h2 class="text-4xl font-bold mb-10 text-center cascade delay-1">Memoria Centrale: RAM vs ROM</h2>
+            <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 cascade delay-2">
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-blue-500">
+                    <h3 class="text-3xl font-bold text-blue-400 mb-4">RAM</h3>
+                    <p class="text-sm uppercase tracking-wider text-slate-500 mb-4">Random Access Memory</p>
+                    <ul class="space-y-3 text-slate-300">
+                        <li>✔️ <strong class="text-white">Volatile:</strong> Perde i dati quando si spegne il PC.</li>
+                        <li>✔️ <strong class="text-white">Lettura/Scrittura:</strong> Continua modifica dei dati.</li>
+                        <li>✔️ <strong class="text-white">Funzione:</strong> "Banco da lavoro" del computer. Contiene Sistema Operativo e App attive.</li>
+                    </ul>
+                </div>
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-purple-500">
+                    <h3 class="text-3xl font-bold text-purple-400 mb-4">ROM</h3>
+                    <p class="text-sm uppercase tracking-wider text-slate-500 mb-4">Read Only Memory</p>
+                    <ul class="space-y-3 text-slate-300">
+                        <li>✔️ <strong class="text-white">Non Volatile:</strong> Mantiene i dati senza corrente.</li>
+                        <li>✔️ <strong class="text-white">Sola Lettura:</strong> (Di base, sebbene aggiornabile - EEPROM).</li>
+                        <li>✔️ <strong class="text-white">Funzione:</strong> Contiene il BIOS/UEFI, le istruzioni essenziali per far "svegliare" l'hardware.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-5xl font-bold mb-6 cascade delay-1">Le Periferiche di I/O</h2>
+                <p class="text-2xl text-slate-300 mb-8 cascade delay-2">Senza periferiche, un computer sarebbe un cervello isolato in una scatola. Le periferiche sono dispositivi hardware che permettono al computer di comunicare con il mondo esterno.</p>
+                <div class="flex justify-center gap-8 cascade delay-3 text-xl font-bold">
+                    <span class="px-6 py-3 bg-blue-600/20 text-blue-400 rounded-full border border-blue-600">INPUT (Ingresso)</span>
+                    <span class="px-6 py-3 bg-emerald-600/20 text-emerald-400 rounded-full border border-emerald-600">OUTPUT (Uscita)</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <h2 class="text-4xl font-bold mb-10 text-center cascade delay-1">Individuare le Periferiche</h2>
+            <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 cascade delay-2">
+                <div>
+                    <h3 class="text-2xl font-bold text-blue-400 mb-6 border-b border-blue-900 pb-2">Dispositivi di INPUT</h3>
+                    <p class="text-slate-400 mb-6">Traducono le azioni umane o i dati ambientali in segnali digitali comprensibili al computer.</p>
+                    <ul class="space-y-4 text-lg">
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Tastiera:</strong> Immissione di testo e comandi.</li>
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Mouse / Touchpad:</strong> Puntamento e interazione grafica.</li>
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Scanner / Webcam:</strong> Acquisizione di immagini o documenti video.</li>
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Microfono:</strong> Acquisizione di dati audio.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-emerald-400 mb-6 border-b border-emerald-900 pb-2">Dispositivi di OUTPUT</h3>
+                    <p class="text-slate-400 mb-6">Ricevono i risultati dell'elaborazione digitale e li trasformano in forma comprensibile per l'uomo.</p>
+                    <ul class="space-y-4 text-lg">
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Monitor / Display:</strong> Restituzione visiva (fondamentale).</li>
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Stampante:</strong> Trasposizione su supporto fisico (carta).</li>
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Altoparlanti / Cuffie:</strong> Restituzione sonora.</li>
+                        <li class="bg-slate-800 p-3 rounded-lg"><strong class="text-white">Motori aptici:</strong> Feedback tattile (es. vibrazione dei controller).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide px-12 md:px-24">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-6xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 cascade delay-1">Domande?</h2>
+                <p class="text-2xl text-slate-300 cascade delay-2">Fine della prima lezione.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <div class="fixed bottom-6 right-8 flex gap-4 z-50">
+        <button id="prevBtn" class="bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-full border border-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <button id="nextBtn" class="bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-full border border-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+    </div>
+    
+    <div class="fixed bottom-8 left-8 text-slate-500 text-sm z-50 hidden md:block">
+        Usa le frecce della tastiera <kbd class="bg-slate-800 px-2 py-1 rounded">←</kbd> <kbd class="bg-slate-800 px-2 py-1 rounded">→</kbd> per navigare.
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const progressBar = document.getElementById('progress-bar');
+            let currentSlide = 0;
+
+            function updatePresentation() {
+                // Rimuove active class da tutte le slide
+                slides.forEach(slide => slide.classList.remove('active'));
+                
+                // Aggiunge active class alla slide corrente
+                slides[currentSlide].classList.add('active');
+
+                // Aggiorna bottoni
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === slides.length - 1;
+
+                // Aggiorna progress bar
+                const progress = ((currentSlide + 1) / slides.length) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+
+            function goNext() {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    updatePresentation();
+                }
+            }
+
+            function goPrev() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updatePresentation();
+                }
+            }
+
+            // Event Listeners Click
+            nextBtn.addEventListener('click', goNext);
+            prevBtn.addEventListener('click', goPrev);
+
+            // Event Listeners Tastiera
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') {
+                    goNext();
+                } else if (e.key === 'ArrowLeft') {
+                    goPrev();
+                }
+            });
+
+            // Inizializza
+            updatePresentation();
+        });
+    </script>
+</body>
+</html>
