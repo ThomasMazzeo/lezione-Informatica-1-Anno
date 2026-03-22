@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitolo 2: Computer e Codici</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        dark: '#0f172a',
+                        primary: '#06b6d4', // Cyan
+                        accent: '#8b5cf6', // Purple
+                        success: '#10b981', // Emerald
+                        warning: '#f59e0b', // Amber
+                        danger: '#ef4444' // Red
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        
+        /* Gestione Slide */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.5s ease, visibility 0.5s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 4rem 8%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; overflow-y: auto;}
+
+        /* Animazioni di ingresso (Slide load) */
+        .anim-item { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide.active .anim-item.show { opacity: 1; transform: translateY(0); }
+        
+        .delay-100 { transition-delay: 0.1s; } .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; } .delay-400 { transition-delay: 0.4s; }
+
+        /* SISTEMA ANIMAZIONE PASSO-PASSO (Per calcoli matematici) */
+        .step-item { 
+            opacity: 0; 
+            transform: translateX(-20px); 
+            transition: all 0.4s ease-out; 
+            /* Mantiene lo spazio occupato per evitare salti di layout nei calcoli */
+        }
+        .step-item.show-step { 
+            opacity: 1; 
+            transform: translateX(0); 
+        }
+        .step-container { border-left: 2px solid rgba(6, 182, 212, 0.3); padding-left: 1.5rem; margin-top: 1rem;}
+
+        /* UI Controls */
+        .nav-btn {
+            position: fixed; top: 50%; transform: translateY(-50%); z-index: 50;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6); width: 60px; height: 60px; border-radius: 50%;
+            cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+        }
+        .nav-btn:hover { background: rgba(6, 182, 212, 0.2); color: white; border-color: rgba(6, 182, 212, 0.5); transform: translateY(-50%) scale(1.1); }
+        #prev-btn { left: 20px; }
+        #next-btn { right: 20px; }
+        
+        #progress-bar { position: fixed; bottom: 0; left: 0; height: 4px; background: linear-gradient(90deg, #06b6d4, #8b5cf6); width: 0%; transition: width 0.3s; z-index: 50;}
+        #slide-counter { position: fixed; bottom: 15px; right: 20px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #94a3b8; }
+        #step-indicator { position: fixed; top: 20px; right: 20px; z-index: 50; font-size: 0.9rem; color: #06b6d4; font-weight: bold; background: rgba(6,182,212,0.1); padding: 5px 15px; border-radius: 20px; display: none; opacity:0; transition: opacity 0.3s;}
+        #step-indicator.active { display: block; opacity: 1;}
+
+        /* Componenti Visivi */
+        .glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        .math-box { font-family: 'JetBrains Mono', monospace; background: rgba(15, 23, 42, 0.8); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        .highlight { color: #06b6d4; font-weight: bold; }
+        .bit-box { display: inline-flex; width: 30px; height: 30px; border: 1px solid #475569; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; margin-right: 2px; border-radius: 4px; background: #1e293b;}
+        .task-box { border-left: 4px solid #f59e0b; background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%); padding: 1rem 1.5rem; border-radius: 0 0.5rem 0.5rem 0; }
+        
+        /* Modello DIKW Pyramid */
+        .dikw-layer { display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: bold; border-bottom: 2px solid #0f172a; padding: 1rem; transition: transform 0.3s;}
+        .dikw-layer:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+    <button id="prev-btn" onclick="prevAction()"><i class="fas fa-chevron-left"></i></button>
+    <button id="next-btn" onclick="nextAction()"><i class="fas fa-chevron-right"></i></button>
+    <div id="progress-bar"></div>
+    <div id="slide-counter"></div>
+    <div id="step-indicator"><i class="fas fa-forward step"></i> Premi Avanti per il calcolo</div>
+
+    <!-- ==============================================
+         INIZIO SLIDE
+    =============================================== -->
+
+    <!-- SLIDE 1: COPERTINA -->
+    <div class="slide active">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="anim-item show inline-block px-4 py-1 rounded-full border border-primary text-primary mb-6 font-semibold tracking-widest text-sm uppercase">Capitolo 2</div>
+            <h1 class="anim-item show delay-100 text-6xl md:text-8xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-accent tracking-tighter">Computer <br> e codici</h1>
+            <p class="anim-item show delay-200 text-2xl text-slate-400 font-light max-w-2xl mx-auto mb-12">Linguaggi, algebra binaria e codifica dell'informazione.</p>
+            <div class="anim-item show delay-300 flex justify-center gap-6 text-4xl text-slate-600">
+                <i class="fas fa-laptop-code"></i>
+                <i class="fas fa-binary"></i>
+                <i class="fas fa-microchip"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: OBIETTIVI -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-12 text-center">In questo capitolo parleremo di:</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="anim-item delay-100 glass-card text-center border-t-4 border-primary hover:-translate-y-2 transition-transform">
+                    <i class="fas fa-language text-6xl text-primary mb-6"></i>
+                    <h3 class="text-2xl font-bold mb-4">Linguaggi del computer</h3>
+                    <p class="text-slate-400 font-light">Alfabeti, grammatiche e come i calcolatori interpretano i segnali.</p>
+                </div>
+                <div class="anim-item delay-200 glass-card text-center border-t-4 border-accent hover:-translate-y-2 transition-transform">
+                    <i class="fas fa-calculator text-6xl text-accent mb-6"></i>
+                    <h3 class="text-2xl font-bold mb-4">Algebra dei computer</h3>
+                    <p class="text-slate-400 font-light">Sistemi di numerazione, base 2, base 16 e operazioni binarie.</p>
+                </div>
+                <div class="anim-item delay-300 glass-card text-center border-t-4 border-success hover:-translate-y-2 transition-transform">
+                    <i class="fas fa-photo-video text-6xl text-success mb-6"></i>
+                    <h3 class="text-2xl font-bold mb-4">Elaborazione dati</h3>
+                    <p class="text-slate-400 font-light">Come digitalizzare e codificare lettere, numeri reali, immagini e suoni.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: DATI VS INFORMAZIONI -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-5xl font-bold mb-12 border-b border-slate-700 pb-4"><span class="text-primary">2.1</span> Dati e Informazioni</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <div class="anim-item delay-100 glass-card border-l-4 border-slate-500">
+                        <h3 class="text-2xl font-bold text-white mb-2"><i class="fas fa-cube text-slate-400 mr-2"></i> Il Dato</h3>
+                        <p class="text-slate-300">Un numero, parola, immagine o suono con un valore definito, ma <span class="highlight">non associato ad alcun contesto</span>.</p>
+                    </div>
+                    <div class="anim-item delay-200 glass-card border-l-4 border-primary">
+                        <h3 class="text-2xl font-bold text-white mb-2"><i class="fas fa-lightbulb text-primary mr-2"></i> L'Informazione</h3>
+                        <p class="text-slate-300">Un dato che viene <span class="highlight">contestualizzato</span> e che porta con sé nuova conoscenza su un fenomeno.</p>
+                    </div>
+                </div>
+                
+                <div class="anim-item delay-300 glass-card bg-slate-800/80">
+                    <h4 class="text-xl font-bold mb-6 text-center">Un esempio pratico</h4>
+                    <div class="flex justify-center gap-12 mb-6">
+                        <div class="text-6xl text-white font-mono border border-slate-600 p-4 rounded bg-slate-900">四</div>
+                        <div class="text-6xl text-white font-mono border border-slate-600 p-4 rounded bg-slate-900">五</div>
+                    </div>
+                    <p class="text-slate-400 text-center mb-6">Senza contesto, sono solo "simboli" incomprensibili (sono ideogrammi cinesi per 4 e 5).</p>
+                    <div class="bg-primary/10 border border-primary/30 p-4 rounded-lg">
+                        <p class="text-sm text-slate-300 mb-2"><strong class="text-white">Se aggiungiamo contesto:</strong></p>
+                        <ul class="text-sm space-y-2 text-slate-300">
+                            <li><strong>四 (4):</strong> Temp. media (°C) a Edimburgo a Gennaio.</li>
+                            <li><strong>五 (5):</strong> Temp. media (°C) a Nordkapp a Giugno.</li>
+                        </ul>
+                        <p class="mt-4 text-primary font-bold">Ora sono informazioni: permettono di prendere decisioni (es. "mi porto vestiti pesanti").</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center relative">
+            <h2 class="anim-item text-4xl font-bold mb-4">Il Modello DIKW</h2>
+            <p class="anim-item delay-100 text-slate-400 mb-12">Il processo della conoscenza (Data - Information - Knowledge - Wisdom)</p>
+            
+            <div class="anim-item delay-200 max-w-3xl mx-auto flex flex-col items-center w-full relative">
+                <div class="absolute inset-0 bg-primary/5 blur-[100px] -z-10 rounded-full"></div>
+
+                <div class="w-full h-32 bg-accent text-white flex flex-col justify-end items-center mb-2 transition-transform hover:scale-[1.02] cursor-default pb-4" 
+                     style="clip-path: polygon(50% 0%, 62.5% 100%, 37.5% 100%);">
+                    <div class="font-normal text-xs md:text-3xl ">Saggezza</div>
+                    <div class="font-normal text-xs mt-1">Influenza, efficacia</div>
+                </div>
+                
+                <div class="w-full h-24 bg-warning text-slate-900 flex flex-col justify-center items-center mb-2 transition-transform hover:scale-[1.02] cursor-default" 
+                     style="clip-path: polygon(37.5% 0%, 62.5% 0%, 75% 100%, 25% 100%);">
+                    <div class="text-2xl md:text-3xl font-bold">Conoscenza</div>
+                    <div class="font-normal text-sm mt-1 text-slate-800">Regole, esperienza, convinzioni</div>
+                </div>
+                
+                <div class="w-full h-24 bg-primary text-slate-900 flex flex-col justify-center items-center mb-2 transition-transform hover:scale-[1.02] cursor-default" 
+                     style="clip-path: polygon(25% 0%, 75% 0%, 87.5% 100%, 12.5% 100%);">
+                    <div class="text-2xl md:text-3xl font-bold">Informazioni</div>
+                    <div class="font-normal text-sm mt-1 text-slate-800">Consapevolezza, modelli rilevanti</div>
+                </div>
+                
+                <div class="w-full h-24 bg-slate-300 text-slate-900 flex flex-col justify-center items-center transition-transform hover:scale-[1.02] cursor-default" 
+                     style="clip-path: polygon(12.5% 0%, 87.5% 0%, 100% 100%, 0% 100%);">
+                    <div class="text-2xl md:text-3xl font-bold">Dati</div>
+                    <div class="font-normal text-sm mt-1 text-slate-800">Segnali, misure dirette</div>
+                </div>
+            </div>
+            
+            <div class="anim-item delay-300 flex justify-between mt-12 text-sm font-bold uppercase tracking-widest px-4 md:px-12">
+                <div class="text-slate-400 flex items-center"><i class="fas fa-arrow-up text-primary mr-3 text-lg"></i> Aggregazione & Analisi</div>
+                <div class="text-slate-400 flex items-center"><i class="fas fa-arrow-up text-accent mr-3 text-lg"></i> Controllo & Strategia</div>
+            </div>
+        </div>
+    </div>
+	<!-- SLIDE 5: LINGUAGGI E CODICI -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-10 text-center border-b border-slate-700 pb-4">Comunicazione e Linguaggi</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                <div class="anim-item delay-100 glass-card">
+                    <p class="text-lg text-slate-300 mb-6 leading-relaxed">Per comunicare bisogna utilizzare un linguaggio comune. Simboli uguali in linguaggi diversi portano informazioni differenti.</p>
+                    <div class="p-4 bg-slate-800 rounded border border-slate-600 text-center">
+                        <div class="text-2xl font-bold text-white mb-2">"DATA"</div>
+                        <div class="flex justify-around text-sm">
+                            <span class="text-primary">🇬🇧 In Inglese: Dati</span>
+                            <span class="text-success">🇮🇹 In Italiano: Giorno/Mese/Anno</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="anim-item delay-200 glass-card bg-slate-800/80">
+                    <h4 class="text-xl font-bold mb-4 text-accent">Anatomia di un linguaggio</h4>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3"><i class="fas fa-font text-slate-500 mt-1"></i> <div><strong class="text-white">Alfabeto:</strong> Insieme finito di simboli.</div></li>
+                        <li class="flex items-start gap-3"><i class="fas fa-book text-slate-500 mt-1"></i> <div><strong class="text-white">Grammatica:</strong> Regole per creare sequenze (parole).</div></li>
+                        <li class="flex items-start gap-3"><i class="fas fa-brain text-slate-500 mt-1"></i> <div><strong class="text-white">Semantica:</strong> L'insieme dei significati associati alle parole.</div></li>
+                    </ul>
+                    <div class="mt-6 p-3 bg-accent/20 border border-accent/40 rounded text-center font-bold text-accent">
+                        Un linguaggio con una semantica prende il nome di CODICE.
+                    </div>
+                </div>
+            </div>
+            <div class="anim-item delay-300 mt-8 text-center text-slate-400 text-3xl tracking-[1rem]">
+                <i class="fas fa-a"></i> <i class="fas fa-1"></i> <i class="fas fa-smile"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: ANALOGICO VS DIGITALE -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-5xl font-bold mb-12 border-b border-slate-700 pb-4"><span class="text-primary">2.2</span> Analogico e Digitale</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <!-- Analogico -->
+                <div class="anim-item delay-100 glass-card border-t-4 border-amber-500 relative overflow-hidden">
+                    <i class="fas fa-thermometer-three-quarters absolute -right-6 -bottom-6 text-9xl text-amber-500/10"></i>
+                    <h3 class="text-3xl font-bold text-white mb-4 relative z-10">Misura Analogica</h3>
+                    <p class="text-slate-300 font-light leading-relaxed mb-6 relative z-10">
+                        Rappresenta <strong>tutti i valori</strong> che una grandezza può assumere in un dato intervallo, variando con <strong>continuità</strong> (senza effettuare salti).
+                    </p>
+                    <div class="flex items-center gap-4 bg-slate-900 p-4 rounded-lg relative z-10">
+                        <div class="w-full h-4 bg-slate-700 rounded-full overflow-hidden relative">
+                            <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 via-yellow-400 to-red-500 w-[70%]"></div>
+                        </div>
+                        <span class="text-sm text-slate-400">Termometro a mercurio</span>
+                    </div>
+                </div>
+
+                <!-- Digitale -->
+                <div class="anim-item delay-200 glass-card border-t-4 border-primary relative overflow-hidden">
+                    <i class="fas fa-digital-tachograph absolute -right-6 -bottom-6 text-9xl text-primary/10"></i>
+                    <h3 class="text-3xl font-bold text-white mb-4 relative z-10">Misura Digitale</h3>
+                    <p class="text-slate-300 font-light leading-relaxed mb-6 relative z-10">
+                        Trasforma una grandezza continua in una <strong>successione finita di numeri</strong>. Non prevede valori intermedi tra due "step" definiti. (Dall'inglese <em>digit</em>, cifra).
+                    </p>
+                    <div class="flex items-center justify-between bg-slate-900 p-4 rounded-lg relative z-10">
+                        <div class="font-mono text-3xl font-bold text-primary tracking-widest bg-black px-4 py-2 border-2 border-slate-700 rounded shadow-inner">37.1<span class="text-xl">°C</span></div>
+                        <span class="text-sm text-slate-400 text-right">Termometro digitale</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="anim-item delay-300 task-box mt-10 w-full md:w-1/2 mx-auto">
+                <h4 class="font-bold text-warning mb-1"><i class="fas fa-search mr-2"></i>Ora prova tu!</h4>
+                <p class="text-sm text-slate-300">Trova tutti gli apparecchi digitali che hai in casa: bilancia, orologio, termostato ecc.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: CAMPIONAMENTO -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-item text-4xl font-bold mb-10">Da Analogico a Digitale</h2>
+            <div class="anim-item delay-100 flex justify-center items-center gap-6 mb-12 text-2xl font-bold">
+                <span class="text-amber-500"><i class="fas fa-wave-square"></i> Continua</span>
+                <i class="fas fa-arrow-right text-slate-600"></i>
+                <span class="text-primary"><i class="fas fa-bars"></i> Discretizzazione</span>
+                <i class="fas fa-arrow-right text-slate-600"></i>
+                <span class="text-white"><i class="fas fa-binary"></i> 0 e 1</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                <div class="anim-item delay-200 glass-card">
+                    <h3 class="text-xl font-bold text-white mb-3 text-primary">Campionamento</h3>
+                    <p class="text-sm text-slate-300 leading-relaxed mb-4">Rilevare, a intervalli regolari, il valore della grandezza analogica. Si ottiene un numero finito di valori (discretizzazione).</p>
+                    <h3 class="text-xl font-bold text-white mb-3 text-primary">Precisione</h3>
+                    <p class="text-sm text-slate-300 leading-relaxed">Approssimazione del valore (es. ai decimi o ai multipli di 5). Più piccoli sono gli intervalli, maggiore è la precisione.</p>
+                </div>
+                
+                <div class="anim-item delay-300 glass-card border border-danger/50 bg-danger/5 flex flex-col justify-center">
+                    <h3 class="text-xl font-bold text-danger mb-3"><i class="fas fa-exclamation-triangle mr-2"></i>Attenzione alla Perdita di Dati</h3>
+                    <p class="text-sm text-slate-300 leading-relaxed">Nella trasformazione si perdono inevitabilmente valori intermedi. Un buon campionamento deve limitare questa perdita per ricostruire fedelmente il segnale originale.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: SISTEMI DI NUMERAZIONE -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-5xl font-bold mb-12 border-b border-slate-700 pb-4"><span class="text-primary">2.3</span> Sistemi di Numerazione</h2>
+            
+            <div class="anim-item delay-100 glass-card mb-10">
+                <h3 class="text-2xl font-bold text-white mb-4">La Notazione Decimale (Base 10)</h3>
+                <p class="text-slate-300 mb-6 font-light">Utilizza 10 cifre (0-9). È <strong class="text-primary">posizionale</strong>: il valore di ogni cifra dipende dalla posizione che occupa (unità, decine, centinaia).</p>
+                
+                <div class="math-box text-center text-xl md:text-2xl tracking-widest">
+                    375 = <span class="text-primary">3</span> × 10<sup class="text-sm text-slate-400">2</sup> + <span class="text-success">7</span> × 10<sup class="text-sm text-slate-400">1</sup> + <span class="text-accent">5</span> × 10<sup class="text-sm text-slate-400">0</sup>
+                </div>
+                <p class="text-center text-sm text-slate-500 mt-2">Questa è la notazione polinomiale o espansa.</p>
+            </div>
+
+            <div class="anim-item delay-200 glass-card border border-slate-600 bg-slate-800/50">
+                <p class="text-slate-300 font-light mb-4">La notazione espansa vale per <strong>qualsiasi base</strong>. Se inventassimo un sistema in Base 7, il calcolo sarebbe identico:</p>
+                <div class="math-box text-center text-lg md:text-xl text-slate-400">
+                    <span class="text-white">(375)<sub>10</sub></span> = 1 × 7<sup>3</sup> + 0 × 7<sup>2</sup> + 4 × 7<sup>1</sup> + 4 × 7<sup>0</sup> <span class="text-white">= (1044)<sub>7</sub></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: SISTEMA BINARIO -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-item text-4xl font-bold mb-8">Il Sistema Binario (Base 2)</h2>
+            <div class="anim-item delay-100 text-8xl text-slate-700 font-mono tracking-[2rem] mb-8 font-black">01</div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left mb-10">
+                <div class="anim-item delay-200 glass-card">
+                    <h3 class="text-xl font-bold text-primary mb-3"><i class="fas fa-microchip mr-2"></i>Il linguaggio dei computer</h3>
+                    <p class="text-slate-300">Nei calcolatori si usa la base 2 perché utilizza solo due cifre (0 e 1), perfette per rappresentare stati fisici bistabili (acceso/spento, positivo/negativo).</p>
+                </div>
+                <div class="anim-item delay-300 glass-card">
+                    <h3 class="text-xl font-bold text-accent mb-3"><i class="fas fa-cube mr-2"></i>Il BIT</h3>
+                    <p class="text-slate-300">Acronimo di <em>Binary Digit</em>. È l'unità elementare di informazione. Può assumere un solo stato alla volta.</p>
+                </div>
+            </div>
+
+            <div class="anim-item delay-400 p-4 border-2 border-success text-success font-bold text-2xl rounded-lg inline-block bg-success/10">
+                Con <span class="text-white mx-2">n</span> bit è possibile rappresentare <span class="text-white mx-2">2<sup>n</sup></span> numeri diversi.
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 10: COMBINAZIONI (ATTIVITA) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-10 border-l-8 border-primary pl-4">Costruiamo le Combinazioni</h2>
+            
+            <div class="anim-item delay-100 glass-card mb-10 bg-slate-800/80">
+                <h3 class="text-xl font-bold text-white mb-4"><i class="fas fa-users mr-2"></i>Proviamo insieme: 3 bit</h3>
+                <p class="text-slate-300 mb-6">Quanti numeri si possono rappresentare nel sistema binario con 3 bit? Elenchiamo i gruppi:</p>
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-4 text-center font-mono text-xl mb-6">
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">000</div>
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">001</div>
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">010</div>
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">011</div>
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">100</div>
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">101</div>
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">110</div>
+                    <div class="bg-slate-900 border border-slate-700 py-2 rounded">111</div>
+                </div>
+                <p class="text-primary font-bold text-lg text-center">Con 3 bit otteniamo 8 = 2³ combinazioni (rappresentano i numeri da 0 a 7).</p>
+            </div>
+
+            <div class="anim-item delay-200 task-box w-full">
+                <h4 class="text-xl font-bold text-warning mb-2"><i class="fas fa-pencil-alt mr-2"></i>Ora prova tu!</h4>
+                <ul class="list-disc list-inside text-slate-300 space-y-2">
+                    <li>Quante combinazioni si possono ottenere con <strong>5 bit</strong>? (Calcola mentalmente)</li>
+                    <li>Se vuoi rappresentare <strong>25 numeri diversi</strong>, quanti bit sono necessari come minimo?</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 11: CONVERSIONE DEC -> BIN (TEORIA) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-8">Da Sistema Decimale a Binario (Interi)</h2>
+            <p class="anim-item delay-100 text-xl text-slate-400 mb-10 font-light">Il metodo delle divisioni successive per 2.</p>
+            
+            <div class="grid grid-cols-1 gap-6">
+                <div class="anim-item delay-200 glass-card flex items-center gap-6 p-6">
+                    <div class="w-12 h-12 rounded-full bg-primary/20 text-primary font-bold text-2xl flex items-center justify-center shrink-0">1</div>
+                    <p class="text-lg text-slate-200">Dividiamo il numero per 2 calcolando <strong>quoziente</strong> e <strong>resto</strong>.</p>
+                </div>
+                <div class="anim-item delay-300 glass-card flex items-center gap-6 p-6">
+                    <div class="w-12 h-12 rounded-full bg-primary/20 text-primary font-bold text-2xl flex items-center justify-center shrink-0">2</div>
+                    <p class="text-lg text-slate-200">Se il quoziente è diverso da 0, <strong>ripetiamo</strong> l'operazione sul nuovo quoziente.</p>
+                </div>
+                <div class="anim-item delay-400 glass-card border-l-8 border-success flex items-center gap-6 p-6">
+                    <div class="w-12 h-12 rounded-full bg-success/20 text-success font-bold text-2xl flex items-center justify-center shrink-0">3</div>
+                    <p class="text-lg text-white">La rappresentazione binaria è la sequenza dei <strong>RESTI</strong>, letti in <strong class="text-success uppercase tracking-widest">ordine inverso</strong> rispetto all'ottenimento.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 12: CALCOLO DEC -> BIN -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-8 text-primary">Calcolo: Da Base 10 a Base 2</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <!-- Esempio Guidato -->
+                <div class="glass-card">
+                    <h3 class="text-xl font-bold text-white mb-6 border-b border-slate-600 pb-2">Esprimiamo (14)<sub>10</sub> in Binario</h3>
+                    <div class="math-box text-lg step-container relative">
+                        <!-- Linea freccia lettura -->
+                        <div class="absolute -right-4 top-4 bottom-4 w-2 border-r-2 border-success flex flex-col justify-between items-end opacity-0 transition-opacity duration-1000" id="arrow-14">
+                            <i class="fas fa-caret-up text-success absolute -top-3 -right-[7px]"></i>
+                            <span class="absolute -right-24 top-1/2 -translate-y-1/2 text-success font-bold text-sm rotate-90 tracking-widest uppercase">Lettura</span>
+                        </div>
+
+                        <div class="step-item text-slate-300 mb-2">14 : 2 = 7 <span class="text-slate-500 mx-2">|</span> Resto <span class="highlight">0</span> <span class="text-xs text-slate-500 italic ml-2">(LSB: Meno significativo)</span></div>
+                        <div class="step-item text-slate-300 mb-2"> 7 : 2 = 3 <span class="text-slate-500 mx-2">|</span> Resto <span class="highlight">1</span></div>
+                        <div class="step-item text-slate-300 mb-2"> 3 : 2 = 1 <span class="text-slate-500 mx-2">|</span> Resto <span class="highlight">1</span></div>
+                        <div class="step-item text-slate-300 mb-4"> 1 : 2 = 0 <span class="text-slate-500 mx-2">|</span> Resto <span class="highlight">1</span> <span class="text-xs text-slate-500 italic ml-2">(MSB: Più significativo)</span></div>
+                        
+                        <div class="step-item border-t border-slate-600 pt-4 text-center font-bold text-2xl text-success" ontransitionend="document.getElementById('arrow-14').style.opacity=1;">
+                            (14)<sub>10</sub> = (1110)<sub>2</sub>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ora prova tu -->
+                <div class="task-box flex flex-col">
+                    <h3 class="text-xl font-bold text-warning mb-6 border-b border-warning/30 pb-2">Ora prova tu: Esprimi (57)<sub>10</sub></h3>
+                    <div class="math-box text-lg step-container bg-slate-900/50 flex-grow relative">
+                         <div class="absolute -right-4 top-4 bottom-4 w-2 border-r-2 border-warning flex flex-col justify-between items-end opacity-0 transition-opacity duration-1000" id="arrow-57">
+                            <i class="fas fa-caret-up text-warning absolute -top-3 -right-[7px]"></i>
+                        </div>
+                        <div class="step-item text-slate-300 mb-2">57 : 2 = 28 <span class="text-slate-500 mx-2">|</span> Resto <span class="text-warning font-bold">1</span></div>
+                        <div class="step-item text-slate-300 mb-2">28 : 2 = 14 <span class="text-slate-500 mx-2">|</span> Resto <span class="text-warning font-bold">0</span></div>
+                        <div class="step-item text-slate-300 mb-2">14 : 2 = 7  <span class="text-slate-500 mx-2">|</span> Resto <span class="text-warning font-bold">0</span></div>
+                        <div class="step-item text-slate-300 mb-2"> 7 : 2 = 3  <span class="text-slate-500 mx-2">|</span> Resto <span class="text-warning font-bold">1</span></div>
+                        <div class="step-item text-slate-300 mb-2"> 3 : 2 = 1  <span class="text-slate-500 mx-2">|</span> Resto <span class="text-warning font-bold">1</span></div>
+                        <div class="step-item text-slate-300 mb-4"> 1 : 2 = 0  <span class="text-slate-500 mx-2">|</span> Resto <span class="text-warning font-bold">1</span></div>
+                        <div class="step-item border-t border-slate-600 pt-4 text-center font-bold text-2xl text-white" ontransitionend="document.getElementById('arrow-57').style.opacity=1;">
+                            Risp: <span class="text-warning">(111001)<sub>2</sub></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Marker per segnalare presenza di step -->
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 13: CONVERSIONE DEC -> BIN (FRAZIONARI) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-6 text-primary">Conversione di Numeri Razionali</h2>
+            <p class="text-lg text-slate-300 mb-8 font-light">Per la parte dopo la virgola si utilizza la <strong class="text-white">moltiplicazione per 2</strong>, conservando la parte intera generata (0 o 1) letta in <strong>ordine diretto</strong>.</p>
+            
+            <div class="glass-card mb-6">
+                <h3 class="text-xl font-bold text-white mb-6 border-b border-slate-600 pb-2">Convertiamo (14,625)<sub>10</sub> in binario</h3>
+                
+                <div class="step-item bg-slate-800 p-3 rounded mb-4 border-l-4 border-blue-500">
+                    <strong class="text-blue-400">1. Parte Intera:</strong> (14)<sub>10</sub> = (1110)<sub>2</sub> <em class="text-slate-400 text-sm ml-2">(Calcolato in precedenza)</em>
+                </div>
+                
+                <div class="step-item bg-slate-800 p-4 rounded mb-4 border-l-4 border-emerald-500">
+                    <strong class="text-emerald-400 block mb-4">2. Parte Frazionaria (0,625):</strong>
+                    <div class="math-box text-lg space-y-3 relative">
+                         <!-- Linea freccia lettura verso il basso -->
+                         <div class="absolute -right-4 top-4 bottom-4 w-2 border-r-2 border-emerald-500 flex flex-col justify-between items-end opacity-0 transition-opacity duration-1000" id="arrow-frac">
+                            <i class="fas fa-caret-down text-emerald-500 absolute -bottom-3 -right-[7px]"></i>
+                            <span class="absolute -right-24 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm rotate-90 tracking-widest uppercase">Lettura</span>
+                        </div>
+                        <div class="step-item text-slate-300">0,625 × 2 = <span class="text-white font-bold bg-slate-700 px-1 rounded">1</span>,25 <i class="fas fa-long-arrow-alt-right mx-3 text-slate-500"></i> Tolgo 1, resta 0,25</div>
+                        <div class="step-item text-slate-300">0,250 × 2 = <span class="text-white font-bold bg-slate-700 px-1 rounded">0</span>,50 <i class="fas fa-long-arrow-alt-right mx-3 text-slate-500"></i> Tolgo 0, resta 0,50</div>
+                        <div class="step-item text-slate-300">0,500 × 2 = <span class="text-white font-bold bg-slate-700 px-1 rounded">1</span>,00 <i class="fas fa-long-arrow-alt-right mx-3 text-slate-500"></i> Tolgo 1, resta 0. <span class="text-success text-sm ml-2 italic">Fine.</span></div>
+                        <div class="step-item mt-2 text-emerald-400 font-bold" ontransitionend="document.getElementById('arrow-frac').style.opacity=1;">Risultato frazionario: ,101</div>
+                    </div>
+                </div>
+
+                <div class="step-item text-center text-3xl font-black text-white mt-8 p-4 bg-gradient-to-r from-blue-900/50 to-emerald-900/50 rounded-lg border border-slate-600">
+                    (14,625)<sub>10</sub> = (1110,101)<sub>2</sub>
+                </div>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 14: CONVERSIONE BIN -> DEC -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-8 text-accent">Da Base 2 a Base 10</h2>
+            <p class="text-lg text-slate-300 mb-6 font-light">Si applica la definizione di notazione posizionale: si moltiplica ogni bit per il suo <strong class="text-white">peso (potenza di 2)</strong> e si sommano i risultati.</p>
+            
+            <div class="glass-card mb-8">
+                <h3 class="text-xl font-bold text-white mb-6 border-b border-slate-600 pb-2">Esprimiamo (1011)<sub>2</sub> nel sistema decimale</h3>
+                
+                <div class="overflow-x-auto mb-6">
+                    <table class="w-full text-center border-collapse">
+                        <tr class="step-item">
+                            <td class="text-left font-bold text-slate-400 p-2 border-b border-slate-700">Posizione</td>
+                            <td class="p-2 border-b border-slate-700">3</td><td class="p-2 border-b border-slate-700">2</td><td class="p-2 border-b border-slate-700">1</td><td class="p-2 border-b border-slate-700">0</td>
+                        </tr>
+                        <tr class="step-item">
+                            <td class="text-left font-bold text-slate-400 p-2 border-b border-slate-700">Peso</td>
+                            <td class="p-2 border-b border-slate-700 text-accent font-mono">2<sup>3</sup> (8)</td>
+                            <td class="p-2 border-b border-slate-700 text-accent font-mono">2<sup>2</sup> (4)</td>
+                            <td class="p-2 border-b border-slate-700 text-accent font-mono">2<sup>1</sup> (2)</td>
+                            <td class="p-2 border-b border-slate-700 text-accent font-mono">2<sup>0</sup> (1)</td>
+                        </tr>
+                        <tr class="step-item">
+                            <td class="text-left font-bold text-white p-2 text-xl">BIT</td>
+                            <td class="p-2 text-xl font-black text-white">1</td>
+                            <td class="p-2 text-xl font-black text-white bg-slate-800">0</td>
+                            <td class="p-2 text-xl font-black text-white">1</td>
+                            <td class="p-2 text-xl font-black text-white">1</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="math-box text-xl text-center">
+                    <div class="step-item text-slate-300 mb-4">
+                        1×<span class="text-accent">2<sup>3</sup></span> + 0×<span class="text-accent">2<sup>2</sup></span> + 1×<span class="text-accent">2<sup>1</sup></span> + 1×<span class="text-accent">2<sup>0</sup></span>
+                    </div>
+                    <div class="step-item text-white font-bold text-3xl">
+                        8 + 0 + 2 + 1 = <span class="text-accent">(11)<sub>10</sub></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-item bg-slate-800/80 border border-slate-600 p-4 rounded-lg flex items-center justify-between text-sm">
+                <div class="text-slate-300"><span class="bg-slate-700 px-2 rounded font-bold text-white mr-2">Nota:</span> Se c'è la virgola, si usano potenze negative (2<sup>-1</sup> = 0.5, 2<sup>-2</sup> = 0.25 ecc.)</div>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 15: ADDIZIONE BINARIA -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-8 border-l-8 border-primary pl-4">Operazioni: L'Addizione Binaria</h2>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                
+                <div class="glass-card md:col-span-4 border-t-4 border-primary self-start">
+                    <h3 class="text-xl font-bold text-white mb-6"><i class="fas fa-book-open mr-2 text-primary"></i>Le Regole Base</h3>
+                    <ul class="font-mono text-lg space-y-3">
+                        <li class="flex justify-between items-center bg-slate-800/80 p-3 rounded border border-slate-700"><span>0 + 0</span> <span class="text-primary font-bold">= 0</span></li>
+                        <li class="flex justify-between items-center bg-slate-800/80 p-3 rounded border border-slate-700"><span>1 + 0</span> <span class="text-primary font-bold">= 1</span></li>
+                        <li class="flex justify-between items-center bg-slate-800/80 p-3 rounded border border-slate-700"><span>0 + 1</span> <span class="text-primary font-bold">= 1</span></li>
+                        <li class="flex justify-between items-center bg-danger/10 p-3 rounded border border-danger/30">
+                            <span>1 + 1</span> 
+                            <div class="text-right leading-tight">
+                                <span class="text-danger font-bold">= 0</span><br>
+                                <span class="text-[10px] text-danger/80 font-sans uppercase tracking-widest">con riporto di 1</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card md:col-span-8 text-center flex flex-col items-center">
+                    <div class="w-full text-left flex justify-between items-end border-b border-slate-600 pb-2 mb-8">
+                        <h3 class="text-xl font-bold text-white">Esempio: (1011111)<sub>2</sub> + (10110)<sub>2</sub></h3>
+                        <span class="text-sm text-slate-400 font-light animate-pulse"><i class="fas fa-hand-pointer text-primary mr-2"></i>Premi avanti per calcolare</span>
+                    </div>
+                    
+                    <div class="step-container w-full flex justify-center border-none mt-2">
+                        <div class="font-mono text-2xl sm:text-3xl inline-flex flex-row-reverse justify-end relative pt-10 pl-16 pr-8 bg-slate-900/90 p-8 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7)] border border-slate-700">
+                            
+                            <div class="absolute left-6 bottom-[7.5rem] text-slate-500 font-black">+</div>
+                            <div class="absolute left-6 bottom-[3.5rem] text-slate-500 font-black">=</div>
+                            
+                            <div class="absolute top-4 left-16 right-8 h-10 border-b border-dashed border-slate-700">
+                                <span class="absolute -left-12 top-2 text-[10px] font-sans uppercase tracking-widest text-slate-500">Riporti</span>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-16 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div> <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">0</div>
+                                <div class="text-primary font-black pt-4">1</div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 font-sans mt-4 text-center leading-tight">1+0<br><span class="text-primary font-bold">=1</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-16 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-danger font-black pt-4">0</div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 font-sans mt-4 text-center leading-tight">1+1<br><span class="text-danger font-bold">=0 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-16 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-primary font-black pt-4">1</div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 font-sans mt-4 text-center leading-tight">1+1+1<br><span class="text-primary font-bold">=1 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-16 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">0</div>
+                                <div class="text-danger font-black pt-4">0</div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 font-sans mt-4 text-center leading-tight">1+0+1<br><span class="text-danger font-bold">=0 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-16 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-primary font-black pt-4">1</div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 font-sans mt-4 text-center leading-tight">1+1+1<br><span class="text-primary font-bold">=1 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-16 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-white">0</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400"></div>
+                                <div class="text-primary font-black pt-4">1</div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 font-sans mt-4 text-center leading-tight">0+1<br><span class="text-primary font-bold">=1</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-16 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400"></div>
+                                <div class="text-primary font-black pt-4">1</div>
+                                <div class="text-[10px] sm:text-xs text-slate-400 font-sans mt-4 text-center leading-tight">1+0<br><span class="text-primary font-bold">=1</span></div>
+                            </div>
+
+                        </div>
+                    </div>
+                    
+                    <div class="step-item mt-10 bg-primary/10 text-white px-8 py-4 rounded-xl border border-primary/30 shadow-lg">
+                        <span class="text-slate-400 text-sm uppercase tracking-widest mr-4">Risultato Finale</span>
+                        <span class="font-mono text-3xl font-bold text-primary">(1110101)<sub>2</sub></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 16: OVERFLOW -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-item text-4xl font-bold mb-6 text-warning"><i class="fas fa-exclamation-triangle mr-3"></i>Il problema dell'Overflow</h2>
+            <p class="anim-item delay-100 text-xl text-slate-300 mb-10 max-w-4xl mx-auto font-light">I calcolatori utilizzano un numero <strong>finito e fissato di bit</strong>. Se un'operazione genera un risultato che supera questa capacità, il dato viene perso (Overflow).</p>
+            
+            <div class="anim-item delay-200 glass-card bg-slate-800/80 border-t-4 border-danger max-w-3xl mx-auto">
+                <h3 class="text-xl text-left font-bold text-white mb-6 border-b border-slate-600 pb-2">Esempio: Somma con limite a 8 bit</h3>
+                
+                <div class="font-mono text-2xl inline-block text-right mb-6">
+                    <div class="flex text-danger text-lg mb-1 pr-[30px] font-bold">
+                        <div class="w-[30px] text-center">1</div><div class="w-[30px]"></div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px]"></div><div class="w-[30px]"></div>
+                    </div>
+                    <div class="flex text-white mb-1 text-slate-400">
+                        <div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">0</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="ml-4 text-white">+</div>
+                    </div>
+                    <div class="flex text-white mb-2 border-b-2 border-slate-500 pb-2 text-slate-400">
+                        <div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">0</div><div class="w-[30px] text-center">0</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">0</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">0</div><div class="ml-4 text-white">=</div>
+                    </div>
+                    <div class="flex text-white font-bold relative">
+                        <div class="absolute -left-[40px] top-1/2 -translate-y-1/2 text-danger text-4xl animate-pulse"><i class="fas fa-times-circle bg-dark rounded-full"></i></div>
+                        <div class="w-[30px] text-center text-danger border-2 border-danger rounded z-10 bg-danger/20">1</div>
+                        <div class="w-[30px] text-center">0</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">0</div><div class="w-[30px] text-center">1</div><div class="w-[30px] text-center">0</div><div class="w-[30px] text-center">1</div><div class="ml-4 text-transparent">=</div>
+                    </div>
+                </div>
+                <p class="text-danger font-bold text-lg bg-danger/10 p-3 rounded">L'operazione genera un nono bit: non è eseguibile correttamente in un sistema a 8 bit!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 17: NUMERI CON SEGNO - MODULO E SEGNO -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-10 border-b border-slate-700 pb-4">Numeri con Segno: Modulo e Segno</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="anim-item delay-100 glass-card">
+                    <p class="text-lg text-slate-300 mb-6 font-light">Per i numeri negativi non possiamo usare il simbolo "-". <br>La tecnica base usa il <strong>bit più a sinistra (MSB) come indicatore di segno</strong>:</p>
+                    <ul class="text-xl font-mono bg-slate-800 p-4 rounded border border-slate-600 space-y-2">
+                        <li>MSB = <strong class="text-primary text-2xl">0</strong> <i class="fas fa-arrow-right text-sm text-slate-500 mx-2"></i> Positivo (+)</li>
+                        <li>MSB = <strong class="text-danger text-2xl">1</strong> <i class="fas fa-arrow-right text-sm text-slate-500 mx-2"></i> Negativo (-)</li>
+                    </ul>
+                    <p class="mt-4 text-sm text-slate-400">In 8 bit, il bit 7 è il segno, i restanti 7 bit indicano il valore (modulo).</p>
+                </div>
+
+                <div class="anim-item delay-200 glass-card border-t-4 border-danger bg-danger/5">
+                    <h3 class="text-xl font-bold text-danger mb-4"><i class="fas fa-bug mr-2"></i>I difetti di questa tecnica</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-3 font-light mb-4">
+                        <li><strong>Doppio zero:</strong> <span class="font-mono bg-slate-900 px-2 rounded">+0 = 00000000</span> e <span class="font-mono bg-slate-900 px-2 rounded">-0 = 10000000</span> (spreco logico).</li>
+                        <li><strong>Calcoli errati:</strong> Se sommi numeri discordi con l'addizione binaria standard, il risultato è sbagliato.</li>
+                    </ul>
+                    <div class="font-mono text-sm bg-slate-900 p-2 rounded text-slate-400 text-center">Es: -31 + 5 = -36 (invece di -26)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 18: COMPLEMENTO A 2 (TEORIA) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-item text-5xl font-bold mb-6 text-accent">Il Complemento a 2 (CA2)</h2>
+            <p class="anim-item delay-100 text-xl text-slate-300 mb-10 font-light">La soluzione adottata da tutti i computer per gestire i numeri negativi ed eseguire le sottrazioni come semplici addizioni.</p>
+            
+            <div class="anim-item delay-200 glass-card border-t-4 border-accent mb-10">
+                <h3 class="text-2xl font-bold text-white mb-6">Come funziona il peso?</h3>
+                <p class="text-slate-300 mb-6 text-left">Il bit più significativo (MSB) indica ancora il segno (1=negativo), ma a differenza del "Modulo e Segno", <strong>gli viene assegnato un peso negativo</strong>.</p>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center border-collapse text-sm">
+                        <tr class="bg-slate-800">
+                            <td class="text-left font-bold text-slate-400 p-3 border border-slate-700">Bit pos.</td>
+                            <td class="p-3 border border-slate-700 text-accent font-bold bg-accent/20">7 (Segno)</td>
+                            <td class="p-3 border border-slate-700">6</td><td class="p-3 border border-slate-700">5</td><td class="p-3 border border-slate-700">4</td><td class="p-3 border border-slate-700">...</td><td class="p-3 border border-slate-700">0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left font-bold text-slate-400 p-3 border border-slate-700">Peso</td>
+                            <td class="p-3 border border-slate-700 font-mono text-danger font-bold text-lg">-2<sup>7</sup> (-128)</td>
+                            <td class="p-3 border border-slate-700 font-mono text-primary">+2<sup>6</sup> (64)</td>
+                            <td class="p-3 border border-slate-700 font-mono text-primary">+2<sup>5</sup> (32)</td>
+                            <td class="p-3 border border-slate-700 font-mono text-primary">+2<sup>4</sup> (16)</td>
+                            <td class="p-3 border border-slate-700">...</td>
+                            <td class="p-3 border border-slate-700 font-mono text-primary">+2<sup>0</sup> (1)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="anim-item delay-300 p-4 border border-slate-600 bg-slate-800 rounded text-slate-300">
+                L'equazione base per trovare un numero negativo <span class="font-mono text-white mx-1">-m</span> in <span class="font-mono text-white mx-1">n</span> bit è: <br>
+                <span class="text-2xl font-black text-white mt-2 block">x = 2<sup>n</sup> - m</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 19: CALCOLO COMPLEMENTO A 2 RAPIDO -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-8 text-accent">Calcolo Rapido del Complemento a 2</h2>
+            <p class="text-lg text-slate-300 mb-8 font-light">Come rappresentare <strong>(-31)<sub>10</sub></strong> in binario a 8 bit senza equazioni matematiche complesse.</p>
+            
+            <div class="glass-card mb-8">
+                <div class="step-container relative">
+                    <div class="step-item mb-6">
+                        <h4 class="font-bold text-white mb-2">Passo 1: Esprimi il numero positivo in binario</h4>
+                        <div class="math-box inline-block">(+31)<sub>10</sub> = <span class="tracking-widest text-primary">00011111</span></div>
+                    </div>
+                    
+                    <div class="step-item mb-6 border-t border-slate-700 pt-4">
+                        <h4 class="font-bold text-white mb-2">Passo 2: Inverti tutti i bit (Complemento a 1)</h4>
+                        <p class="text-sm text-slate-400 mb-2">Gli zeri diventano uno, gli uno diventano zeri.</p>
+                        <div class="math-box inline-block">CA1 = <span class="tracking-widest text-warning">11100000</span></div>
+                    </div>
+                    
+                    <div class="step-item border-t border-slate-700 pt-4">
+                        <h4 class="font-bold text-white mb-2">Passo 3: Aggiungi 1 (Complemento a 2)</h4>
+                        <div class="math-box inline-block">
+                            <div class="text-right">
+                                <div class="tracking-widest text-warning">11100000</div>
+                                <div class="tracking-widest">+      1</div>
+                                <div class="border-t border-slate-600 mt-1 pt-1 tracking-widest font-bold text-accent">11100001</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item mt-8 bg-success/20 border border-success/50 p-4 rounded text-center">
+                        <strong class="text-success text-xl">Risultato: (-31)<sub>10</sub> = (11100001)<sub>CA2</sub></strong>
+                    </div>
+                </div>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 20: LA SOTTRAZIONE COME ADDIZIONE -->
+	<div class="slide">
+        <div class="max-w-6xl mx-auto w-full text-center">
+            <h2 class="text-4xl font-bold mb-8 border-l-8 border-success pl-4 text-left">La Sottrazione nei Computer</h2>
+            <p class="text-xl text-slate-300 mb-6 font-light max-w-4xl mx-auto text-left">I computer <strong class="text-white">non sottraggono</strong>. Trasformano la sottrazione nell'addizione di un numero negativo espresso in Complemento a 2.</p>
+            
+            <div class="glass-card bg-slate-800/80 border-t-4 border-success">
+                <h3 class="text-2xl font-bold text-white mb-6">Operazione: 29 - 14 &nbsp;<i class="fas fa-arrow-right text-slate-500 mx-2 text-lg"></i>&nbsp; 29 + (-14)</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left mb-8">
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 shadow-inner">
+                        <div class="text-sm text-slate-400 uppercase font-bold mb-2"><i class="fas fa-plus-circle text-primary mr-2"></i>Addendo 1 (+29)</div>
+                        <div class="font-mono tracking-widest text-2xl text-primary font-bold text-center mt-4">00011101</div>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 shadow-inner">
+                        <div class="text-sm text-slate-400 uppercase font-bold mb-2"><i class="fas fa-minus-circle text-accent mr-2"></i>Addendo 2 (-14 in CA2)</div>
+                        <div class="text-xs text-slate-500 mb-2 text-center">14 = 00001110 &rarr; Inv: 11110001 &rarr; +1</div>
+                        <div class="font-mono tracking-widest text-2xl text-accent font-bold text-center">11110010</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center">
+                    <span class="text-sm text-slate-400 font-light animate-pulse mb-2"><i class="fas fa-hand-pointer text-success mr-2"></i>Premi avanti per calcolare</span>
+                    
+                    <div class="step-container w-full flex justify-center border-none mt-2 overflow-visible">
+                        <div class="font-mono text-xl sm:text-2xl md:text-3xl inline-flex flex-row-reverse justify-end relative pt-10 pb-6 pl-12 pr-6 bg-black/60 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7)] border border-slate-700">
+                            
+                            <div class="absolute left-4 bottom-[6.5rem] md:bottom-[7.5rem] text-slate-500 font-black">+</div>
+                            <div class="absolute left-4 bottom-[3rem] md:bottom-[3.5rem] text-slate-500 font-black">=</div>
+                            
+                            <div class="absolute top-4 left-12 right-6 h-10 border-b border-dashed border-slate-700">
+                                <span class="absolute -left-10 top-2 text-[10px] font-sans uppercase tracking-widest text-slate-500">Riporti</span>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">0</div>
+                                <div class="text-success font-black pt-4">1</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">1+0<br><span class="text-success font-bold">=1</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div>
+                                <div class="text-white">0</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-success font-black pt-4">1</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">0+1<br><span class="text-success font-bold">=1</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">0</div>
+                                <div class="text-success font-black pt-4">1</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">1+0<br><span class="text-success font-bold">=1</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">0</div>
+                                <div class="text-success font-black pt-4">1</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">1+0<br><span class="text-success font-bold">=1</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center"></div>
+                                <div class="text-white">1</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-success font-black pt-4 text-opacity-30">0</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">1+1<br><span class="text-slate-500 font-bold">=0 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-5 h-5 sm:w-7 sm:h-7 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-xs sm:text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-white">0</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-success font-black pt-4 text-opacity-30">0</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">1+0+1<br><span class="text-slate-500 font-bold">=0 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item">
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-5 h-5 sm:w-7 sm:h-7 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-xs sm:text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-white">0</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-success font-black pt-4 text-opacity-30">0</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">1+0+1<br><span class="text-slate-500 font-bold">=0 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-9 sm:w-12 md:w-14 items-center step-item border-l border-dashed border-slate-700/50">
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-5 h-5 sm:w-7 sm:h-7 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-xs sm:text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-white">0</div>
+                                <div class="text-white w-full text-center pb-3 border-b-2 border-slate-400">1</div>
+                                <div class="text-success font-black pt-4 text-opacity-30">0</div>
+                                <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans mt-4 text-center leading-tight">1+0+1<br><span class="text-slate-500 font-bold">=0 (r.1)</span></div>
+                            </div>
+
+                            <div class="flex flex-col w-12 sm:w-14 md:w-16 items-center step-item relative bg-danger/5 -ml-4 rounded-l-xl border-l border-t border-b border-danger/30">
+                                <div class="absolute -top-4 text-danger text-[9px] uppercase font-bold text-center bg-dark px-2 py-1 rounded border border-danger w-max whitespace-nowrap z-10 shadow-lg">
+                                    <i class="fas fa-trash-alt mr-1"></i> Scartato
+                                </div>
+                                <div class="h-10 mb-2 flex items-center justify-center">
+                                    <div class="w-5 h-5 sm:w-7 sm:h-7 rounded-full border border-danger/50 bg-danger/20 text-danger flex items-center justify-center text-xs sm:text-sm font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">1</div>
+                                </div>
+                                <div class="text-transparent">0</div>
+                                <div class="text-transparent w-full text-center pb-3 border-b-2 border-transparent">0</div>
+                                <div class="text-slate-500 font-black pt-4 line-through decoration-danger decoration-2 opacity-50">1</div>
+                                <div class="text-[9px] sm:text-[10px] text-danger font-sans mt-4 text-center leading-tight font-bold">Ignora<br>Overflow</div>
+                            </div>
+
+                        </div>
+                    </div>
+                    
+                    <div class="step-item mt-8 bg-success/20 text-white px-8 py-4 rounded-xl border border-success/50 shadow-lg flex items-center">
+                        <i class="fas fa-check-circle text-success text-2xl mr-4"></i>
+                        <div>
+                            <span class="block text-slate-300 text-sm uppercase tracking-widest mb-1">Risultato Corretto</span>
+                            <span class="font-mono text-2xl font-bold text-success">(00001111)<sub>2</sub> = (+15)<sub>10</sub></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+    <!-- SLIDE 21: ECCESSO N -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-8">Notazione Eccesso N</h2>
+            <p class="anim-item delay-100 text-lg text-slate-300 mb-8 font-light leading-relaxed">Un altro metodo per rappresentare numeri negativi traslando (spostando) tutti i valori in positivo.</p>
+            
+            <div class="anim-item delay-200 glass-card mb-8 bg-slate-800/80">
+                <h3 class="text-xl font-bold text-white mb-4">La Formula</h3>
+                <div class="text-2xl font-mono text-primary text-center bg-black p-4 rounded border border-slate-700 mb-4 inline-block mx-auto">N = 2<sup>n-1</sup> - 1</div>
+                <p class="text-slate-300 font-light mt-4">Con 8 bit (n=8), <strong class="text-white">N = 127</strong>. Il numero 127 fa da "zero virtuale". I numeri sotto 127 sono negativi, sopra sono positivi.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                <div class="anim-item delay-300 glass-card border-t-4 border-success">
+                    <h4 class="font-bold text-white mb-4 text-lg">Esempio: (+12)<sub>10</sub> in Eccesso 127</h4>
+                    <ul class="text-sm text-slate-300 space-y-2">
+                        <li>1. Sommo 127: <span class="text-white font-mono">127 + 12 = 139</span></li>
+                        <li>2. Converto in binario puro:</li>
+                        <li class="font-mono text-xl text-success font-bold mt-2">(10001011)<sub>EC127</sub></li>
+                    </ul>
+                </div>
+                <div class="anim-item delay-400 glass-card border-t-4 border-danger">
+                    <h4 class="font-bold text-white mb-4 text-lg">Esempio: (-12)<sub>10</sub> in Eccesso 127</h4>
+                    <ul class="text-sm text-slate-300 space-y-2">
+                        <li>1. Sommo 127: <span class="text-white font-mono">127 - 12 = 115</span></li>
+                        <li>2. Converto in binario puro:</li>
+                        <li class="font-mono text-xl text-danger font-bold mt-2">(01110011)<sub>EC127</sub></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 22: SISTEMA ESADECIMALE -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-item text-5xl font-bold mb-6 border-b border-slate-700 pb-4 text-amber-400">Il Sistema Esadecimale</h2>
+            <p class="anim-item delay-100 text-xl text-slate-300 mb-10 font-light max-w-3xl mx-auto">Viene utilizzato perché permette una scrittura molto più sintetica rispetto al lunghissimo formato binario, mantenendo una conversione immediata (Base 16 = 2<sup>4</sup>).</p>
+            
+            <div class="anim-item delay-200 glass-card mb-10">
+                <h3 class="text-xl font-bold text-white mb-6">I 16 Simboli dell'Alfabeto</h3>
+                <div class="grid grid-cols-8 gap-3 font-mono text-2xl">
+                    <div class="bg-slate-800 border border-slate-600 rounded py-2">0</div><div class="bg-slate-800 border border-slate-600 rounded py-2">1</div><div class="bg-slate-800 border border-slate-600 rounded py-2">2</div><div class="bg-slate-800 border border-slate-600 rounded py-2">3</div>
+                    <div class="bg-slate-800 border border-slate-600 rounded py-2">4</div><div class="bg-slate-800 border border-slate-600 rounded py-2">5</div><div class="bg-slate-800 border border-slate-600 rounded py-2">6</div><div class="bg-slate-800 border border-slate-600 rounded py-2">7</div>
+                    <div class="bg-slate-800 border border-slate-600 rounded py-2">8</div><div class="bg-slate-800 border border-slate-600 rounded py-2">9</div>
+                    <div class="bg-amber-500/20 text-amber-400 border border-amber-500/50 rounded py-2 font-black relative group cursor-help"><span class="group-hover:opacity-0 transition">A</span><span class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm">10</span></div>
+                    <div class="bg-amber-500/20 text-amber-400 border border-amber-500/50 rounded py-2 font-black relative group cursor-help"><span class="group-hover:opacity-0 transition">B</span><span class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm">11</span></div>
+                    <div class="bg-amber-500/20 text-amber-400 border border-amber-500/50 rounded py-2 font-black relative group cursor-help"><span class="group-hover:opacity-0 transition">C</span><span class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm">12</span></div>
+                    <div class="bg-amber-500/20 text-amber-400 border border-amber-500/50 rounded py-2 font-black relative group cursor-help"><span class="group-hover:opacity-0 transition">D</span><span class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm">13</span></div>
+                    <div class="bg-amber-500/20 text-amber-400 border border-amber-500/50 rounded py-2 font-black relative group cursor-help"><span class="group-hover:opacity-0 transition">E</span><span class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm">14</span></div>
+                    <div class="bg-amber-500/20 text-amber-400 border border-amber-500/50 rounded py-2 font-black relative group cursor-help"><span class="group-hover:opacity-0 transition">F</span><span class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm">15</span></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4 italic">Passa il mouse sulle lettere per vedere il valore decimale corrispondente.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 23: CALCOLO ESADECIMALE -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-8 text-amber-400">Convertiamo (1246,35)<sub>10</sub> in Esadecimale</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Parte Intera -->
+                <div class="glass-card">
+                    <h3 class="text-xl font-bold text-white mb-6 border-b border-slate-600 pb-2">1. Parte Intera (Divisioni per 16)</h3>
+                    <div class="math-box text-lg step-container relative">
+                        <div class="absolute -right-4 top-4 bottom-4 w-2 border-r-2 border-amber-400 flex flex-col justify-between items-end opacity-0 transition-opacity duration-1000" id="arrow-hex">
+                            <i class="fas fa-caret-up text-amber-400 absolute -top-3 -right-[7px]"></i>
+                        </div>
+
+                        <div class="step-item text-slate-300 mb-2">1246 : 16 = 77 <span class="text-slate-500 mx-2">|</span> R. <span class="highlight">14</span> &rarr; <strong class="text-amber-400">E</strong></div>
+                        <div class="step-item text-slate-300 mb-2"> 77 : 16 = 4  <span class="text-slate-500 mx-2">|</span> R. <span class="highlight">13</span> &rarr; <strong class="text-amber-400">D</strong></div>
+                        <div class="step-item text-slate-300 mb-4">  4 : 16 = 0  <span class="text-slate-500 mx-2">|</span> R. <span class="highlight">4</span>  &rarr; <strong class="text-amber-400">4</strong></div>
+                        
+                        <div class="step-item border-t border-slate-600 pt-4 text-center font-bold text-2xl text-white" ontransitionend="document.getElementById('arrow-hex').style.opacity=1;">
+                            Intero: <span class="text-amber-400">4DE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parte Frazionaria -->
+                <div class="glass-card">
+                    <h3 class="text-xl font-bold text-white mb-6 border-b border-slate-600 pb-2">2. Parte Frazionaria (Moltipl. per 16)</h3>
+                    <div class="math-box text-lg step-container relative">
+                         <div class="absolute -right-4 top-4 bottom-4 w-2 border-r-2 border-amber-400 flex flex-col justify-between items-end opacity-0 transition-opacity duration-1000" id="arrow-hex-frac">
+                            <i class="fas fa-caret-down text-amber-400 absolute -bottom-3 -right-[7px]"></i>
+                        </div>
+                        <div class="step-item text-slate-300 mb-2">0,35 × 16 = <span class="text-amber-400 font-bold bg-slate-700 px-1 rounded">5</span>,60</div>
+                        <div class="step-item text-slate-300 mb-2">0,60 × 16 = <span class="text-amber-400 font-bold bg-slate-700 px-1 rounded">9</span>,60</div>
+                        <div class="step-item text-slate-300 mb-2">0,60 × 16 = <span class="text-amber-400 font-bold bg-slate-700 px-1 rounded">9</span>,60 <span class="text-xs text-slate-400 italic">(Periodico!)</span></div>
+                        
+                        <div class="step-item border-t border-slate-600 pt-4 mt-6 text-center font-bold text-2xl text-white" ontransitionend="document.getElementById('arrow-hex-frac').style.opacity=1;">
+                            Frazionario: <span class="text-amber-400">,599...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="step-item text-center text-3xl font-black text-white mt-8 p-4 bg-amber-500/10 rounded-lg border border-amber-500/30">
+                Risultato finale: (4DE,599...)<sub>16</sub>
+            </div>
+            <div class="has-steps hidden"></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 24: DA ESADECIMALE A BINARIO VELOCE -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-item text-4xl font-bold mb-8">La scorciatoia: Esadecimale <i class="fas fa-exchange-alt mx-4 text-slate-500"></i> Binario</h2>
+            <p class="anim-item delay-100 text-lg text-slate-300 mb-10 font-light max-w-3xl mx-auto">Essendo 16 una potenza di 2 (2<sup>4</sup> = 16), ogni singola cifra esadecimale corrisponde esattamente a un gruppo di <strong>4 bit</strong>.</p>
+            
+            <div class="anim-item delay-200 glass-card bg-slate-800/80 mb-10 text-left border-l-4 border-primary">
+                <h3 class="text-xl font-bold text-white mb-6">Convertiamo 1011000100<sub>2</sub> in Esadecimale</h3>
+                <ul class="space-y-4 text-slate-300">
+                    <li><strong class="text-white">1. Raggruppa a 4 a 4 partendo da destra:</strong> <br> <span class="font-mono text-xl mt-2 inline-block tracking-widest">10 &nbsp; 1100 &nbsp; 0100</span></li>
+                    <li><strong class="text-white">2. Aggiungi zeri a sinistra se manca:</strong> <br> <span class="font-mono text-xl mt-2 inline-block tracking-widest"><span class="text-slate-500">00</span>10 &nbsp; 1100 &nbsp; 0100</span></li>
+                    <li><strong class="text-white">3. Converti ogni gruppo nel suo valore Hex:</strong> <br> 
+                        <div class="flex gap-12 font-mono text-2xl mt-2">
+                            <div class="text-center">0010<br><i class="fas fa-arrow-down text-sm text-slate-500"></i><br><span class="text-amber-400 font-bold">2</span></div>
+                            <div class="text-center">1100<br><i class="fas fa-arrow-down text-sm text-slate-500"></i><br><span class="text-amber-400 font-bold">C</span> (12)</div>
+                            <div class="text-center">0100<br><i class="fas fa-arrow-down text-sm text-slate-500"></i><br><span class="text-amber-400 font-bold">4</span></div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <p class="anim-item delay-300 text-2xl font-black text-white">Risultato: <span class="text-amber-400">(2C4)<sub>16</sub></span></p>
+        </div>
+    </div>
+
+   
+    <!-- SLIDE 30: ASCII E UNICODE -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-item text-4xl font-bold mb-10 border-b border-slate-700 pb-4">Codifica Caratteri: ASCII e UNICODE</h2>
+            
+            <div class="anim-item delay-100 p-4 border-l-4 border-primary bg-slate-800/80 mb-10">
+                <p class="text-lg text-slate-300">Oltre ai numeri, il calcolatore elabora dati <strong class="text-white">alfanumerici</strong> (lettere, simboli, punteggiatura). Una successione di questi caratteri si chiama <strong class="text-primary uppercase tracking-widest">Stringa</strong>.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="anim-item delay-200 glass-card">
+                    <h3 class="text-3xl font-black text-white mb-4 opacity-80">ASCII</h3>
+                    <p class="text-slate-300 font-light mb-4">Lo standard originale. Usa <strong class="text-white">7 bit</strong> (o 8 bit nell'estensione).</p>
+                    <div class="bg-slate-900 p-3 rounded border border-slate-700 flex justify-between items-center mb-4">
+                        <span>Bit: 7</span>
+                        <span class="font-mono text-primary font-bold">2<sup>7</sup> = 128 combinazioni</span>
+                    </div>
+                    <p class="text-sm text-slate-400">Sufficiente per l'alfabeto latino base, cifre e punteggiatura. Totalmente inadeguato per le lingue mondiali (cirillico, arabo, asiatiche).</p>
+                </div>
+
+                <div class="anim-item delay-300 glass-card border-t-4 border-accent">
+                    <h3 class="text-3xl font-black text-white mb-4">UNICODE</h3>
+                    <p class="text-slate-300 font-light mb-4">Il nuovo standard globale per risolvere i limiti dell'ASCII.</p>
+                    <div class="bg-slate-900 p-3 rounded border border-slate-700 flex justify-between items-center mb-4 text-sm">
+                        <span>Piani: 17</span>
+                        <span>Codici per piano: 2<sup>16</sup></span>
+                        <span class="font-mono text-accent font-bold">&gt; 1,1 Milioni totali</span>
+                    </div>
+                    <p class="text-sm text-slate-400">Include tutti gli alfabeti del mondo, simboli storici, e persino le <strong>Emoji <i class="fas fa-smile-beam text-warning mx-1 text-lg"></i></strong>. I primi 128 caratteri coincidono con l'ASCII.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE FINE -->
+    <div class="slide">
+        <div class="max-w-4xl mx-auto text-center h-full flex flex-col justify-center items-center">
+            <div class="anim-item text-8xl text-success mb-8"><i class="fas fa-check-circle"></i></div>
+            <h2 class="anim-item delay-100 text-6xl font-black mb-6">Capitolo Completato</h2>
+            <p class="anim-item delay-200 text-2xl text-slate-400 font-light mb-12">Hai terminato lo studio del Capitolo 2: Computer e codici.</p>
+            <button onclick="location.reload()" class="anim-item delay-300 px-8 py-4 bg-primary hover:bg-cyan-600 text-white rounded-full font-bold transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50 text-xl"><i class="fas fa-redo mr-2"></i>Ricomincia</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        const stepIndicator = document.getElementById('step-indicator');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        function updateUI() {
+            // Aggiorna progress bar e counter
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progress}%`;
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            
+            // Check se ci sono step non mostrati nella slide corrente
+            checkStepIndicator();
+        }
+
+        function checkStepIndicator() {
+            const currentSlideEl = slides[currentSlide];
+            const hasHiddenSteps = currentSlideEl.querySelectorAll('.step-item:not(.show-step)').length > 0;
+            const hasStepsMarker = currentSlideEl.querySelector('.has-steps');
+            
+            if (hasHiddenSteps && hasStepsMarker) {
+                stepIndicator.classList.add('active');
+            } else {
+                stepIndicator.classList.remove('active');
+            }
+        }
+
+        function triggerSlideAnimations(slideIndex) {
+            const current = slides[slideIndex];
+            const animElements = current.querySelectorAll('.anim-item');
+            
+            // Reset animazioni base
+            animElements.forEach(el => el.classList.remove('show'));
+            
+            // Reset degli step matematici solo se si è appena entrati nella slide
+            // (non se sto tornando indietro da uno step già aperto)
+            // In questo setup base, ripristiniamo tutto al cambio slide per pulizia
+            const stepElements = current.querySelectorAll('.step-item');
+            stepElements.forEach(el => el.classList.remove('show-step'));
+
+            setTimeout(() => {
+                animElements.forEach(el => el.classList.add('show'));
+                checkStepIndicator();
+            }, 50);
+        }
+
+        function showSlide(index) {
+            if (index < 0 || index >= totalSlides) return;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            currentSlide = index;
+            updateUI();
+            triggerSlideAnimations(currentSlide);
+        }
+
+        // FUNZIONE CENTRALE PER GESTIRE CLICK "AVANTI" (O step o slide)
+        function nextAction() {
+            const currentSlideEl = slides[currentSlide];
+            // Cerca elementi step nascosti
+            const hiddenSteps = currentSlideEl.querySelectorAll('.step-item:not(.show-step)');
+            
+            if (hiddenSteps.length > 0) {
+                // Se ci sono step, mostra il primo della lista
+                hiddenSteps[0].classList.add('show-step');
+                checkStepIndicator();
+                
+                // Opzionale: scrolla dolcemente verso l'elemento appena mostrato
+                // hiddenSteps[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                // Se non ci sono step, vai alla slide successiva
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function prevAction() {
+            // Per semplicità, il tasto indietro torna direttamente alla slide precedente (resettando gli step)
+            showSlide(currentSlide - 1);
+        }
+
+        // Navigazione Tastiera
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextAction();
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevAction();
+            }
+        });
+
+        // Init
+        window.onload = () => {
+            updateUI();
+            triggerSlideAnimations(currentSlide);
+        };
+    </script>
+</body>
+</html>
