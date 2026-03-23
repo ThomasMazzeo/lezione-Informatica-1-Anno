@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore C++: 20 Esercizi Visivi</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Nunito:wght@700;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Nunito', 'sans-serif'], mono: ['Fira Code', 'monospace'] },
+                    colors: {
+                        brand: { dark: '#0f172a', primary: '#3b82f6', accent: '#10b981', alert: '#f43f5e', purple: '#8b5cf6', orange: '#f97316' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; user-select: none; }
+        
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.4s ease-in-out, visibility 0.4s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 2rem 2%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #090e17);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        .anim-fade-up { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide.active .anim-fade-up.show { opacity: 1; transform: translateY(0); }
+        .delay-100 { transition-delay: 0.1s; } .delay-200 { transition-delay: 0.2s; }
+
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); z-index: 50; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981); width: 0%; transition: width 0.3s ease-out; }
+        #slide-counter { position: absolute; bottom: 20px; right: 30px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #64748b; }
+        
+        /* Layout a 3 Colonne: Visivo | IDE | RAM/Term */
+        .sim-grid { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 1rem; height: 65vh; }
+        
+        .window-panel { background: #1e1e1e; border-radius: 1rem; border: 1px solid #333; box-shadow: 0 15px 30px -10px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; }
+        .window-header { background: #2d2d2d; padding: 0.5rem 1rem; display: flex; align-items: center; border-bottom: 1px solid #111; gap: 0.5rem; }
+        .window-title { color: #858585; font-size: 0.8rem; text-transform: uppercase; font-weight: 800; margin-left: auto; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; } .dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
+        
+        /* Grafica Sinistra */
+        .visual-panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; gap: 1rem; }
+        
+        /* IDE */
+        .ide-content { padding: 1.5rem; font-family: 'Fira Code', monospace; font-size: 1.1rem; line-height: 1.6; color: #d4d4d4; flex-grow: 1; overflow-y: auto; }
+        .code-line { padding: 0.1rem 0.5rem; border-radius: 0.25rem; border-left: 3px solid transparent; opacity: 0; display: none; }
+        .code-line.visible { opacity: 1; display: block; animation: slideIn 0.2s forwards; }
+        .code-line.active-debug { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; }
+
+        /* RAM & Term */
+        .right-panel { display: flex; flex-direction: column; gap: 1rem; }
+        .ram-content { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.4rem; background: rgba(15, 23, 42, 0.8); overflow-y: auto; }
+        .ram-var { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; font-family: 'Fira Code', monospace; transition: all 0.3s; }
+        .v-name { color: #8b5cf6; font-weight: bold; } .v-type { color: #569cd6; font-size: 0.8rem; margin-right: 0.5rem; } .v-val { color: #10b981; font-weight: bold; }
+        .term-content { padding: 1rem; flex-grow: 1; background: #000; font-family: 'Fira Code', monospace; color: #10b981; white-space: pre-wrap; font-size: 0.9rem;}
+        .cursor-blink { animation: blink 1s step-end infinite; }
+
+        .btn-sim { background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; padding: 0.8rem 2rem; border-radius: 2rem; font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 900; color: white; cursor: pointer; transition: all 0.2s; margin-top: 1rem; }
+        .btn-sim:hover { transform: scale(1.05); } .btn-sim.exec-mode { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-sim.done-mode { background: #334155; color: #94a3b8; cursor: not-allowed; transform: none; }
+
+        /* Helpers IDE Syntax */
+        .kw { color: #569cd6; } /* keyword */
+        .ty { color: #4ec9b0; } /* type */
+        .fn { color: #dcdcaa; } /* function */
+        .st { color: #ce9178; } /* string */
+        .nm { color: #b5cea8; } /* number */
+        .vr { color: #9cdcfe; } /* variable */
+        .op { color: #d4d4d4; } /* operator */
+        .cm { color: #6a9955; } /* comment */
+        .al { color: #f43f5e; font-weight: bold; } /* alert/semicolon */
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+        .var-update { background: rgba(16,185,129,0.2); border-color: #10b981; transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="slide-counter"></div>
+
+    <div id="slides-container">
+        <div class="slide active">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="anim-fade-up show bg-blue-500/10 border border-blue-500/30 text-blue-400 px-4 py-1 rounded-full font-bold uppercase tracking-widest mb-6 inline-block text-sm">
+                    Simulatore Avanzato
+                </div>
+                <h1 class="anim-fade-up show delay-100 text-6xl font-display font-black mb-6 text-white leading-tight">
+                    20 Sfide di <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Logica & Codice</span>
+                </h1>
+                <p class="anim-fade-up show delay-200 text-xl text-slate-300 mb-10">
+                    A sinistra vedrai l'obiettivo visivo. Al centro scriveremo il codice. A destra osserveremo la RAM e il Terminale in tempo reale.
+                </p>
+                <button onclick="nextSlide()" class="anim-fade-up show delay-200 btn-sim mx-auto">Inizia Subito <i class="fas fa-play"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === DATABASE ESERCIZI (20 Livelli) ===
+        // Formatto compatto:
+        // lines: array di stringhe HTML per l'IDE
+        // steps: [riga_ide, oggetto_ram_aggiornato, stringa_terminale]
+        const exData = [
+            {
+                title: "1. Il Saluto Base",
+                desc: "Stampiamo semplicemente un messaggio sullo schermo.",
+                vis: `<i class="fas fa-hand-sparkles text-7xl text-blue-400 mb-4"></i><div class="text-xl font-bold">Invia un saluto</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Ciao!"</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{},"Ciao!"], [2,{},"Ciao!\n[Fine]"] ]
+            },
+            {
+                title: "2. Scatola in Memoria",
+                desc: "Creiamo una variabile intera per l'età e diamole un valore.",
+                vis: `<div class="w-24 h-24 border-4 border-dashed border-purple-400 rounded-xl flex items-center justify-center text-4xl font-bold text-purple-400 mb-4">25</div><div class="bg-purple-500 text-white px-3 py-1 rounded">Età</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">eta</span> <span class="op">=</span> <span class="nm">25</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{eta:25},""], [2,{eta:25},"[Fine]"] ]
+            },
+            {
+                title: "3. La Somma",
+                desc: "Sommiamo due numeri e salviamo il risultato in una terza variabile.",
+                vis: `<div class="flex items-center gap-2 text-4xl"><i class="fas fa-apple-alt text-red-500"></i><span class="text-white">+</span><i class="fas fa-apple-alt text-red-500"></i><span class="text-white">=</span><i class="fas fa-box text-orange-400"></i></div><div class="mt-4 text-slate-300">5 + 3 = Totale</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">mele</span> <span class="op">=</span> <span class="nm">5</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">pere</span> <span class="op">=</span> <span class="nm">3</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">tot</span> <span class="op">=</span> <span class="vr">mele</span> <span class="op">+</span> <span class="vr">pere</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{mele:5},""], [2,{mele:5, pere:3},""], [3,{mele:5, pere:3, tot:8},""], [4,{mele:5, pere:3, tot:8},"[Fine]"] ]
+            },
+            {
+                title: "4. Danno Subito (Sottrazione)",
+                desc: "Sottraiamo un valore (danno) dalla vita del giocatore.",
+                vis: `<div class="flex items-center gap-4 text-4xl"><i class="fas fa-heart text-red-500"></i> <span class="text-white">- 20</span></div><div class="mt-4 text-slate-300">Vita scende</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">vita</span> <span class="op">=</span> <span class="nm">100</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">vita</span> <span class="op">=</span> <span class="vr">vita</span> <span class="op">-</span> <span class="nm">20</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{vita:100},""], [2,{vita:80},""], [3,{vita:80},"[Fine]"] ]
+            },
+            {
+                title: "5. Area Rettangolo (Moltiplicazione)",
+                desc: "Calcoliamo l'area moltiplicando base per altezza.",
+                vis: `<div class="w-32 h-20 border-2 border-emerald-500 bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold mb-2">Area = ?</div><span class="text-sm">b: 10, h: 5</span>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">b</span> <span class="op">=</span> <span class="nm">10</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">h</span> <span class="op">=</span> <span class="nm">5</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">area</span> <span class="op">=</span> <span class="vr">b</span> <span class="op">*</span> <span class="vr">h</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{b:10},""], [2,{b:10, h:5},""], [3,{b:10, h:5, area:50},""], [4,{b:10, h:5, area:50},"[Fine]"] ]
+            },
+            {
+                title: "6. Dividere il Bottino",
+                desc: "Dividiamo le monete d'oro tra 4 membri del party.",
+                vis: `<i class="fas fa-coins text-6xl text-yellow-400 mb-2"></i><div class="text-2xl font-bold">100 / 4</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">oro</span> <span class="op">=</span> <span class="nm">100</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">quota</span> <span class="op">=</span> <span class="vr">oro</span> <span class="op">/</span> <span class="nm">4</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{oro:100},""], [2,{oro:100, quota:25},""], [3,{oro:100, quota:25},"[Fine]"] ]
+            },
+            {
+                title: "7. Avanzi di Pizza (Modulo)",
+                desc: "Calcoliamo quante fette di pizza avanzano usando l'operatore modulo (%).",
+                vis: `<i class="fas fa-pizza-slice text-6xl text-orange-500 mb-2"></i><div class="text-lg">10 fette, 3 persone.<br>Resto?</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">resto</span> <span class="op">=</span> <span class="nm">10</span> <span class="op">%</span> <span class="nm">3</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="vr">resto</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{resto:1},""], [2,{resto:1},"1"], [3,{resto:1},"1\n[Fine]"] ]
+            },
+            {
+                title: "8. Input Utente (Cin)",
+                desc: "Chiediamo all'utente il suo anno di nascita e salviamolo.",
+                vis: `<i class="fas fa-keyboard text-6xl text-emerald-400 mb-4"></i><div>Digita l'anno</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">anno</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">std::cin</span> <span class="op">&gt;&gt;</span> <span class="vr">anno</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{anno:"?"},""], [2,{anno:1995},"> 1995\n"], [3,{anno:1995},"> 1995\n[Fine]"] ]
+            },
+            {
+                title: "9. Chiedi e Rispondi",
+                desc: "Combiniamo Output e Input per creare un dialogo base.",
+                vis: `<i class="fas fa-comments text-6xl text-blue-400 mb-2"></i><div>Botta e Risposta</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">pin</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"PIN: "</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">std::cin</span> <span class="op">&gt;&gt;</span> <span class="vr">pin</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{pin:"?"},""], [2,{pin:"?"},"PIN: "], [3,{pin:1234},"PIN: 1234\n"], [4,{pin:1234},"PIN: 1234\n[Fine]"] ]
+            },
+            {
+                title: "10. Level Up! (Incremento)",
+                desc: "Esiste una scorciatoia per aggiungere 1 a una variabile: l'operatore ++.",
+                vis: `<i class="fas fa-arrow-up text-6xl text-emerald-400 mb-2"></i><div class="text-2xl font-bold">LVL ++</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">lvl</span> <span class="op">=</span> <span class="nm">5</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">lvl</span><span class="op">++</span><span class="al">;</span> <span class="cm">// Uguale a lvl = lvl + 1</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{lvl:5},""], [2,{lvl:6},""], [3,{lvl:6},"[Fine]"] ]
+            },
+            {
+                title: "11. Raccogliere Monete",
+                desc: "Aggiungiamo un valore specifico a una variabile usando +=.",
+                vis: `<div class="text-4xl"><i class="fas fa-wallet text-yellow-600"></i> <span class="text-emerald-400">+ 50</span></div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">soldi</span> <span class="op">=</span> <span class="nm">10</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">soldi</span> <span class="op">+=</span> <span class="nm">50</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{soldi:10},""], [2,{soldi:60},""], [3,{soldi:60},"[Fine]"] ]
+            },
+            {
+                title: "12. Scambio Magico (Swap)",
+                desc: "Per scambiare il contenuto di due scatole, ci serve una scatola temporanea.",
+                vis: `<div class="flex items-center gap-4 text-3xl"><div class="bg-blue-500 p-3 rounded">A</div> <i class="fas fa-exchange-alt"></i> <div class="bg-red-500 p-3 rounded">B</div></div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">a</span> <span class="op">=</span> <span class="nm">1</span>, <span class="vr">b</span> <span class="op">=</span> <span class="nm">2</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">temp</span> <span class="op">=</span> <span class="vr">a</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">a</span> <span class="op">=</span> <span class="vr">b</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">b</span> <span class="op">=</span> <span class="vr">temp</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{a:1, b:2},""], [2,{a:1, b:2, temp:1},""], [3,{a:2, b:2, temp:1},""], [4,{a:2, b:1, temp:1},""], [5,{a:2, b:1, temp:1},"[Fine]"] ]
+            },
+            {
+                title: "13. Il Cancello (If base)",
+                desc: "Usiamo la logica: stampiamo 'Accesso' SOLO SE l'età è >= 18.",
+                vis: `<i class="fas fa-lock text-6xl text-slate-400 mb-2"></i><div>Se Età >= 18</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">eta</span> <span class="op">=</span> <span class="nm">20</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">eta</span> <span class="op">&gt;=</span> <span class="nm">18</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Accesso"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{eta:20},""], [2,{eta:20},""], [3,{eta:20},"Accesso"], [4,{eta:20},"Accesso"], [5,{eta:20},"Accesso\n[Fine]"] ]
+            },
+            {
+                title: "14. Uguaglianza Esatta",
+                desc: "Controlliamo se un PIN inserito è esattamente uguale a quello segreto.",
+                vis: `<i class="fas fa-key text-6xl text-yellow-500 mb-2"></i><div>PIN == 1234 ?</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">pin</span> <span class="op">=</span> <span class="nm">1234</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">pin</span> <span class="op">==</span> <span class="nm">1234</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Sbloccato"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{pin:1234},""], [2,{pin:1234},""], [3,{pin:1234},"Sbloccato"], [4,{pin:1234},"Sbloccato"], [5,{pin:1234},"Sbloccato\n[Fine]"] ]
+            },
+            {
+                title: "15. Logica Inversa (!=)",
+                desc: "L'operatore != significa 'Diverso Da'. Stampiamo un allarme se lo stato non è 0.",
+                vis: `<i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-2"></i><div>Stato != 0</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">stato</span> <span class="op">=</span> <span class="nm">1</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">stato</span> <span class="op">!=</span> <span class="nm">0</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Allarme!"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{stato:1},""], [2,{stato:1},""], [3,{stato:1},"Allarme!"], [4,{stato:1},"Allarme!"], [5,{stato:1},"Allarme!\n[Fine]"] ]
+            },
+            {
+                title: "16. Sconto del Negozio",
+                desc: "Uniamo matematica e variabili. Calcoliamo il prezzo finale.",
+                vis: `<i class="fas fa-tag text-6xl text-emerald-400 mb-2"></i><div>Prezzo - Sconto</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">prezzo</span> <span class="op">=</span> <span class="nm">100</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">sconto</span> <span class="op">=</span> <span class="nm">20</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">prezzo</span> <span class="op">=</span> <span class="vr">prezzo</span> <span class="op">-</span> <span class="vr">sconto</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{prezzo:100},""], [2,{prezzo:100, sconto:20},""], [3,{prezzo:80, sconto:20},""], [4,{prezzo:80, sconto:20},"[Fine]"] ]
+            },
+            {
+                title: "17. Il Moltiplicatore x2",
+                desc: "Raddoppiamo direttamente la variabile corrente.",
+                vis: `<i class="fas fa-bolt text-6xl text-yellow-400 mb-2"></i><div class="text-2xl font-bold">Danno * 2</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">danno</span> <span class="op">=</span> <span class="nm">50</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">danno</span> <span class="op">=</span> <span class="vr">danno</span> <span class="op">*</span> <span class="nm">2</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{danno:50},""], [2,{danno:100},""], [3,{danno:100},"[Fine]"] ]
+            },
+            {
+                title: "18. Media Semplice",
+                desc: "Attenzione alle parentesi nella matematica del C++!",
+                vis: `<div class="text-2xl font-bold border border-white p-3 rounded text-center">(A + B) / 2</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">a</span> <span class="op">=</span> <span class="nm">4</span>, <span class="vr">b</span> <span class="op">=</span> <span class="nm">6</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">media</span> <span class="op">=</span> (<span class="vr">a</span> <span class="op">+</span> <span class="vr">b</span>) <span class="op">/</span> <span class="nm">2</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{a:4, b:6},""], [2,{a:4, b:6, media:5},""], [3,{a:4, b:6, media:5},"[Fine]"] ]
+            },
+            {
+                title: "19. Calcolo Perimetro",
+                desc: "Assegniamo il valore e calcoliamo il perimetro in un colpo solo.",
+                vis: `<div class="w-16 h-16 border-4 border-blue-400 mb-2"></div><div>Lato * 4</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">lato</span> <span class="op">=</span> <span class="nm">5</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">perimetro</span> <span class="op">=</span> <span class="vr">lato</span> <span class="op">*</span> <span class="nm">4</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{lato:5},""], [2,{lato:5, perimetro:20},""], [3,{lato:5, perimetro:20},"[Fine]"] ]
+            },
+            {
+                title: "20. La Prova Finale",
+                desc: "Uniamo Variabile, Sottrazione e Condizione logica in un mini-negozio.",
+                vis: `<i class="fas fa-store text-6xl text-purple-400 mb-2"></i><div>Compra se hai soldi!</div>`,
+                lines: [
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">soldi</span> <span class="op">=</span> <span class="nm">100</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="vr">soldi</span> <span class="op">=</span> <span class="vr">soldi</span> <span class="op">-</span> <span class="nm">40</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">soldi</span> <span class="op">&gt;=</span> <span class="nm">0</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Comprato!"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `}`
+                ],
+                steps: [ [0,{},""], [1,{soldi:100},""], [2,{soldi:60},""], [3,{soldi:60},""], [4,{soldi:60},"Comprato!"], [5,{soldi:60},"Comprato!"], [6,{soldi:60},"Comprato!\n[Vittoria!]"] ]
+            }
+        ];
+
+        // --- INIEZIONE HTML DELLE SLIDE ---
+        const container = document.getElementById('slides-container');
+        
+        exData.forEach((ex, idx) => {
+            let codeHTML = '';
+            ex.lines.forEach((line, i) => { codeHTML += `<div id="code-${idx}-${i}" class="code-line">${line}</div>`; });
+
+            container.innerHTML += `
+            <div class="slide" id="slide-${idx}">
+                <div class="max-w-[95%] mx-auto w-full">
+                    <div class="anim-fade-up flex items-center gap-4 mb-2">
+                        <span class="bg-blue-500/20 text-blue-400 font-bold px-3 py-1 rounded-full text-xs border border-blue-500/30">Lvl ${idx + 1}/20</span>
+                        <h2 class="text-2xl font-display font-black tracking-tight">${ex.title}</h2>
+                    </div>
+                    <p class="anim-fade-up delay-100 text-slate-300 mb-4 font-light text-sm">${ex.desc}</p>
+                    
+                    <div class="anim-fade-up delay-200 sim-grid">
+                        <div class="window-panel">
+                            <div class="window-header"><i class="fas fa-eye text-emerald-400"></i><span class="window-title !ml-2 text-emerald-400">Obiettivo</span></div>
+                            <div class="visual-panel flex-grow">${ex.vis}</div>
+                        </div>
+
+                        <div class="window-panel">
+                            <div class="window-header"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><span class="window-title">main.cpp</span></div>
+                            <div class="ide-content" id="ide-${idx}">${codeHTML}</div>
+                        </div>
+                        
+                        <div class="right-panel">
+                            <div class="window-panel" style="flex: 1;">
+                                <div class="window-header"><i class="fas fa-memory text-purple-400"></i><span class="window-title text-purple-400">RAM</span></div>
+                                <div class="ram-content" id="ram-${idx}"><div class="text-slate-500 text-sm italic text-center mt-2">Vuota</div></div>
+                            </div>
+                            <div class="window-panel" style="flex: 1;">
+                                <div class="window-header"><i class="fas fa-terminal text-brand-orange"></i><span class="window-title text-brand-orange">Console</span></div>
+                                <div class="term-content relative"><span id="term-${idx}"></span><span class="cursor-blink">_</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center anim-fade-up delay-200">
+                        <button id="btn-${idx}" class="btn-sim" onclick="handleSimClick(${idx})">
+                            <i class="fas fa-hammer"></i> Costruisci
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        // --- MOTORE SIMULATORE ---
+        let simStates = {};
+        exData.forEach((_, i) => { simStates[i] = { phase: 'build', step: 0, ramState: {} }; });
+
+        function handleSimClick(idx) {
+            const state = simStates[idx];
+            const ex = exData[idx];
+            const btn = document.getElementById(`btn-${idx}`);
+
+            if (state.phase === 'build') {
+                if (state.step < ex.lines.length) {
+                    document.getElementById(`code-${idx}-${state.step}`).classList.add('visible');
+                    state.step++;
+                    if (state.step === ex.lines.length) {
+                        state.phase = 'exec'; state.step = 0;
+                        btn.classList.add('exec-mode'); btn.innerHTML = `<i class="fas fa-bug"></i> Step Debug`;
+                    }
+                }
+            } 
+            else if (state.phase === 'exec') {
+                if (state.step < ex.steps.length) {
+                    const [lineIdx, ramData, termOutput] = ex.steps[state.step];
+                    
+                    // 1. Evidenzia Riga
+                    document.querySelectorAll(`#ide-${idx} .code-line`).forEach(el => el.classList.remove('active-debug'));
+                    document.getElementById(`code-${idx}-${lineIdx}`).classList.add('active-debug');
+                    
+                    // 2. Disegna RAM (calcolando diff per l'animazione)
+                    const ramDiv = document.getElementById(`ram-${idx}`);
+                    let ramHTML = '';
+                    if (Object.keys(ramData).length === 0) {
+                        ramHTML = `<div class="text-slate-500 text-sm italic text-center mt-2">Vuota</div>`;
+                    } else {
+                        for (let key in ramData) {
+                            const val = ramData[key];
+                            const isNewOrUpdated = state.ramState[key] !== val;
+                            const updateClass = isNewOrUpdated ? 'var-update' : '';
+                            const undefClass = val === "?" ? 'text-red-400 italic' : '';
+                            ramHTML += `<div class="ram-var ${updateClass}"><div><span class="v-type">int</span><span class="v-name">${key}</span></div><div class="v-val ${undefClass}">${val}</div></div>`;
+                        }
+                        state.ramState = {...ramData}; // salva nuovo stato
+                    }
+                    ramDiv.innerHTML = ramHTML;
+
+                    // 3. Disegna Terminale
+                    document.getElementById(`term-${idx}`).textContent = termOutput;
+
+                    state.step++;
+                    if (state.step === ex.steps.length) {
+                        state.phase = 'done';
+                        btn.classList.remove('exec-mode'); btn.classList.add('done-mode');
+                        
+                        if (idx === exData.length - 1) {
+                            btn.innerHTML = `<i class="fas fa-trophy"></i> Corso Finito!`;
+                        } else {
+                            btn.innerHTML = `Avanti <i class="fas fa-arrow-right"></i>`;
+                            btn.onclick = () => nextSlide();
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- SISTEMA DI NAVIGAZIONE ---
+        const totalSlides = exData.length + 1; // 20 esercizi + copertina
+        let currentSlide = 0;
+        
+        function updateUI() {
+            document.getElementById('progress-bar').style.width = `${(currentSlide / (totalSlides - 1)) * 100}%`;
+            document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function triggerAnimations(slideEl) {
+            const anims = slideEl.querySelectorAll('.anim-fade-up');
+            anims.forEach(el => el.classList.remove('show'));
+            void slideEl.offsetWidth; // force reflow
+            setTimeout(() => { anims.forEach(el => el.classList.add('show')); }, 50);
+        }
+
+        function showSlide(index) {
+            if (index < 0 || index >= totalSlides) return;
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(s => s.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+            updateUI();
+            triggerAnimations(slides[index]);
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        window.onload = () => updateUI();
+    </script>
+</body>
+</html>
