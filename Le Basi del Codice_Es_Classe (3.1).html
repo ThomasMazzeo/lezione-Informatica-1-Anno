@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore C++: Debug e Logica</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Nunito:wght@700;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Nunito', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        brand: { dark: '#0f172a', primary: '#3b82f6', accent: '#10b981', alert: '#f43f5e', purple: '#8b5cf6', orange: '#f97316' },
+                        code: { bg: '#1e1e1e', keyword: '#c586c0', type: '#569cd6', func: '#dcdcaa', str: '#ce9178', comment: '#6a9955', num: '#b5cea8', var: '#9cdcfe' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; user-select: none; }
+        
+        /* Gestione Slide */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.6s ease-in-out, visibility 0.6s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 3rem 5%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #090e17);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* Animazioni base */
+        .anim-fade-up { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide.active .anim-fade-up.show { opacity: 1; transform: translateY(0); }
+        .delay-100 { transition-delay: 0.1s; } .delay-200 { transition-delay: 0.2s; } .delay-300 { transition-delay: 0.3s; }
+
+        /* Progress e Controlli */
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); z-index: 50; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981); width: 0%; transition: width 0.5s ease-out; }
+        #slide-counter { position: absolute; bottom: 20px; right: 30px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #64748b; letter-spacing: 2px; }
+        
+        /* Layout Simulatore */
+        .sim-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; height: 60vh; }
+        .right-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        /* Componenti Finestre */
+        .window-panel { background: #1e1e1e; border-radius: 1rem; border: 1px solid #333; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; }
+        .window-header { background: #2d2d2d; padding: 0.5rem 1rem; display: flex; align-items: center; border-bottom: 1px solid #111; gap: 0.5rem; }
+        .window-title { color: #858585; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-left: auto; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
+        
+        /* IDE e Codice */
+        .ide-content { padding: 1.5rem; font-family: 'Fira Code', monospace; font-size: 1.1rem; line-height: 1.7; color: #d4d4d4; flex-grow: 1; overflow-y: auto; }
+        .code-line { padding: 0.2rem 0.5rem; border-radius: 0.25rem; border-left: 3px solid transparent; transition: all 0.3s ease; opacity: 0; display: none; }
+        .code-line.visible { opacity: 1; display: block; animation: slideIn 0.3s forwards; }
+        
+        /* Stato Debug (Riga Attiva) */
+        .code-line.active-debug { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; box-shadow: inset 0 0 10px rgba(59,130,246,0.1); }
+        .code-line.active-debug * { text-shadow: 0 0 5px rgba(255,255,255,0.2); }
+
+        /* RAM (Variabili) */
+        .ram-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; background: rgba(15, 23, 42, 0.8); }
+        .ram-var { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; font-family: 'Fira Code', monospace; }
+        .ram-var .v-name { color: #8b5cf6; font-weight: bold; }
+        .ram-var .v-type { color: #569cd6; font-size: 0.8rem; margin-right: 0.5rem; }
+        .ram-var .v-val { color: #10b981; font-weight: bold; font-size: 1.2rem; }
+        .ram-var .v-val.undef { color: #f43f5e; font-style: italic; }
+
+        /* Terminale */
+        .term-content { padding: 1.5rem; flex-grow: 1; background: #000; font-family: 'Fira Code', monospace; color: #10b981; white-space: pre-wrap; }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+
+        /* Bottone Controllo */
+        .control-bar { display: flex; justify-content: center; margin-top: 1.5rem; }
+        .btn-sim { background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; padding: 1rem 2.5rem; border-radius: 3rem; font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 900; color: white; cursor: pointer; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; }
+        .btn-sim:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5); }
+        .btn-sim.exec-mode { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+        .btn-sim.done-mode { background: #334155; color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes popVar { 0% { transform: scale(0.9); } 50% { transform: scale(1.05); background: rgba(16,185,129,0.2); } 100% { transform: scale(1); } }
+        
+        .var-update { animation: popVar 0.5s ease-out forwards; border-color: #10b981 !important; }
+    </style>
+</head>
+<body>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="slide-counter">1 / 6</div>
+
+    <div class="slide active">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="anim-fade-up show inline-flex items-center gap-3 px-5 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold tracking-widest uppercase mb-8 text-sm">
+                <i class="fas fa-bug"></i> Modalità Debugger
+            </div>
+            <h1 class="anim-fade-up show delay-100 text-6xl font-display font-black mb-6 text-white leading-tight">
+                Simulatore <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Step-by-Step</span>
+            </h1>
+            <p class="anim-fade-up show delay-200 text-xl text-slate-300 font-light leading-relaxed mb-12">
+                Cinque esercizi interattivi. Prima scriveremo il codice riga per riga, poi lo eseguiremo simulando il cervello del computer, guardando in tempo reale <strong>RAM</strong> e <strong>Terminale</strong>.
+            </p>
+            <button onclick="nextSlide()" class="anim-fade-up show delay-300 btn-sim mx-auto">
+                Inizia Simulazione <i class="fas fa-play"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="slides-container"></div>
+
+    <script>
+        // === DATI DEGLI ESERCIZI ===
+        const exercises = [
+            {
+                id: 1,
+                title: "Ex 1: L'Output Base",
+                consegna: "Costruiamo e avviamo un semplice programma per stampare un messaggio a schermo. Nessuna variabile necessaria.",
+                buildLines: [
+                    `<span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span>`,
+                    `<br>`,
+                    `<span class="text-code-type">int</span> <span class="text-code-func">main</span>() {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-str">"Avvio..."</span><span class="text-brand-alert font-bold">;</span>`,
+                    `}`
+                ],
+                execSteps: [
+                    { line: 2, ram: [], term: "" }, // Entra nel main
+                    { line: 3, ram: [], term: "Avvio..." }, // Esegue cout
+                    { line: 4, ram: [], term: "Avvio...\n[Processo terminato]" } // Esce
+                ]
+            },
+            {
+                id: 2,
+                title: "Ex 2: Ciclo di vita di una Variabile",
+                consegna: "Dichiariamo una scatola nella memoria, assegniamole un valore e poi stampiamo il suo contenuto.",
+                buildLines: [
+                    `<span class="text-code-type">int</span> <span class="text-code-func">main</span>() {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-comment">// 1. Dichiara</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-type">int</span> <span class="text-code-var">punti</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-comment">// 2. Assegna</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-var">punti</span> <span class="text-blue-400 font-bold">=</span> <span class="text-code-num">50</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-comment">// 3. Stampa</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-var">punti</span><span class="text-brand-alert font-bold">;</span>`,
+                    `}`
+                ],
+                execSteps: [
+                    { line: 0, ram: [], term: "" },
+                    { line: 2, ram: [{name: 'punti', type: 'int', val: '?', undef: true}], term: "", updated: 'punti' },
+                    { line: 4, ram: [{name: 'punti', type: 'int', val: '50', undef: false}], term: "", updated: 'punti' },
+                    { line: 6, ram: [{name: 'punti', type: 'int', val: '50', undef: false}], term: "50" },
+                    { line: 7, ram: [{name: 'punti', type: 'int', val: '50', undef: false}], term: "50\n[Processo terminato]" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Ex 3: La Matematica (Il Modulo)",
+                consegna: "Dichiariamo due variabili, calcoliamo il resto della loro divisione (modulo) e salviamolo in una terza variabile.",
+                buildLines: [
+                    `<span class="text-code-type">int</span> <span class="text-code-func">main</span>() {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-type">int</span> <span class="text-code-var">a</span> <span class="text-blue-400 font-bold">=</span> <span class="text-code-num">10</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-type">int</span> <span class="text-code-var">b</span> <span class="text-blue-400 font-bold">=</span> <span class="text-code-num">3</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-type">int</span> <span class="text-code-var">resto</span> <span class="text-blue-400 font-bold">=</span> <span class="text-code-var">a</span> <span class="text-brand-orange font-bold">%</span> <span class="text-code-var">b</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-var">resto</span><span class="text-brand-alert font-bold">;</span>`,
+                    `}`
+                ],
+                execSteps: [
+                    { line: 0, ram: [], term: "" },
+                    { line: 1, ram: [{name: 'a', type: 'int', val: '10'}], term: "", updated: 'a' },
+                    { line: 2, ram: [{name: 'a', type: 'int', val: '10'}, {name: 'b', type: 'int', val: '3'}], term: "", updated: 'b' },
+                    { line: 3, ram: [{name: 'a', type: 'int', val: '10'}, {name: 'b', type: 'int', val: '3'}, {name: 'resto', type: 'int', val: '1'}], term: "", updated: 'resto' },
+                    { line: 4, ram: [{name: 'a', type: 'int', val: '10'}, {name: 'b', type: 'int', val: '3'}, {name: 'resto', type: 'int', val: '1'}], term: "1" },
+                    { line: 5, ram: [{name: 'a', type: 'int', val: '10'}, {name: 'b', type: 'int', val: '3'}, {name: 'resto', type: 'int', val: '1'}], term: "1\n[Processo terminato]" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Ex 4: Ascoltare la Tastiera",
+                consegna: "Creiamo una variabile vuota, chiediamo all'utente di scrivere un PIN e salviamolo usando std::cin.",
+                buildLines: [
+                    `<span class="text-code-type">int</span> <span class="text-code-func">main</span>() {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-type">int</span> <span class="text-code-var">pin</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-str">"Inserisci PIN: "</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">std::cin</span> <span class="text-emerald-400 font-bold">&gt;&gt;</span> <span class="text-code-var">pin</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-str">"Salvato!"</span><span class="text-brand-alert font-bold">;</span>`,
+                    `}`
+                ],
+                execSteps: [
+                    { line: 0, ram: [], term: "" },
+                    { line: 1, ram: [{name: 'pin', type: 'int', val: '?', undef: true}], term: "", updated: 'pin' },
+                    { line: 2, ram: [{name: 'pin', type: 'int', val: '?', undef: true}], term: "Inserisci PIN: " },
+                    { line: 3, ram: [{name: 'pin', type: 'int', val: '1234'}], term: "Inserisci PIN: 1234\n", updated: 'pin' }, // Simulazione input
+                    { line: 4, ram: [{name: 'pin', type: 'int', val: '1234'}], term: "Inserisci PIN: 1234\nSalvato!" },
+                    { line: 5, ram: [{name: 'pin', type: 'int', val: '1234'}], term: "Inserisci PIN: 1234\nSalvato!\n[Processo terminato]" }
+                ]
+            },
+            {
+                id: 5,
+                title: "Ex 5: Logica Condizionale",
+                consegna: "Inizializziamo le vite a zero. Usiamo un 'if' per controllare se le vite SONO UGUALI (==) a zero.",
+                buildLines: [
+                    `<span class="text-code-type">int</span> <span class="text-code-func">main</span>() {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-code-type">int</span> <span class="text-code-var">vite</span> <span class="text-blue-400 font-bold">=</span> <span class="text-code-num">0</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400 font-bold">if</span> ( <span class="text-code-var">vite</span> <span class="text-emerald-400 font-bold">==</span> <span class="text-code-num">0</span> ) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-str">"Game Over"</span><span class="text-brand-alert font-bold">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;}`,
+                    `}`
+                ],
+                execSteps: [
+                    { line: 0, ram: [], term: "" },
+                    { line: 1, ram: [{name: 'vite', type: 'int', val: '0'}], term: "", updated: 'vite' },
+                    { line: 2, ram: [{name: 'vite', type: 'int', val: '0'}], term: "" }, // Controlla la condizione (True)
+                    { line: 3, ram: [{name: 'vite', type: 'int', val: '0'}], term: "Game Over" },
+                    { line: 4, ram: [{name: 'vite', type: 'int', val: '0'}], term: "Game Over" },
+                    { line: 5, ram: [{name: 'vite', type: 'int', val: '0'}], term: "Game Over\n[Processo terminato]" }
+                ]
+            }
+        ];
+
+        // === GENERAZIONE HTML DELLE SLIDE ===
+        const container = document.getElementById('slides-container');
+        
+        exercises.forEach((ex, index) => {
+            // Genera le righe di codice nascoste
+            let codeHTML = '';
+            ex.buildLines.forEach((line, i) => {
+                codeHTML += `<div id="code-${ex.id}-${i}" class="code-line">${line}</div>`;
+            });
+
+            const slideHTML = `
+            <div class="slide" id="slide-${ex.id}">
+                <div class="max-w-7xl mx-auto w-full">
+                    <div class="anim-fade-up flex items-center gap-4 mb-4">
+                        <span class="bg-blue-500/20 text-blue-400 font-bold px-3 py-1 rounded-full text-sm border border-blue-500/30">Livello ${index + 1}/5</span>
+                        <h2 class="text-3xl font-display font-black tracking-tight">${ex.title}</h2>
+                    </div>
+                    <p class="anim-fade-up delay-100 text-slate-300 mb-6 font-light">${ex.consegna}</p>
+                    
+                    <div class="anim-fade-up delay-200 sim-grid">
+                        <div class="window-panel">
+                            <div class="window-header">
+                                <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+                                <span class="window-title">main.cpp</span>
+                            </div>
+                            <div class="ide-content" id="ide-${ex.id}">
+                                ${codeHTML}
+                            </div>
+                        </div>
+                        
+                        <div class="right-panel">
+                            <div class="window-panel" style="flex: 1;">
+                                <div class="window-header border-b border-slate-700 bg-slate-900">
+                                    <i class="fas fa-memory text-purple-400"></i> <span class="window-title !ml-2 text-purple-400">Variabili (RAM)</span>
+                                </div>
+                                <div class="ram-content" id="ram-${ex.id}">
+                                    <div class="text-slate-500 text-sm italic text-center mt-4">Memoria Vuota</div>
+                                </div>
+                            </div>
+                            <div class="window-panel" style="flex: 1;">
+                                <div class="window-header border-b border-slate-700 bg-slate-900">
+                                    <i class="fas fa-terminal text-brand-orange"></i> <span class="window-title !ml-2 text-brand-orange">Output Console</span>
+                                </div>
+                                <div class="term-content text-sm relative">
+                                    <span id="term-${ex.id}"></span><span class="cursor-blink">_</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-bar anim-fade-up delay-300">
+                        <button id="btn-${ex.id}" class="btn-sim" onclick="handleSimClick(${ex.id})">
+                            <i class="fas fa-hammer"></i> Costruisci Codice
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+            container.innerHTML += slideHTML;
+        });
+
+        // === LOGICA DEL SIMULATORE ===
+        // Stato per ogni esercizio
+        let simStates = {};
+        exercises.forEach(ex => {
+            simStates[ex.id] = { phase: 'build', step: 0 };
+        });
+
+        function handleSimClick(id) {
+            const state = simStates[id];
+            const ex = exercises.find(e => e.id === id);
+            const btn = document.getElementById(`btn-${id}`);
+
+            if (state.phase === 'build') {
+                // Rivelazione riga per riga
+                if (state.step < ex.buildLines.length) {
+                    const lineEl = document.getElementById(`code-${id}-${state.step}`);
+                    lineEl.classList.add('visible');
+                    state.step++;
+                    
+                    if (state.step === ex.buildLines.length) {
+                        // Fine costruzione, passa a debug
+                        state.phase = 'exec';
+                        state.step = 0;
+                        btn.classList.add('exec-mode');
+                        btn.innerHTML = `<i class="fas fa-bug"></i> Esegui Debug (Step 1)`;
+                    } else {
+                        btn.innerHTML = `<i class="fas fa-hammer"></i> Costruisci Riga ${state.step + 1}`;
+                    }
+                }
+            } 
+            else if (state.phase === 'exec') {
+                // Esecuzione riga per riga
+                if (state.step < ex.execSteps.length) {
+                    const stepData = ex.execSteps[state.step];
+                    
+                    // 1. Evidenzia riga IDE
+                    document.querySelectorAll(`#ide-${id} .code-line`).forEach(el => el.classList.remove('active-debug'));
+                    document.getElementById(`code-${id}-${stepData.line}`).classList.add('active-debug');
+                    
+                    // 2. Aggiorna RAM
+                    const ramContainer = document.getElementById(`ram-${id}`);
+                    if (stepData.ram.length === 0) {
+                        ramContainer.innerHTML = `<div class="text-slate-500 text-sm italic text-center mt-4">Memoria Vuota</div>`;
+                    } else {
+                        ramContainer.innerHTML = '';
+                        stepData.ram.forEach(v => {
+                            const valClass = v.undef ? 'undef' : '';
+                            const updateClass = (stepData.updated === v.name) ? 'var-update' : '';
+                            ramContainer.innerHTML += `
+                                <div class="ram-var ${updateClass}">
+                                    <div><span class="v-type">${v.type}</span><span class="v-name">${v.name}</span></div>
+                                    <div class="v-val ${valClass}">${v.val}</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    // 3. Aggiorna Terminale
+                    document.getElementById(`term-${id}`).textContent = stepData.term;
+
+                    state.step++;
+                    
+                    if (state.step === ex.execSteps.length) {
+                        state.phase = 'done';
+                        btn.classList.remove('exec-mode');
+                        btn.classList.add('done-mode');
+                        
+                        // Se è l'ultimo es, cambia testo, altrimenti vai al prossimo
+                        if(id === 5) {
+                            btn.innerHTML = `<i class="fas fa-check-double"></i> Corso Completato!`;
+                        } else {
+                            btn.innerHTML = `Esercizio Finito. Prossimo Livello <i class="fas fa-arrow-right ml-2"></i>`;
+                            btn.onclick = () => nextSlide();
+                        }
+                    } else {
+                        btn.innerHTML = `<i class="fas fa-step-forward"></i> Esegui Riga ${ex.execSteps[state.step].line + 1}`;
+                    }
+                }
+            }
+        }
+
+
+        // === NAVIGAZIONE SLIDES (Adattata) ===
+        const totalSlides = 6;
+        let currentSlide = 0;
+        
+        function updateUI() {
+            const progress = (currentSlide / (totalSlides - 1)) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function triggerAnimations(slideEl) {
+            const animElements = slideEl.querySelectorAll('.anim-fade-up');
+            animElements.forEach(el => el.classList.remove('show'));
+            void slideEl.offsetWidth; // Reflow
+            setTimeout(() => { animElements.forEach(el => el.classList.add('show')); }, 50);
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            currentSlide = index;
+            updateUI();
+            triggerAnimations(slides[index]);
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        window.onload = () => { updateUI(); };
+    </script>
+</body>
+</html>
