@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Problemi, gli Algoritmi e i Linguaggi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        brand: { dark: '#0f172a', primary: '#3b82f6', accent: '#10b981', alert: '#f43f5e', purple: '#8b5cf6', orange: '#f97316' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        
+        /* Gestione Slide */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.6s ease-in-out, visibility 0.6s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 4rem 8%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* Sistema di Animazioni */
+        .anim-fade-up { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-scale-in { opacity: 0; transform: scale(0.9); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-slide-right { opacity: 0; transform: translateX(-40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .slide.active .anim-fade-up.show { opacity: 1; transform: translateY(0); }
+        .slide.active .anim-scale-in.show { opacity: 1; transform: scale(1); }
+        .slide.active .anim-slide-right.show { opacity: 1; transform: translateX(0); }
+        
+        /* Ritardi a cascata */
+        .delay-100 { transition-delay: 0.1s; }
+        .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; }
+        .delay-400 { transition-delay: 0.4s; }
+        .delay-500 { transition-delay: 0.5s; }
+        .delay-600 { transition-delay: 0.6s; }
+        .delay-700 { transition-delay: 0.7s; }
+
+        /* UI Controls */
+        .nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 50;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5); width: 60px; height: 60px; border-radius: 50%;
+            cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+        }
+        .nav-btn:hover { background: rgba(59, 130, 246, 0.2); color: white; border-color: rgba(59, 130, 246, 0.5); transform: translateY(-50%) scale(1.05); }
+        #prev-btn { left: 30px; }
+        #next-btn { right: 30px; }
+
+        #progress-container {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 5px;
+            background: rgba(255,255,255,0.05); z-index: 50;
+        }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); width: 0%; transition: width 0.4s ease-out; }
+        
+        #slide-counter { position: absolute; bottom: 20px; right: 30px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #64748b; letter-spacing: 2px; }
+        
+        /* Stili Card e Elementi Visivi */
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.25rem; padding: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transition: transform 0.3s ease, border-color 0.3s ease; }
+        .glass-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-3px); }
+        
+        .code-block { background: #0f172a; border: 1px solid #334155; border-radius: 0.75rem; padding: 1.5rem; font-family: 'Fira Code', monospace; color: #a5b4fc; }
+        .flow-arrow { position: relative; }
+        .flow-arrow::after { content: '\f061'; font-family: 'FontAwesome'; position: absolute; right: -2rem; top: 50%; transform: translateY(-50%); color: #475569; font-size: 1.5rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigazione -->
+    <button id="prev-btn" onclick="prevSlide()"><i class="fas fa-chevron-left"></i></button>
+    <button id="next-btn" onclick="nextSlide()"><i class="fas fa-chevron-right"></i></button>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="slide-counter">1 / X</div>
+
+    <!-- INIZIO SLIDE -->
+
+    <!-- Slide 1: Copertina -->
+    <div class="slide active">
+        <div class="max-w-5xl mx-auto text-center">
+            <div class="anim-fade-up show inline-flex items-center gap-3 px-5 py-2 rounded-full bg-brand-primary/10 border border-brand-primary/30 text-brand-primary font-bold tracking-widest uppercase mb-10 text-sm shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                <i class="fas fa-code-branch"></i> Logica e Programmazione
+            </div>
+            <h1 class="anim-fade-up show delay-100 text-7xl font-black mb-8 text-white leading-tight tracking-tight">
+                I Problemi e la loro <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400">Soluzione</span>
+            </h1>
+            <p class="anim-fade-up show delay-200 text-2xl text-slate-400 mb-12 font-light max-w-3xl mx-auto leading-relaxed">
+                Dal ragionamento logico quotidiano agli algoritmi formali, fino alla nascita dei linguaggi di programmazione.
+            </p>
+            <div class="anim-scale-in show delay-300 inline-flex flex-col items-center opacity-70">
+                <div class="flex items-center gap-4 text-slate-300 bg-slate-800/50 px-6 py-3 rounded-xl border border-slate-700">
+                    <i class="fas fa-keyboard text-2xl"></i>
+                    <span class="text-sm font-semibold tracking-wider">Naviga con le frecce della tastiera</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: I Problemi Quotidiani -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-5xl font-bold mb-12 text-center tracking-tight">Il Problem Solving Quotidiano</h2>
+            <p class="anim-fade-up delay-100 text-xl text-slate-300 text-center mb-16 font-light max-w-4xl mx-auto">
+                In ogni ambito, dalle scienze alla vita quotidiana, dobbiamo giornalmente affrontare problemi, eseguire compiti e prendere decisioni. I problemi <strong>non sono tutti uguali</strong>.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="anim-slide-right delay-200 glass-card border-t-4 border-emerald-500">
+                    <div class="flex items-center gap-4 mb-6 text-emerald-400 text-3xl">
+                        <i class="fas fa-check-circle"></i>
+                        <h3 class="text-2xl font-bold text-white">Problemi Semplici o Noti</h3>
+                    </div>
+                    <p class="text-slate-300 font-light mb-6">Siamo in grado di risolverli perché sono elementari o perché li abbiamo già affrontati in passato, basandoci sull'esperienza.</p>
+                    <ul class="space-y-3 text-slate-400 text-sm">
+                        <li class="flex gap-3"><i class="fas fa-pizza-slice text-emerald-500 mt-1"></i> Ripartire il costo di una pizzata tra amici.</li>
+                        <li class="flex gap-3"><i class="fas fa-film text-emerald-500 mt-1"></i> Scegliere un film per la serata.</li>
+                        <li class="flex gap-3"><i class="fas fa-book text-emerald-500 mt-1"></i> Mettere in ordine gli appunti scolastici.</li>
+                    </ul>
+                </div>
+                
+                <div class="anim-slide-right delay-300 glass-card border-t-4 border-brand-alert">
+                    <div class="flex items-center gap-4 mb-6 text-brand-alert text-3xl">
+                        <i class="fas fa-times-circle"></i>
+                        <h3 class="text-2xl font-bold text-white">Problemi Complessi o Impossibili</h3>
+                    </div>
+                    <p class="text-slate-300 font-light mb-6">La ricerca della soluzione è difficile. Spesso mancano dati, conoscenze o la natura stessa della situazione la rende un enigma.</p>
+                    <ul class="space-y-3 text-slate-400 text-sm">
+                        <li class="flex gap-3"><i class="fas fa-space-shuttle text-brand-alert mt-1"></i> Calcolare la distanza esatta Terra-Sole.</li>
+                        <li class="flex gap-3"><i class="fas fa-sort-alpha-down text-brand-alert mt-1"></i> Ordinare alfabeticamente tutti gli abitanti di Pechino.</li>
+                        <li class="flex gap-3"><i class="fas fa-egg text-brand-alert mt-1"></i> Determinare se è nato prima l'uovo o la gallina.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Il Processo di Soluzione -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-5xl font-bold mb-16 tracking-tight">Dall'Ostacolo alla Soluzione</h2>
+            
+            <div class="flex flex-col md:flex-row justify-center items-center gap-6">
+                <div class="anim-scale-in delay-100 flex flex-col items-center w-64 flow-arrow md:pr-8">
+                    <div class="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-600 flex items-center justify-center text-4xl text-slate-400 mb-6">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">1. Il Problema</h3>
+                    <p class="text-sm text-slate-400 font-light">La situazione iniziale complessa e ricca di incognite da affrontare.</p>
+                </div>
+                
+                <div class="anim-scale-in delay-200 flex flex-col items-center w-64 flow-arrow md:pr-8">
+                    <div class="w-24 h-24 rounded-full bg-brand-orange/20 border-2 border-brand-orange text-brand-orange flex items-center justify-center text-4xl mb-6 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">2. L'Analisi</h3>
+                    <p class="text-sm text-slate-400 font-light">Comprensione profonda della situazione, individuazione di vincoli e risorse.</p>
+                </div>
+                
+                <div class="anim-scale-in delay-300 flex flex-col items-center w-64 flow-arrow md:pr-8">
+                    <div class="w-24 h-24 rounded-full bg-brand-purple/20 border-2 border-brand-purple text-brand-purple flex items-center justify-center text-4xl mb-6 shadow-[0_0_20px_rgba(139,92,246,0.2)]">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">3. La Strategia</h3>
+                    <p class="text-sm text-slate-400 font-light">Individuazione dell'idea (criterio risolutivo) per superare l'ostacolo.</p>
+                </div>
+
+                <div class="anim-scale-in delay-400 flex flex-col items-center w-64">
+                    <div class="w-24 h-24 rounded-full bg-brand-accent/20 border-2 border-brand-accent text-brand-accent flex items-center justify-center text-4xl mb-6 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">4. La Soluzione</h3>
+                    <p class="text-sm text-slate-400 font-light">L'insieme ordinato delle operazioni (istruzioni) per raggiungere l'obiettivo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Il Contadino, il Lupo... (Intro) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <div class="anim-fade-up text-brand-orange uppercase tracking-widest font-bold text-sm mb-4">Caso di Studio</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-bold mb-12 tracking-tight">Il Contadino, il Lupo, la Capra e il Cavolo</h2>
+            
+            <div class="anim-scale-in delay-200 glass-card p-10 border-t-4 border-slate-500 mb-12 text-left">
+                <div class="flex items-start gap-6">
+                    <i class="fas fa-water text-5xl text-blue-400 mt-2"></i>
+                    <p class="text-xl text-slate-200 font-light leading-relaxed">
+                        Sulla riva di un fiume ci sono un <strong>contadino</strong>, un <strong>lupo</strong>, una <strong>capra</strong> e un <strong>cavolo</strong>. Devono attraversare il fiume con una piccola barca. Su di essa è possibile portare <strong>soltanto due cose</strong> alla volta (il contadino che rema + un passeggero).
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-12 text-6xl">
+                <div class="anim-fade-up delay-300 flex flex-col items-center gap-4 text-slate-300">
+                    <i class="fas fa-user-tie"></i><span class="text-sm uppercase tracking-widest font-bold text-slate-500">Contadino</span>
+                </div>
+                <div class="anim-fade-up delay-400 flex flex-col items-center gap-4 text-slate-300">
+                    <i class="fas fa-dog"></i><span class="text-sm uppercase tracking-widest font-bold text-slate-500">Lupo</span>
+                </div>
+                <div class="anim-fade-up delay-500 flex flex-col items-center gap-4 text-slate-300">
+                    <i class="fas fa-horse-head"></i><span class="text-sm uppercase tracking-widest font-bold text-slate-500">Capra</span>
+                </div>
+                <div class="anim-fade-up delay-600 flex flex-col items-center gap-4 text-slate-300">
+                    <i class="fas fa-leaf"></i><span class="text-sm uppercase tracking-widest font-bold text-slate-500">Cavolo</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Il Contadino (Analisi e Vincoli) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-10 text-center">Analisi e Riformulazione del Problema</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="anim-slide-right delay-100 glass-card border-l-8 border-brand-accent">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-bullseye text-brand-accent"></i> L'Obiettivo (Goal)
+                    </h3>
+                    <p class="text-lg text-slate-300 font-light">
+                        Traghettare il contadino e le "tre cose" intatte dalla riva di partenza alla riva opposta del fiume.
+                    </p>
+                </div>
+
+                <div class="anim-slide-right delay-200 glass-card border-l-8 border-brand-orange">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-anchor text-brand-orange"></i> I Vincoli Fisici
+                    </h3>
+                    <p class="text-lg text-slate-300 font-light">
+                        Limite della barca: si possono portare al massimo <strong>due entità alla volta</strong> (necessariamente il contadino per remare + uno tra lupo, capra o cavolo).
+                    </p>
+                </div>
+
+                <div class="anim-fade-up delay-300 md:col-span-2 glass-card border-l-8 border-brand-alert bg-brand-alert/5">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-exclamation-triangle text-brand-alert"></i> I Vincoli Logici (Pericolo)
+                    </h3>
+                    <p class="text-slate-300 mb-4 font-light">Bisogna prestare assoluta attenzione a chi viene lasciato incustodito sulla riva, in quanto:</p>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="flex-1 bg-slate-900/80 p-5 rounded-lg border border-brand-alert/30 flex items-center gap-4">
+                            <div class="text-3xl text-slate-400"><i class="fas fa-dog"></i> + <i class="fas fa-horse-head"></i></div>
+                            <div>
+                                <h4 class="font-bold text-brand-alert">Lupo e Capra</h4>
+                                <p class="text-sm text-slate-400">Il lupo divora la capra.</p>
+                            </div>
+                        </div>
+                        <div class="flex-1 bg-slate-900/80 p-5 rounded-lg border border-brand-alert/30 flex items-center gap-4">
+                            <div class="text-3xl text-slate-400"><i class="fas fa-horse-head"></i> + <i class="fas fa-leaf"></i></div>
+                            <div>
+                                <h4 class="font-bold text-brand-alert">Capra e Cavolo</h4>
+                                <p class="text-sm text-slate-400">La capra mangia il cavolo.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Il Contadino (La Soluzione) -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-8 text-center">La Ricerca della Soluzione</h2>
+            <p class="anim-fade-up delay-100 text-lg text-slate-300 text-center mb-12 max-w-4xl mx-auto font-light">
+                Il compito è "suggerire" al contadino le istruzioni risolutive: indicargli <strong>l'esatta sequenza delle operazioni</strong> da compiere senza infrangere i vincoli.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="anim-scale-in delay-200">
+                    <div class="code-block space-y-4 shadow-[0_0_30px_rgba(59,130,246,0.1)] border-brand-primary/30">
+                        <div class="text-brand-primary text-xs uppercase tracking-widest font-bold mb-2">// Sequenza Risolutiva</div>
+                        <div class="flex gap-4"><span class="text-slate-500">1.</span> <span class="text-white">Porta la <span class="text-brand-accent font-bold">Capra</span> (Lupo e Cavolo sono salvi)</span></div>
+                        <div class="flex gap-4"><span class="text-slate-500">2.</span> <span class="text-white">Torna <span class="text-slate-400 italic">da solo</span></span></div>
+                        <div class="flex gap-4"><span class="text-slate-500">3.</span> <span class="text-white">Porta il <span class="text-brand-orange font-bold">Lupo</span></span></div>
+                        <div class="flex gap-4"><span class="text-slate-500">4.</span> <span class="text-white">Riporta indietro la <span class="text-brand-accent font-bold">Capra</span> (Cruciale!)</span></div>
+                        <div class="flex gap-4"><span class="text-slate-500">5.</span> <span class="text-white">Porta il <span class="text-emerald-400 font-bold">Cavolo</span> (Il Lupo non lo mangia)</span></div>
+                        <div class="flex gap-4"><span class="text-slate-500">6.</span> <span class="text-white">Torna <span class="text-slate-400 italic">da solo</span></span></div>
+                        <div class="flex gap-4"><span class="text-slate-500">7.</span> <span class="text-white">Porta la <span class="text-brand-accent font-bold">Capra</span></span></div>
+                        <div class="text-brand-accent text-xs uppercase tracking-widest font-bold mt-4 pt-4 border-t border-slate-700">// Obiettivo Raggiunto</div>
+                    </div>
+                </div>
+
+                <div class="anim-fade-up delay-300 glass-card">
+                    <h3 class="text-2xl font-bold text-white mb-4">L'importanza della Chiarezza</h3>
+                    <p class="text-slate-300 font-light leading-relaxed mb-6">
+                        È fondamentale che <strong>chi deve eseguire</strong> la procedura (l'esecutore) la possa comprendere senza possibilità di errore.
+                    </p>
+                    <div class="bg-slate-800/80 p-5 rounded-lg border-l-4 border-purple-500 text-sm text-slate-400">
+                        <i class="fas fa-language text-purple-400 mr-2"></i> <strong>Rappresentazione Grafica:</strong> Spesso si usano disegni per descrivere la soluzione, svincolandola da barriere linguistiche o di alfabetizzazione dell'esecutore.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Cos'è un Algoritmo? -->
+    <div class="slide">
+        <div class="max-w-4xl mx-auto w-full text-center">
+            <div class="anim-scale-in inline-flex items-center justify-center w-24 h-24 rounded-full bg-brand-primary/20 border-2 border-brand-primary text-brand-primary text-4xl mb-8">
+                <i class="fas fa-sitemap"></i>
+            </div>
+            <h2 class="anim-fade-up delay-100 text-6xl font-black mb-10 tracking-tight">Il Concetto di Algoritmo</h2>
+            
+            <div class="anim-fade-up delay-200 p-10 glass-card border-2 border-brand-primary/50 mb-12 shadow-[0_0_40px_rgba(59,130,246,0.15)] relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 opacity-5 text-[12rem]"><i class="fas fa-quote-right"></i></div>
+                <p class="text-3xl font-light leading-relaxed text-white relative z-10 italic">
+                    "L'algoritmo è una sequenza ordinata di passi semplici che hanno lo scopo di portare a termine un compito a volte complesso."
+                </p>
+            </div>
+
+            <p class="anim-fade-up delay-300 text-xl text-slate-300 font-light max-w-3xl mx-auto">
+                Una volta scoperta l'idea per risolvere il problema (la strategia risolutiva), bisogna "scrivere" le singole istruzioni che l'esecutore deve compiere, in rigida sequenza, una dopo l'altra.
+            </p>
+        </div>
+    </div>
+
+    <!-- Slide 8: L'Origine del Termine -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-12 text-center">Da dove viene il termine "Algoritmo"?</h2>
+            
+            <div class="flex flex-col md:flex-row items-center gap-12 bg-slate-900/60 rounded-3xl p-10 border border-slate-700/50 shadow-2xl">
+                <div class="anim-scale-in delay-100 w-48 h-48 shrink-0 rounded-full border-4 border-brand-orange/50 flex items-center justify-center bg-slate-800 text-brand-orange text-6xl overflow-hidden relative shadow-[0_0_30px_rgba(249,115,22,0.2)]">
+                    <i class="fas fa-mosque absolute bottom-4 opacity-20 text-8xl"></i>
+                    <i class="fas fa-book-open relative z-10"></i>
+                </div>
+                
+                <div class="anim-fade-up delay-200">
+                    <h3 class="text-4xl font-black text-white mb-4">al-Khwarizmi</h3>
+                    <p class="text-brand-orange font-bold uppercase tracking-widest text-sm mb-6">Matematico Arabo (IX Secolo d.C.)</p>
+                    <p class="text-lg text-slate-300 font-light leading-relaxed mb-6">
+                        Il termine "algoritmo" è una deformazione latina (<i>algorithmi</i>) del nome di questo celebre studioso persiano. 
+                    </p>
+                    <div class="bg-slate-800 p-5 rounded-xl border-l-4 border-brand-orange text-sm text-slate-400">
+                        È ritenuto l'ideatore del procedimento sistematico che consente di effettuare il <strong>calcolo della moltiplicazione</strong> tra due numeri mediante la disposizione a cifre incolonnate (lo stesso algoritmo che impariamo e usiamo ancora oggi a scuola).
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Esempi di Algoritmi -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-12 text-center tracking-tight">Esempi di Algoritmi</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="anim-slide-right delay-100 glass-card border-t-4 border-blue-500">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl"><i class="fas fa-tint"></i></div>
+                        <h3 class="text-2xl font-bold text-white">Problema di Logica</h3>
+                    </div>
+                    <p class="text-slate-300 text-sm mb-6 font-light">
+                        Un agricoltore deve diluire fertilizzante in 20 litri d'acqua. Ha un annaffiatoio (capacità 25L) contenente 16L d'acqua, e due contenitori vuoti da 5L e 3L.
+                    </p>
+                    <div class="p-4 bg-slate-900 rounded-lg text-sm text-slate-400 border border-slate-700 italic">
+                        L'algoritmo è la sequenza precisa di travasi per ottenere esattamente i 4L mancanti nell'annaffiatoio.
+                    </div>
+                </div>
+
+                <div class="anim-slide-right delay-200 glass-card border-t-4 border-emerald-500">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl"><i class="fas fa-utensils"></i></div>
+                        <h3 class="text-2xl font-bold text-white">Vita Quotidiana</h3>
+                    </div>
+                    <p class="text-slate-300 text-sm mb-6 font-light">
+                        La preparazione e cottura di una <strong>pizza margherita</strong>. Partendo dagli ingredienti di base.
+                    </p>
+                    <div class="p-4 bg-slate-900 rounded-lg text-sm text-slate-400 border border-slate-700 italic">
+                        Una ricetta culinaria è a tutti gli effetti un algoritmo: descrive passo dopo passo, in sequenza, le operazioni da eseguire per ottenere il risultato desiderato.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Comunicare l'Algoritmo & Pseudocodifica -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-8 text-center">La Descrizione dell'Algoritmo</h2>
+            <p class="anim-fade-up delay-100 text-lg text-slate-300 text-center mb-12 max-w-3xl mx-auto font-light">
+                L'algoritmo deve essere descritto in modo chiaro, in un linguaggio comprensibile per il suo esecutore.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="anim-scale-in delay-200">
+                    <h3 class="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-2">La Pseudocodifica</h3>
+                    <p class="text-slate-300 font-light mb-6">
+                        È la descrizione di un algoritmo in <strong>linguaggio naturale</strong> (la lingua che parliamo), strutturata in passi formali. Adatta quando l'esecutore è un essere umano.
+                    </p>
+                    
+                    <div class="code-block text-sm leading-relaxed">
+                        <div class="text-slate-500 mb-2">// Inviare un messaggio col cellulare</div>
+                        <div class="text-white"><span class="text-blue-400">1.</span> Accendi il telefono</div>
+                        <div class="text-white"><span class="text-blue-400">2.</span> Seleziona l'app opportuna</div>
+                        <div class="text-brand-accent mt-2"><span class="text-blue-400">3.</span> Se (numero è in agenda) allora:</div>
+                        <div class="text-white pl-6"><span class="text-blue-400">4.</span> Seleziona il nome dalla rubrica</div>
+                        <div class="text-brand-orange mt-2"><span class="text-blue-400">5.</span> Altrimenti:</div>
+                        <div class="text-white pl-6"><span class="text-blue-400">6.</span> Digita il numero sulla tastiera</div>
+                        <div class="text-white mt-2"><span class="text-blue-400">7.</span> Compila il messaggio</div>
+                        <div class="text-white"><span class="text-blue-400">8.</span> Clicca sull'icona &lt;invio&gt;</div>
+                    </div>
+                </div>
+
+                <div class="anim-fade-up delay-300 flex flex-col justify-center">
+                    <div class="glass-card border-l-4 border-purple-500 mb-6">
+                        <h4 class="font-bold text-white mb-2"><i class="fas fa-layer-group text-purple-400 mr-2"></i>Generalità</h4>
+                        <p class="text-sm text-slate-300 font-light">L'algoritmo deve contemplare tutte le possibili situazioni (es. numero in agenda VS numero nuovo), non un singolo caso specifico.</p>
+                    </div>
+                    <div class="glass-card border-l-4 border-emerald-500">
+                        <h4 class="font-bold text-white mb-2"><i class="fas fa-route text-emerald-400 mr-2"></i>Non Univocità</h4>
+                        <p class="text-sm text-slate-300 font-light">Possiamo descrivere la procedura con parole diverse o raggruppare istruzioni in modi diversi, pur mantenendone la correttezza logica.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Il Problema del Linguaggio (Uomo vs Macchina) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-4xl font-bold mb-16 tracking-tight">Uomo vs Macchina: Il Gap Linguistico</h2>
+            
+            <div class="flex flex-col md:flex-row items-center justify-between gap-8 mb-16 relative">
+                <!-- Linea di connessione interrotta -->
+                <div class="hidden md:block absolute top-1/2 left-1/4 right-1/4 h-1 bg-slate-700 transform -translate-y-1/2 z-0"></div>
+                <div class="hidden md:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-brand-alert text-white px-3 py-1 rounded-full text-xs font-bold z-10"><i class="fas fa-times mr-1"></i> Incompatibile</div>
+
+                <div class="anim-slide-right delay-100 glass-card w-full md:w-1/3 relative z-10 border-t-4 border-blue-500">
+                    <i class="fas fa-user text-5xl text-blue-400 mb-6 block"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Umano</h3>
+                    <p class="text-sm text-slate-300 mb-4 font-light">Comprende il <strong>Linguaggio Naturale</strong> (Pseudocodifica). Discorsivo, ambiguo, complesso.</p>
+                </div>
+                
+                <div class="anim-scale-in delay-200 glass-card w-full md:w-1/3 relative z-10 border-t-4 border-emerald-500 bg-slate-900">
+                    <i class="fas fa-microchip text-5xl text-emerald-400 mb-6 block"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Macchina (CPU)</h3>
+                    <p class="text-sm text-slate-300 font-light">Comprende solo <strong>Codice Binario</strong> (0 e 1). Rigido, elementare (basso livello).</p>
+                    <div class="mt-4 font-mono text-xs text-emerald-500 break-all opacity-50">10110010 00101111...</div>
+                </div>
+            </div>
+
+            <p class="anim-fade-up delay-300 text-xl text-slate-300 font-light max-w-3xl mx-auto">
+                Tutti i dispositivi (PC, smartphone, lavatrici, automobili) hanno un microprocessore interno. Gli esseri umani faticano enormemente a scrivere direttamente in binario. Serviva un <span class="text-white font-bold">ponte</span>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Slide 12: La Nascita dei Linguaggi -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-12 text-center">La Nascita dei Linguaggi di Programmazione</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center items-stretch">
+                <div class="anim-fade-up delay-100 glass-card flex flex-col items-center">
+                    <div class="w-16 h-16 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-2xl text-slate-500 mb-6"><i class="fas fa-history"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-4">La Preistoria</h3>
+                    <p class="text-sm text-slate-400 font-light leading-relaxed">
+                        Inizialmente si programmava direttamente in binario. Processo lento, prono ad errori, consistente nel tradurre manualmente algoritmi in sequenze di zeri e uno.
+                    </p>
+                </div>
+
+                <div class="anim-scale-in delay-200 glass-card border-brand-primary flex flex-col items-center shadow-[0_0_30px_rgba(59,130,246,0.1)]">
+                    <div class="w-16 h-16 rounded-full bg-brand-primary/20 text-brand-primary border border-brand-primary/50 flex items-center justify-center text-2xl mb-6"><i class="fas fa-code"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-4">Alto Livello</h3>
+                    <p class="text-sm text-slate-300 font-light leading-relaxed">
+                        Anni '50: nascono linguaggi "vicini all'uomo". Comprendono poche parole chiave, perlopiù in inglese, governate da una sintassi rigorosa e schematizzata per non creare ambiguità.
+                    </p>
+                </div>
+
+                <div class="anim-fade-up delay-300 glass-card flex flex-col items-center">
+                    <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 flex items-center justify-center text-2xl mb-6"><i class="fas fa-cogs"></i></div>
+                    <h3 class="text-xl font-bold text-white mb-4">Il Compilatore</h3>
+                    <p class="text-sm text-slate-300 font-light leading-relaxed">
+                        Il programma magico: traduce in automatico il codice ad alto livello scritto dal programmatore nel codice binario finale comprensibile dalla CPU (Codice Eseguibile).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 13: Linguaggi Storici -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-4xl font-bold mb-16 tracking-tight">I Pionieri dell'Alto Livello</h2>
+            
+            <div class="flex flex-col md:flex-row gap-10 text-left">
+                <div class="anim-slide-right delay-100 flex-1 glass-card border-t-8 border-purple-500 relative overflow-hidden">
+                    <i class="fas fa-graduation-cap absolute -right-6 -bottom-6 text-9xl text-purple-500/10"></i>
+                    <h3 class="text-4xl font-black text-white mb-2 relative z-10">Pascal</h3>
+                    <div class="text-purple-400 font-bold mb-6 text-sm tracking-widest relative z-10">1968 • Prof. N. Wirth (Zurigo)</div>
+                    <p class="text-slate-300 font-light leading-relaxed relative z-10">
+                        Progettato principalmente a scopo didattico, costringeva a scrivere codice ordinato e strutturato. È stato per anni il linguaggio più utilizzato per affrontare lo studio della programmazione nelle scuole.
+                    </p>
+                </div>
+                
+                <div class="anim-slide-right delay-200 flex-1 glass-card border-t-8 border-blue-500 relative overflow-hidden">
+                    <i class="fas fa-terminal absolute -right-6 -bottom-6 text-9xl text-blue-500/10"></i>
+                    <h3 class="text-4xl font-black text-white mb-2 relative z-10">C</h3>
+                    <div class="text-blue-400 font-bold mb-6 text-sm tracking-widest relative z-10">Anni '70 • Dennis Ritchie</div>
+                    <p class="text-slate-300 font-light leading-relaxed relative z-10">
+                        Creato per sviluppare i primi sistemi operativi (Unix). Estremamente potente e performante. La sua sintassi è alla base della maggior parte dei linguaggi moderni (C++, Java, PHP).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 14: Il Flusso di Programmazione -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-4xl font-bold mb-16 tracking-tight">Il Flusso di Sviluppo Moderno</h2>
+            
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-sm font-bold">
+                <div class="anim-scale-in delay-100 flex flex-col items-center">
+                    <div class="w-32 h-32 rounded-2xl bg-slate-800 border border-slate-600 flex flex-col items-center justify-center text-slate-300 mb-4 shadow-lg">
+                        <i class="fas fa-sitemap text-3xl mb-2"></i>
+                        <span>Algoritmo</span>
+                    </div>
+                    <span class="text-slate-500 font-light text-xs">Linguaggio Naturale</span>
+                </div>
+                
+                <i class="fas fa-arrow-right text-2xl text-slate-600 anim-fade-up delay-200 hidden md:block"></i>
+
+                <div class="anim-scale-in delay-300 flex flex-col items-center">
+                    <div class="w-32 h-32 rounded-2xl bg-brand-primary/20 border border-brand-primary flex flex-col items-center justify-center text-brand-primary mb-4 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                        <i class="fas fa-code text-3xl mb-2"></i>
+                        <span>Sorgente</span>
+                    </div>
+                    <span class="text-brand-primary/70 font-light text-xs">Ling. Programmazione</span>
+                </div>
+
+                <i class="fas fa-arrow-right text-2xl text-slate-600 anim-fade-up delay-400 hidden md:block"></i>
+
+                <div class="anim-scale-in delay-500 flex flex-col items-center">
+                    <div class="w-32 h-32 rounded-2xl bg-emerald-500/20 border border-emerald-500 flex flex-col items-center justify-center text-emerald-400 mb-4 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                        <i class="fas fa-cogs text-3xl mb-2"></i>
+                        <span>Compilatore</span>
+                    </div>
+                    <span class="text-emerald-500/70 font-light text-xs">Analisi sintattica/Traduzione</span>
+                </div>
+
+                <i class="fas fa-arrow-right text-2xl text-slate-600 anim-fade-up delay-600 hidden md:block"></i>
+
+                <div class="anim-scale-in delay-700 flex flex-col items-center">
+                    <div class="w-32 h-32 rounded-2xl bg-slate-900 border-2 border-slate-500 flex flex-col items-center justify-center text-white mb-4 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                        <i class="fas fa-microchip text-3xl mb-2 text-slate-400"></i>
+                        <span>Eseguibile</span>
+                    </div>
+                    <span class="text-slate-400 font-light text-xs">Codice Binario / Macchina</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 15: Oltre 2500 Linguaggi -->
+    <div class="slide">
+        <div class="max-w-4xl mx-auto w-full text-center">
+            <h2 class="anim-fade-up text-4xl font-bold mb-8">Un ecosistema in espansione</h2>
+            
+            <div class="anim-scale-in delay-100 my-12 relative">
+                <div class="text-[12rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-purple-500 to-brand-accent leading-none filter drop-shadow-[0_0_30px_rgba(139,92,246,0.3)]">
+                    2500+
+                </div>
+                <div class="text-2xl font-bold uppercase tracking-widest text-slate-300 mt-2">Linguaggi Esistenti</div>
+            </div>
+
+            <p class="anim-fade-up delay-200 text-xl text-slate-300 font-light leading-relaxed">
+                Perché così tanti? La proliferazione è giustificata da necessità oggettive di specializzazione, dall'innovazione tecnologica (Web, Mobile, AI, Cloud) che richiedono strumenti, paradigmi e istruzioni sempre più sofisticate per sviluppare applicazioni complesse in modo agevole.
+            </p>
+        </div>
+    </div>
+
+    <!-- Slide 16: Sintesi Finale (1/2) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-12 text-brand-primary"><i class="fas fa-clipboard-check mr-4 text-white"></i>Abbiamo imparato che (1/2)</h2>
+            
+            <div class="space-y-6">
+                <div class="anim-slide-right delay-100 glass-card p-6 flex gap-6 items-center">
+                    <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-2xl text-blue-400 shrink-0"><i class="fas fa-search"></i></div>
+                    <p class="text-lg text-slate-200 font-light">
+                        Per scrivere un programma, si <strong>analizza il problema</strong> scomponendo situazioni complesse in elementi riconoscibili e gestibili, per individuare una strategia.
+                    </p>
+                </div>
+                
+                <div class="anim-slide-right delay-200 glass-card p-6 flex gap-6 items-center border-l-4 border-brand-primary">
+                    <div class="w-14 h-14 rounded-full bg-brand-primary/20 flex items-center justify-center text-2xl text-brand-primary shrink-0"><i class="fas fa-sitemap"></i></div>
+                    <p class="text-lg text-white">
+                        L'<strong>algoritmo</strong> è una sequenza ordinata di passi semplici che hanno lo scopo di portare a termine un compito complesso, descrivendo le operazioni risolutive.
+                    </p>
+                </div>
+                
+                <div class="anim-slide-right delay-300 glass-card p-6 flex gap-6 items-center">
+                    <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-2xl text-blue-400 shrink-0"><i class="fas fa-language"></i></div>
+                    <p class="text-lg text-slate-200 font-light">
+                        La descrizione a parole (linguaggio naturale) di un algoritmo prende il nome di <strong>pseudocodifica</strong>, adatta per esecutori umani ma non per le macchine.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 17: Sintesi Finale (2/2) -->
+    <div class="slide">
+        <div class="max-w-5xl mx-auto w-full">
+            <h2 class="anim-fade-up text-4xl font-bold mb-12 text-emerald-400"><i class="fas fa-clipboard-check mr-4 text-white"></i>Abbiamo imparato che (2/2)</h2>
+            
+            <div class="space-y-6">
+                <div class="anim-slide-right delay-100 glass-card p-6 flex gap-6 items-center border-l-4 border-emerald-500">
+                    <div class="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center text-2xl text-emerald-400 shrink-0"><i class="fas fa-code"></i></div>
+                    <p class="text-lg text-white">
+                        Il programmatore codifica l'algoritmo usando un <strong>Linguaggio di Programmazione ad Alto Livello</strong> (formale, rigoroso, con proprie regole sintattiche).
+                    </p>
+                </div>
+                
+                <div class="anim-slide-right delay-200 glass-card p-6 flex gap-6 items-center">
+                    <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-2xl text-emerald-400 shrink-0"><i class="fas fa-cogs"></i></div>
+                    <p class="text-lg text-slate-200 font-light">
+                        Il <strong>Compilatore</strong> traduce le istruzioni ad alto livello in Codice Binario (eseguibile), l'unico comprensibile e processabile dalla CPU.
+                    </p>
+                </div>
+                
+                <div class="anim-slide-right delay-300 glass-card p-6 flex gap-6 items-center">
+                    <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-2xl text-emerald-400 shrink-0"><i class="fas fa-globe"></i></div>
+                    <p class="text-lg text-slate-200 font-light">
+                        Esistono <strong>molteplici linguaggi</strong> di programmazione, creati e differenziati in base alla filosofia adottata, complessità e specifico settore di applicazione.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 18: Conclusione -->
+    <div class="slide">
+        <div class="max-w-4xl mx-auto text-center flex flex-col justify-center items-center h-full">
+            <div class="anim-scale-in w-32 h-32 rounded-full bg-brand-primary/20 border-4 border-brand-primary/50 flex items-center justify-center text-6xl text-brand-primary mb-10 shadow-[0_0_50px_rgba(59,130,246,0.3)]">
+                <i class="fas fa-check"></i>
+            </div>
+            <h1 class="anim-fade-up delay-100 text-6xl font-black mb-6 text-white tracking-tight">Argomento Completato</h1>
+            <p class="anim-fade-up delay-200 text-2xl text-slate-400 mb-12 font-light">Hai appreso i concetti di problem solving, algoritmo e programmazione formale.</p>
+            <div class="anim-fade-up delay-300">
+               <button onclick="goToSlide(0)" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold rounded-xl transition-all shadow-lg flex items-center gap-3 text-lg">
+                   <i class="fas fa-redo"></i> Torna all'inizio
+               </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FINE SLIDE -->
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        function updateUI() {
+            // Update Progress Bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // Update Counter
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function triggerAnimations(slideIndex) {
+            const current = slides[slideIndex];
+            
+            // Trova gli elementi animati nella slide corrente
+            const animElements = current.querySelectorAll('.anim-fade-up, .anim-scale-in, .anim-slide-right');
+            
+            // Rimuovi classe show per resettare animazione
+            animElements.forEach(el => el.classList.remove('show'));
+            
+            // Forza il reflow
+            void current.offsetWidth; 
+            
+            // Applica show con leggero ritardo per innescare CSS
+            setTimeout(() => {
+                animElements.forEach(el => el.classList.add('show'));
+            }, 50);
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            if (index === currentSlide && document.querySelector('.slide.active')) return;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            currentSlide = index;
+            updateUI();
+            triggerAnimations(currentSlide);
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        function goToSlide(index) { showSlide(index); }
+
+        // Navigazione Tastiera
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Inizializzazione all'avvio
+        window.onload = () => {
+            updateUI();
+            triggerAnimations(currentSlide);
+        };
+    </script>
+</body>
+</html>
