@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Basi del C++: Riga per Riga</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Nunito:wght@700;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Nunito', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        brand: { dark: '#0f172a', primary: '#3b82f6', accent: '#10b981', alert: '#f43f5e', purple: '#8b5cf6', orange: '#f97316' },
+                        /* Colori stile VS Code per il codice */
+                        code: { bg: '#1e1e1e', keyword: '#c586c0', type: '#569cd6', func: '#dcdcaa', str: '#ce9178', comment: '#6a9955', num: '#b5cea8', var: '#9cdcfe' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; user-select: none; }
+        
+        /* Gestione Slide */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.6s ease-in-out, visibility 0.6s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 4rem 8%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #090e17);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* Animazioni a cascata */
+        .anim-fade-up { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-scale-in { opacity: 0; transform: scale(0.9); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-slide-right { opacity: 0; transform: translateX(-40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .slide.active .anim-fade-up.show { opacity: 1; transform: translateY(0); }
+        .slide.active .anim-scale-in.show { opacity: 1; transform: scale(1); }
+        .slide.active .anim-slide-right.show { opacity: 1; transform: translateX(0); }
+        
+        /* Ritardi */
+        .delay-100 { transition-delay: 0.1s; }
+        .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; }
+        .delay-400 { transition-delay: 0.4s; }
+        .delay-500 { transition-delay: 0.5s; }
+
+        /* Progress e Controlli */
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); z-index: 50; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981); width: 0%; transition: width 0.5s ease-out; }
+        #slide-counter { position: absolute; bottom: 20px; right: 30px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #64748b; letter-spacing: 2px; }
+        
+        /* Componenti UI */
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5rem; padding: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .level-badge { display: inline-block; background: rgba(255, 255, 255, 0.1); padding: 0.3rem 1.2rem; border-radius: 2rem; font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 1rem; text-transform: uppercase; }
+        
+        /* Finestra IDE/Codice */
+        .ide-window { background: #1e1e1e; border-radius: 1rem; border: 1px solid #333; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
+        .ide-header { background: #2d2d2d; padding: 0.75rem 1.5rem; display: flex; gap: 0.5rem; align-items: center; border-bottom: 1px solid #111; }
+        .ide-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .ide-dot.red { background: #ff5f56; } .ide-dot.yellow { background: #ffbd2e; } .ide-dot.green { background: #27c93f; }
+        .ide-content { padding: 2rem; font-family: 'Fira Code', monospace; font-size: 1.2rem; line-height: 1.8; color: #d4d4d4; }
+        
+        /* Finestra Terminale */
+        .terminal-window { background: #000; border-radius: 1rem; border: 2px solid #333; padding: 1.5rem; font-family: 'Fira Code', monospace; color: #10b981; position: relative; min-height: 120px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Elementi Interattivi */
+        .logic-btn { background: #1e293b; border: 2px solid #334155; color: #e2e8f0; padding: 1rem 1.5rem; border-radius: 1rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; box-shadow: 0 4px 0 #0f172a; }
+        .logic-btn:hover:not(:disabled) { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 0 #0f172a; }
+        .logic-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 #0f172a; }
+        .logic-btn.success { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; box-shadow: 0 0 0 #0f172a; transform: translateY(4px); cursor: default; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+        .error-shake { animation: shake 0.4s both; border-color: #f43f5e !important; background: rgba(244, 63, 94, 0.1) !important; color: #f43f5e !important; }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .anim-pop { animation: pop 0.4s forwards; }
+
+        .btn-glow { background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; padding: 1.2rem 3rem; border-radius: 3rem; font-family: 'Nunito', sans-serif; font-size: 1.3rem; font-weight: 900; color: white; cursor: pointer; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; }
+        .btn-glow:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6); }
+    </style>
+</head>
+<body>
+
+    <!-- Controlli Nascosti (Frecce Tastiera consigliate) -->
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="slide-counter">1 / X</div>
+
+    <!-- Slide 1: Copertina -->
+    <div class="slide active">
+        <div class="max-w-5xl mx-auto text-center">
+            <div class="anim-fade-up show inline-flex items-center gap-3 px-5 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold tracking-widest uppercase mb-10 text-sm shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                <i class="fas fa-terminal"></i> Introduzione al C++
+            </div>
+            <h1 class="anim-fade-up show delay-100 text-7xl font-display font-black mb-8 text-white leading-tight tracking-tight">
+                Le Basi del <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Codice</span>
+            </h1>
+            <div class="anim-fade-up show delay-200 glass-card !bg-slate-900/50 border-l-4 border-l-blue-500 !p-8 max-w-3xl mx-auto mb-12 text-left">
+                <p class="text-2xl text-slate-300 font-light leading-relaxed italic">
+                    "Nessuna formula magica.<br>Nessun concetto dato per scontato.<br>
+                    <strong class="text-white">Smontiamo il codice riga per riga e impariamo a parlare con la macchina.</strong>"
+                </p>
+            </div>
+            <div class="anim-scale-in show delay-300 opacity-70 mt-8">
+                <span class="text-slate-400 font-semibold tracking-widest uppercase text-sm"><i class="fas fa-arrows-alt-h mr-2"></i> Usa le frecce per scorrere</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: Lo Scheletro -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <div class="anim-fade-up level-badge text-blue-400 border border-blue-400/30">Step 1</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-10 tracking-tight">Lo Scheletro (Il Motore)</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                <!-- Codice -->
+                <div class="anim-slide-right delay-200 ide-window">
+                    <div class="ide-header">
+                        <div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div>
+                        <span class="text-slate-400 text-sm ml-4">motore.cpp</span>
+                    </div>
+                    <div class="ide-content">
+                        <div class="text-code-comment mb-4">// Tutto inizia da qui:</div>
+                        <div><span class="text-code-type">int</span> <span class="text-code-func">main</span>() <span class="text-yellow-400">{</span></div>
+                        <br>
+                        <div class="pl-8 text-code-comment">// ... il tuo codice ...</div>
+                        <br>
+                        <div class="pl-8"><span class="text-code-keyword">return</span> <span class="text-code-num">0</span><span class="text-brand-alert">;</span></div>
+                        <div><span class="text-yellow-400">}</span></div>
+                    </div>
+                </div>
+                
+                <!-- Spiegazione -->
+                <div class="anim-fade-up delay-300 space-y-6">
+                    <div class="glass-card !p-5 border-l-4 border-purple-500">
+                        <h3 class="text-xl font-bold text-white mb-2"><code class="text-purple-400">main()</code> (La Stanza Principale)</h3>
+                        <p class="text-sm text-slate-300">Il computer non legge a caso. Cerca <strong>sempre</strong> la parola <code>main</code> e inizia a eseguire le istruzioni da lì. È il motore del programma.</p>
+                    </div>
+                    <div class="glass-card !p-5 border-l-4 border-yellow-500">
+                        <h3 class="text-xl font-bold text-white mb-2"><code class="text-yellow-400">{ }</code> Le Parentesi Graffe</h3>
+                        <p class="text-sm text-slate-300">Rappresentano i muri della stanza. Tutto ciò che sta tra <code>{</code> (inizio) e <code>}</code> (fine) appartiene al <code>main</code>.</p>
+                    </div>
+                    <div class="glass-card !p-5 border-l-4 border-emerald-500">
+                        <h3 class="text-xl font-bold text-white mb-2"><code class="text-code-keyword">return 0</code><code class="text-brand-alert">;</code></h3>
+                        <p class="text-sm text-slate-300">È il segnale di "Missione Compiuta". Dice al computer: <i>"Ho finito tutto e ci sono zero errori"</i>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Il Megafono e le Parole -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <div class="anim-fade-up level-badge text-brand-orange border border-brand-orange/30">Step 2</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-10 tracking-tight">Parlare allo Schermo</h2>
+            
+            <div class="anim-scale-in delay-200 ide-window mb-10">
+                <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">stampa.cpp</span></div>
+                <div class="ide-content !py-6">
+                    <span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span><br><br>
+                    <span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br>
+                    <span class="pl-8 text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-str">"Ciao Mondo!"</span><span class="text-brand-alert font-bold text-2xl">;</span><br>
+                    }
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="anim-fade-up delay-300 glass-card !p-6">
+                    <div class="text-3xl text-blue-400 mb-3"><i class="fas fa-book"></i> <code class="text-lg">#include</code></div>
+                    <h3 class="font-bold text-white mb-2">Il Dizionario</h3>
+                    <p class="text-sm text-slate-300">Il PC nasce senza parole. <code>&lt;iostream&gt;</code> gli insegna i comandi base per l'Input e l'Output (lo schermo e la tastiera).</p>
+                </div>
+                <div class="anim-fade-up delay-400 glass-card !p-6 border-t-4 border-brand-orange">
+                    <div class="text-3xl text-brand-orange mb-3"><i class="fas fa-bullhorn"></i> <code class="text-lg">cout &lt;&lt;</code></div>
+                    <h3 class="font-bold text-white mb-2">Il Megafono</h3>
+                    <p class="text-sm text-slate-300"><strong>C-Out</strong> (Character Output). Le doppie frecce <code>&lt;&lt;</code> indicano la direzione: stiamo spingendo il testo <strong>verso</strong> lo schermo.</p>
+                </div>
+                <div class="anim-fade-up delay-500 glass-card !p-6 border-t-4 border-brand-alert bg-brand-alert/10">
+                    <div class="text-3xl text-brand-alert mb-3 font-black">;</div>
+                    <h3 class="font-bold text-white mb-2">Il Punto e Virgola</h3>
+                    <p class="text-sm text-slate-300 font-bold">REGOLA D'ORO: <span class="font-normal">Ogni istruzione in C++ deve finire con il punto e virgola. Dimenticarlo = Esplosione.</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: INTERATTIVO - Assembla Hello World -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <div class="anim-fade-up level-badge text-emerald-400 border border-emerald-400/30">Sfida Interattiva 1</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-8 tracking-tight">Assembla "Hello World"</h2>
+            <p class="anim-fade-up delay-200 text-lg text-slate-300 mb-10 font-light">Il programma più famoso del mondo. <strong class="text-white">Clicca i blocchi nel corretto ordine logico e sintattico</strong> per farlo funzionare.</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <!-- Comandi da cliccare -->
+                <div class="flex flex-col gap-4" id="hw-buttons">
+                    <button class="logic-btn" data-val="2" onclick="buildHW(this)"><span class="font-mono text-code-type">int main() { ... }</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Lo Scheletro</span></button>
+                    <button class="logic-btn" data-val="4" onclick="buildHW(this)"><span class="font-mono text-brand-alert font-black text-2xl">;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Punto e Virgola</span></button>
+                    <button class="logic-btn" data-val="1" onclick="buildHW(this)"><span class="font-mono text-code-keyword">#include &lt;iostream&gt;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Dizionario</span></button>
+                    <button class="logic-btn" data-val="3" onclick="buildHW(this)"><span class="font-mono text-white">std::cout &lt;&lt; <span class="text-code-str">"Hello!"</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Comando</span></button>
+                </div>
+
+                <!-- IDE e Terminale -->
+                <div class="flex flex-col gap-6">
+                    <div class="ide-window h-48">
+                        <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">main.cpp</span></div>
+                        <div class="ide-content text-sm leading-loose" id="hw-code">
+                            <span class="text-slate-600 italic">// In attesa del codice...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="terminal-window">
+                        <div class="text-slate-500 text-xs uppercase tracking-widest mb-2 border-b border-slate-800 pb-2">Output Terminale</div>
+                        <div id="hw-terminal" class="text-2xl font-bold text-emerald-400"></div><span class="cursor-blink text-emerald-400 text-2xl">_</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Variabili in Codice -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <div class="anim-fade-up level-badge text-purple-400 border border-purple-400/30">Step 3</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-10 tracking-tight">Le Variabili in Sintassi</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div class="anim-slide-right delay-200">
+                    <div class="glass-card border-t-8 border-purple-500 text-center !p-10 relative">
+                        <i class="fas fa-box-open text-8xl text-purple-400 mb-6 drop-shadow-[0_0_20px_rgba(139,92,246,0.5)]"></i>
+                        <h3 class="text-2xl font-bold text-white mb-2">La Memoria</h3>
+                        <p class="text-slate-300 font-light">Per creare una "scatola" nel codice servono 3 cose: <strong>La Forma, L'Etichetta e l'Assegnazione (=)</strong>.</p>
+                    </div>
+                </div>
+                
+                <div class="anim-fade-up delay-300">
+                    <div class="ide-window mb-6">
+                        <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <div class="ide-content !py-6 text-center text-3xl font-black">
+                            <span class="text-code-type">int</span> <span class="text-code-var">vite</span> <span class="text-blue-400">=</span> <span class="text-code-num">3</span><span class="text-brand-alert">;</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-4">
+                        <li class="glass-card !p-4 flex gap-4 items-center"><span class="bg-slate-800 text-code-type font-mono font-bold px-3 py-1 rounded">int</span> <span class="text-slate-300 text-sm">La Forma: Solo numeri <strong class="text-white">Int</strong>eri (niente virgola).</span></li>
+                        <li class="glass-card !p-4 flex gap-4 items-center"><span class="bg-slate-800 text-code-var font-mono font-bold px-3 py-1 rounded">vite</span> <span class="text-slate-300 text-sm">L'Etichetta: Il nome che abbiamo inventato noi.</span></li>
+                        <li class="glass-card !p-4 flex gap-4 items-center"><span class="bg-blue-500/20 border border-blue-500 text-blue-400 font-mono font-bold px-3 py-1 rounded">= 3</span> <span class="text-slate-300 text-sm">Prendi il <strong class="text-white">3</strong> e sbattilo <strong>dentro</strong> la scatola.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: INTERATTIVO - Usa le Variabili -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full">
+            <div class="anim-fade-up level-badge text-emerald-400 border border-emerald-400/30">Sfida Interattiva 2</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-8 tracking-tight">Dichiara, Assegna, Stampa</h2>
+            <p class="anim-fade-up delay-200 text-lg text-slate-300 mb-10 font-light">Crea la variabile per il punteggio, inserisci il valore "100" e usa il megafono per stamparla sul terminale.</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <!-- Comandi da cliccare -->
+                <div class="flex flex-col gap-4" id="var-buttons">
+                    <button class="logic-btn" data-val="3" onclick="buildVar(this)"><span class="font-mono text-white">std::cout &lt;&lt; <span class="text-code-var">punti</span><span class="text-brand-alert">;</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Stampa Scatola</span></button>
+                    <button class="logic-btn" data-val="1" onclick="buildVar(this)"><span class="font-mono"><span class="text-code-type">int</span> <span class="text-code-var">punti</span><span class="text-brand-alert">;</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Dichiara</span></button>
+                    <button class="logic-btn" data-val="2" onclick="buildVar(this)"><span class="font-mono"><span class="text-code-var">punti</span> <span class="text-blue-400">=</span> <span class="text-code-num">100</span><span class="text-brand-alert">;</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Assegna Valore</span></button>
+                </div>
+
+                <!-- IDE e Terminale -->
+                <div class="flex flex-col gap-6">
+                    <div class="ide-window h-48">
+                        <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">gioco.cpp</span></div>
+                        <div class="ide-content text-sm leading-loose" id="var-code">
+                            <span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br>
+                            <span id="var-code-content" class="pl-8 block h-20 text-slate-600 italic">// Codice qui...</span>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="terminal-window">
+                        <div class="text-slate-500 text-xs uppercase tracking-widest mb-2 border-b border-slate-800 pb-2">Output Terminale</div>
+                        <div id="var-terminal" class="text-4xl font-bold text-emerald-400"></div><span class="cursor-blink text-emerald-400 text-4xl">_</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Conclusione -->
+    <div class="slide">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="anim-pop w-32 h-32 mx-auto rounded-full bg-emerald-500/20 border-4 border-emerald-500 flex items-center justify-center text-6xl text-emerald-400 mb-10 shadow-[0_0_50px_rgba(16,185,129,0.4)]">
+                <i class="fas fa-unlock-alt"></i>
+            </div>
+            <h1 class="anim-fade-up delay-100 text-7xl font-display font-black mb-6 text-white tracking-tight">Hai sbloccato il C++!</h1>
+            <p class="anim-fade-up delay-200 text-2xl text-slate-300 mb-10 font-light leading-relaxed">
+                Hai appena scritto e compreso la sintassi reale:<br>
+            </p>
+            
+            <div class="anim-fade-up delay-300 flex flex-wrap justify-center gap-4 mb-12">
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-code-keyword">#include</span>
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-code-func">main()</span>
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-white">cout &lt;&lt;</span>
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-code-type">int</span>
+                <span class="bg-brand-alert/20 border border-brand-alert px-4 py-2 rounded-lg font-mono text-brand-alert font-black text-xl">;</span>
+            </div>
+            
+            <button onclick="location.reload()" class="anim-pop delay-400 btn-glow mx-auto">
+                <i class="fas fa-redo mr-2"></i> Ripeti la Lezione
+            </button>
+        </div>
+    </div>
+
+    <!-- LOGICA JAVASCRIPT -->
+    <script>
+        // Navigazione base
+        const totalSlides = 7;
+        let currentSlide = 0;
+        
+        function updateUI() {
+            const progress = ((currentSlide) / (totalSlides - 1)) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function triggerAnimations(slideIndex) {
+            const current = slides[slideIndex];
+            const animElements = current.querySelectorAll('.anim-fade-up, .anim-scale-in, .anim-slide-right, .anim-pop');
+            
+            animElements.forEach(el => el.classList.remove('show'));
+            void current.offsetWidth; // Reflow
+            setTimeout(() => { animElements.forEach(el => el.classList.add('show')); }, 50);
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            if (index === currentSlide && document.querySelector('.slide.active')) return;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            currentSlide = index;
+            updateUI();
+            triggerAnimations(currentSlide);
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // Error Function
+        function triggerError(containerId, btnObj) {
+            const container = document.getElementById(containerId);
+            btnObj.classList.add('error-shake');
+            setTimeout(() => { btnObj.classList.remove('error-shake'); }, 400);
+        }
+
+        // === ESERCIZIO 1: HELLO WORLD ===
+        let hwStep = 1;
+        const hwCodeDiv = document.getElementById('hw-code');
+        
+        function buildHW(btn) {
+            const val = parseInt(btn.getAttribute('data-val'));
+            
+            if (val === hwStep) {
+                btn.classList.add('success'); btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-check-circle"></i> Compilato`;
+                
+                if(hwStep === 1) hwCodeDiv.innerHTML = `<div class="anim-pop"><span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span><br><br></div>`;
+                if(hwStep === 2) hwCodeDiv.innerHTML += `<div class="anim-pop"><span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br></div>`;
+                if(hwStep === 3) hwCodeDiv.innerHTML += `<div class="pl-8 anim-pop float-left" id="hw-cout"><span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-str">"Hello!"</span></div>`;
+                if(hwStep === 4) {
+                    document.getElementById('hw-cout').innerHTML += `<span class="text-brand-alert font-bold text-lg">;</span><br>}`;
+                    
+                    // Typing Effect Terminale
+                    setTimeout(() => {
+                        let term = document.getElementById('hw-terminal');
+                        let text = "Hello!";
+                        let i = 0;
+                        let typeWriter = setInterval(() => {
+                            if(i < text.length) { term.innerHTML += text.charAt(i); i++; } 
+                            else { 
+                                clearInterval(typeWriter); 
+                                setTimeout(() => nextSlide(), 1500); // Auto-avanza
+                            }
+                        }, 100);
+                    }, 500);
+                }
+                hwStep++;
+            } else {
+                triggerError('hw-buttons', btn);
+                // Reset su errore
+                hwStep = 1;
+                hwCodeDiv.innerHTML = `<span class="text-slate-600 italic text-brand-alert font-bold"><i class="fas fa-skull-crossbones"></i> Errore di Sintassi. Ricomincia.</span>`;
+                setTimeout(() => { hwCodeDiv.innerHTML = `<span class="text-slate-600 italic">// In attesa del codice...</span>`; }, 1500);
+                
+                const origBtns = [
+                    '<span class="font-mono text-code-type">int main() { ... }</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Lo Scheletro</span>',
+                    '<span class="font-mono text-brand-alert font-black text-2xl">;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Punto e Virgola</span>',
+                    '<span class="font-mono text-code-keyword">#include &lt;iostream&gt;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Dizionario</span>',
+                    '<span class="font-mono text-white">std::cout &lt;&lt; <span class="text-code-str">"Hello!"</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Comando</span>'
+                ];
+                
+                const btns = document.querySelectorAll('#hw-buttons button');
+                btns.forEach((b, i) => {
+                    b.classList.remove('success'); b.disabled = false;
+                    // Restore original HTML based on data-val (hardcoded match for simplicity)
+                    if(b.dataset.val == "2") b.innerHTML = origBtns[0];
+                    if(b.dataset.val == "4") b.innerHTML = origBtns[1];
+                    if(b.dataset.val == "1") b.innerHTML = origBtns[2];
+                    if(b.dataset.val == "3") b.innerHTML = origBtns[3];
+                });
+            }
+        }
+
+        // === ESERCIZIO 2: VARIABILI ===
+        let varStep = 1;
+        const varCodeDiv = document.getElementById('var-code-content');
+        
+        function buildVar(btn) {
+            const val = parseInt(btn.getAttribute('data-val'));
+            
+            if (val === varStep) {
+                btn.classList.add('success'); btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-check-circle"></i> Fatto`;
+                
+                if(varStep === 1) {
+                    varCodeDiv.innerHTML = `<div class="anim-pop"><span class="text-code-type">int</span> <span class="text-code-var">punti</span><span class="text-brand-alert font-bold">;</span></div>`;
+                }
+                if(varStep === 2) {
+                    varCodeDiv.innerHTML += `<div class="anim-pop"><span class="text-code-var">punti</span> <span class="text-blue-400 font-bold">=</span> <span class="text-code-num">100</span><span class="text-brand-alert font-bold">;</span></div>`;
+                }
+                if(varStep === 3) {
+                    varCodeDiv.innerHTML += `<div class="anim-pop"><span class="text-white">std::cout</span> <span class="text-brand-orange font-bold">&lt;&lt;</span> <span class="text-code-var">punti</span><span class="text-brand-alert font-bold">;</span></div>`;
+                    
+                    setTimeout(() => {
+                        document.getElementById('var-terminal').innerHTML = "100";
+                        setTimeout(() => nextSlide(), 1500); // Auto-avanza
+                    }, 500);
+                }
+                varStep++;
+            } else {
+                triggerError('var-buttons', btn);
+                // Reset
+                varStep = 1;
+                varCodeDiv.innerHTML = `<span class="text-brand-alert font-bold"><i class="fas fa-exclamation-triangle"></i> ERRORE! Logica fallita.</span>`;
+                setTimeout(() => { varCodeDiv.innerHTML = `<span class="text-slate-600 italic">// Codice qui...</span>`; }, 1500);
+                
+                const origBtnsVar = [
+                    '<span class="font-mono text-white">std::cout &lt;&lt; <span class="text-code-var">punti</span><span class="text-brand-alert">;</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Stampa Scatola</span>',
+                    '<span class="font-mono"><span class="text-code-type">int</span> <span class="text-code-var">punti</span><span class="text-brand-alert">;</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Dichiara</span>',
+                    '<span class="font-mono"><span class="text-code-var">punti</span> <span class="text-blue-400">=</span> <span class="text-code-num">100</span><span class="text-brand-alert">;</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Assegna Valore</span>'
+                ];
+                
+                const btns = document.querySelectorAll('#var-buttons button');
+                btns.forEach(b => {
+                    b.classList.remove('success'); b.disabled = false;
+                    if(b.dataset.val == "3") b.innerHTML = origBtnsVar[0];
+                    if(b.dataset.val == "1") b.innerHTML = origBtnsVar[1];
+                    if(b.dataset.val == "2") b.innerHTML = origBtnsVar[2];
+                });
+            }
+        }
+
+        // Init
+        window.onload = () => {
+            updateUI();
+            triggerAnimations(currentSlide);
+        };
+    </script>
+</body>
+</html>
