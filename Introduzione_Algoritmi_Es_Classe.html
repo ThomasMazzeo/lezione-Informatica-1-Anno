@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sfida Logica: Pensa come un Computer</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Nunito', 'sans-serif'] },
+                    colors: { brand: { dark: '#0f172a', primary: '#3b82f6', accent: '#10b981', alert: '#f43f5e', warning: '#f59e0b', purple: '#8b5cf6' } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; user-select: none; }
+        
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 2rem 5%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #090e17);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* UI Base */
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 2px solid rgba(255,255,255,0.05); border-radius: 2rem; padding: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); width: 100%; max-w: 5xl; display: flex; flex-direction: column; gap: 1.5rem; }
+        .arena { background: #0b1120; border-radius: 1.5rem; border: 3px dashed #334155; height: 240px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        
+        .logic-btn { background: #1e293b; border: 2px solid #334155; color: #e2e8f0; padding: 1.25rem; border-radius: 1rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.75rem; box-shadow: 0 4px 0 #0f172a; width: 100%; }
+        .logic-btn:hover:not(:disabled) { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 0 #0f172a; }
+        .logic-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 #0f172a; }
+        .logic-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: 0 0 0 #0f172a; transform: translateY(4px); }
+        .logic-btn.success { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; }
+
+        /* Animazioni */
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-15px); } 40%, 80% { transform: translateX(15px); } }
+        .error-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; border-color: #f43f5e !important; background: rgba(244, 63, 94, 0.1) !important; }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
+        .anim-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes rain { 0% { transform: translateY(-50px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
+        .rain-drop { position: absolute; color: #3b82f6; animation: rain 1s linear infinite; }
+
+        .next-level-btn { display: none; background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 1rem 3rem; border-radius: 3rem; font-family: 'Nunito', sans-serif; font-size: 1.25rem; font-weight: 900; color: white; cursor: pointer; animation: pop 0.5s forwards; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); margin: 0 auto; text-transform: uppercase; letter-spacing: 1px; }
+        .next-level-btn.visible { display: inline-flex; align-items: center; gap: 0.75rem; }
+        .next-level-btn:hover { transform: scale(1.05); }
+
+        /* Progress */
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 8px; background: rgba(255,255,255,0.05); z-index: 50; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981); width: 0%; transition: width 0.5s ease-out; }
+        .level-badge { display: inline-block; background: rgba(255, 255, 255, 0.1); padding: 0.25rem 1rem; border-radius: 2rem; font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: 2px; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; }
+
+        /* Oggetti Arena */
+        .glass-cup { width: 70px; height: 100px; border: 4px solid #94a3b8; border-top: none; border-radius: 0 0 15px 15px; position: relative; overflow: hidden; }
+        .liquid { width: 100%; position: absolute; bottom: 0; transition: height 0.4s ease, background-color 0.4s ease; }
+    </style>
+</head>
+<body>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+
+    <!-- Intro -->
+    <div class="slide active" id="slide-0">
+        <div class="text-center max-w-4xl mx-auto">
+            <div class="w-32 h-32 mx-auto rounded-3xl bg-brand-primary/20 border-4 border-brand-primary flex items-center justify-center text-6xl text-brand-primary mb-8 shadow-[0_0_40px_rgba(59,130,246,0.4)] anim-pop">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h1 class="text-6xl font-display font-black mb-6 text-white tracking-tight">Pensa come un <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Computer</span></h1>
+            <p class="text-2xl text-slate-300 mb-12 font-light leading-relaxed">
+                I computer sono potentissimi, ma <strong>completamente stupidi</strong>. Fanno solo ed esclusivamente ciò che gli dici, nell'esatto ordine in cui lo dici.
+            </p>
+            <div class="bg-slate-800 border-2 border-slate-600 p-6 rounded-2xl inline-block mb-12 text-left shadow-xl">
+                <h3 class="text-xl text-white font-display font-black mb-4"><i class="fas fa-gamepad text-blue-400 mr-2"></i> COME SI GIOCA:</h3>
+                <ul class="text-slate-300 text-lg space-y-3 font-semibold">
+                    <li><i class="fas fa-eye text-emerald-400 w-6 text-center"></i> 1. Leggi l'obiettivo di ogni livello.</li>
+                    <li><i class="fas fa-mouse-pointer text-blue-400 w-6 text-center"></i> 2. Clicca i pulsanti nell'ordine logico corretto.</li>
+                    <li><i class="fas fa-bomb text-brand-alert w-6 text-center"></i> 3. Se la logica è sbagliata... DISASTRO! E si ricomincia.</li>
+                </ul>
+            </div>
+            <br>
+            <button onclick="nextSlide()" class="logic-btn !w-auto inline-flex !bg-brand-primary !border-blue-400 hover:!bg-blue-600 !text-white !px-12 !py-4 !text-2xl !rounded-full mx-auto">
+                INIZIA LA SFIDA <i class="fas fa-play ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- LIV 1: Sequenza (Cereali) -->
+    <div class="slide" id="slide-1">
+        <div class="glass-card" id="card-1">
+            <div>
+                <div class="level-badge text-brand-warning">Livello 1 • La Sequenza</div>
+                <h2 class="text-4xl font-display font-black text-white"><i class="fas fa-bowl-food text-brand-warning mr-3"></i>La Colazione Perfetta</h2>
+                <p class="text-slate-300 mt-2 text-lg">In informatica, l'ordine dei comandi è tutto. <strong class="text-white">Prepara la colazione.</strong></p>
+            </div>
+            
+            <div class="arena" id="arena-1">
+                <div id="vis-1-msg" class="text-2xl font-black text-slate-600 tracking-widest">TAVOLO VUOTO</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4" id="l1-buttons">
+                <!-- Ordine logico: Ciotola -> Cereali -> Latte -> Mangia -->
+                <button class="logic-btn" data-val="3" onclick="checkL1(this)"><i class="fas fa-jug-detergent text-white"></i> Versa Latte</button>
+                <button class="logic-btn" data-val="1" onclick="checkL1(this)"><i class="fas fa-inbox text-slate-400"></i> Prendi Ciotola</button>
+                <button class="logic-btn" data-val="4" onclick="checkL1(this)"><i class="fas fa-spoon text-blue-300"></i> Mangia!</button>
+                <button class="logic-btn" data-val="2" onclick="checkL1(this)"><i class="fas fa-cookie text-amber-600"></i> Versa Cereali</button>
+            </div>
+            
+            <button id="l1-next" class="next-level-btn" onclick="nextSlide()">Sequenza Perfetta! Avanti <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- LIV 2: Condizionali (Piove) -->
+    <div class="slide" id="slide-2">
+        <div class="glass-card" id="card-2">
+            <div>
+                <div class="level-badge text-blue-400">Livello 2 • Condizione (IF-THEN)</div>
+                <h2 class="text-4xl font-display font-black text-white"><i class="fas fa-cloud-showers-heavy text-blue-400 mr-3"></i>Tempesta in arrivo</h2>
+                <p class="text-slate-300 mt-2 text-lg">Il computer agisce in base alle condizioni esterne. Fuori piove a dirotto. <strong class="text-white">Devi uscire di casa senza bagnarti.</strong></p>
+            </div>
+            
+            <div class="arena overflow-hidden bg-slate-900" id="arena-2">
+                <!-- Pioggia di background -->
+                <div class="absolute inset-0 opacity-30">
+                    <i class="fas fa-tint rain-drop" style="left: 20%; animation-delay: 0s;"></i>
+                    <i class="fas fa-tint rain-drop" style="left: 50%; animation-delay: 0.3s;"></i>
+                    <i class="fas fa-tint rain-drop" style="left: 80%; animation-delay: 0.6s;"></i>
+                </div>
+                <div class="flex items-end gap-12 z-10">
+                    <div id="vis-2-person" class="text-6xl text-slate-400 flex flex-col items-center gap-2 transition-all">
+                        <i class="fas fa-user"></i>
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-500">In Casa</span>
+                    </div>
+                    <i id="vis-2-door" class="fas fa-door-closed text-8xl text-amber-700"></i>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="l2-buttons">
+                <!-- Ordine: Ombrello -> Apri Porta -> Esci -->
+                <button class="logic-btn" data-val="2" onclick="checkL2(this)"><i class="fas fa-door-open text-amber-600"></i> Apri la Porta</button>
+                <button class="logic-btn" data-val="3" onclick="checkL2(this)"><i class="fas fa-walking text-slate-300"></i> Esci Fuori</button>
+                <button class="logic-btn" data-val="1" onclick="checkL2(this)"><i class="fas fa-umbrella text-blue-400"></i> Prendi Ombrello</button>
+            </div>
+            
+            <button id="l2-next" class="next-level-btn" onclick="nextSlide()">Salvo e Asciutto! Avanti <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- LIV 3: Variabili (Swap Bicchieri) -->
+    <div class="slide" id="slide-3">
+        <div class="glass-card" id="card-3">
+            <div>
+                <div class="level-badge text-brand-purple">Livello 3 • Lo "Swap" (Variabili)</div>
+                <h2 class="text-4xl font-display font-black text-white"><i class="fas fa-exchange-alt text-brand-purple mr-3"></i>Il Gioco dei Bicchieri</h2>
+                <p class="text-slate-300 mt-2 text-lg">Un bicchiere (variabile) tiene <strong>un solo liquido alla volta</strong>. Se versi dove c'è già qualcosa, fai un disastro. <strong class="text-white">Scambia la Cola (A) con l'Aranciata (B) usando il bicchiere C (Vuoto).</strong></p>
+            </div>
+            
+            <div class="arena" id="arena-3">
+                <div class="flex gap-12 items-end pb-4">
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="glass-cup"><div id="liq-a" class="liquid" style="height: 90%; background: #78350f;"></div></div>
+                        <span class="font-black text-white text-xl bg-slate-800 px-3 py-1 rounded-lg">A</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="glass-cup"><div id="liq-b" class="liquid" style="height: 90%; background: #f97316;"></div></div>
+                        <span class="font-black text-white text-xl bg-slate-800 px-3 py-1 rounded-lg">B</span>
+                    </div>
+                    <div class="w-1 border-r-2 border-dashed border-slate-600 h-24 mx-4"></div>
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="glass-cup border-slate-600"><div id="liq-c" class="liquid" style="height: 0%; background: transparent;"></div></div>
+                        <span class="font-black text-slate-500 text-xl bg-slate-900 px-3 py-1 rounded-lg">C (Temp)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="l3-buttons">
+                <!-- Logica: A in C (1), B in A (2), C in B (3) -->
+                <button class="logic-btn" data-val="2" onclick="checkL3(this)"><i class="fas fa-arrow-left text-slate-400"></i> Versa <b>B</b> in <b>A</b></button>
+                <button class="logic-btn" data-val="1" onclick="checkL3(this)">Versa <b>A</b> in <b>C</b> <i class="fas fa-arrow-right text-slate-400"></i></button>
+                <button class="logic-btn" data-val="3" onclick="checkL3(this)"><i class="fas fa-arrow-left text-slate-400"></i> Versa <b>C</b> in <b>B</b></button>
+            </div>
+            
+            <button id="l3-next" class="next-level-btn" onclick="nextSlide()">Scambio Riuscito! Avanti <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- LIV 4: Cicli (Salvadanaio) -->
+    <div class="slide" id="slide-4">
+        <div class="glass-card" id="card-4">
+            <div>
+                <div class="level-badge text-brand-alert">Livello 4 • Il Loop (WHILE)</div>
+                <h2 class="text-4xl font-display font-black text-white"><i class="fas fa-piggy-bank text-brand-alert mr-3"></i>Il Salvadanaio</h2>
+                <p class="text-slate-300 mt-2 text-lg">Il computer ripete un'azione <i>finché</i> una condizione è vera. Il videogioco costa <strong>esattamente 3 monete</strong>. <strong class="text-white">Inserisci i soldi e poi compra.</strong> (Se compri prima non hai soldi, se ne metti 4 lo inceppi!).</p>
+            </div>
+            
+            <div class="arena relative" id="arena-4">
+                <div class="flex items-center gap-12">
+                    <div class="relative">
+                        <i id="vis-4-pig" class="fas fa-piggy-bank text-8xl text-pink-400 transition-transform"></i>
+                        <div id="vis-4-coin-anim" class="absolute -top-10 left-8 text-3xl text-yellow-400 opacity-0 transition-all"><i class="fas fa-coins"></i></div>
+                    </div>
+                    <div class="bg-slate-900 border-2 border-slate-700 p-4 rounded-xl text-center">
+                        <div class="text-sm text-slate-400 font-bold uppercase tracking-widest mb-2">Monete Inserite</div>
+                        <div id="vis-4-count" class="text-5xl font-black text-yellow-400 font-mono">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4" id="l4-buttons">
+                <button class="logic-btn py-6 text-xl !bg-slate-800" onclick="addCoin()"><i class="fas fa-coins text-yellow-400 text-2xl"></i> Inserisci 1 Moneta</button>
+                <button class="logic-btn py-6 text-xl !bg-slate-800" onclick="buyGame()"><i class="fas fa-gamepad text-brand-accent text-2xl"></i> Compra Gioco</button>
+            </div>
+            
+            <button id="l4-next" class="next-level-btn" onclick="nextSlide()">Loop Capito! Ultimo Livello <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- LIV 5: AND Logico (Scooter) -->
+    <div class="slide" id="slide-5">
+        <div class="glass-card" id="card-5">
+            <div>
+                <div class="level-badge text-yellow-400">Livello 5 (BOSS) • Operatori Logici</div>
+                <h2 class="text-4xl font-display font-black text-white"><i class="fas fa-motorcycle text-yellow-400 mr-3"></i>Partenza in Scooter</h2>
+                <p class="text-slate-300 mt-2 text-lg">L'operatore <strong>AND</strong> richiede che TUTTE le condizioni siano vere contemporaneamente. <strong class="text-white">Per partire in sicurezza: indossa il Casco AND Accendi il motore.</strong> Poi dai gas!</p>
+            </div>
+            
+            <div class="arena flex-col gap-6" id="arena-5">
+                <div class="flex gap-10 bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                    <div id="status-casco" class="flex flex-col items-center gap-2 opacity-30 transition-opacity">
+                        <i class="fas fa-hard-hat text-4xl text-yellow-400"></i>
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Casco</span>
+                    </div>
+                    <div class="w-px bg-slate-600"></div>
+                    <div id="status-motore" class="flex flex-col items-center gap-2 opacity-30 transition-opacity">
+                        <i class="fas fa-key text-4xl text-slate-300"></i>
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Motore</span>
+                    </div>
+                </div>
+                <div class="relative w-full h-24 flex items-center justify-center overflow-hidden">
+                    <i id="vis-5-moto" class="fas fa-motorcycle text-7xl text-slate-500 absolute transition-all duration-700 ease-in" style="left: 50%; transform: translateX(-50%);"></i>
+                    <div id="vis-5-wind" class="absolute w-full h-full opacity-0 flex items-center justify-between px-10">
+                        <div class="w-20 h-1 bg-white rounded-full animate-pulse"></div>
+                        <div class="w-32 h-1 bg-white rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-2">
+                <button id="btn-casco" class="logic-btn" onclick="toggleMoto('casco')"><i class="fas fa-hard-hat text-yellow-400"></i> Metti il Casco</button>
+                <button id="btn-motore" class="logic-btn" onclick="toggleMoto('motore')"><i class="fas fa-key text-slate-400"></i> Accendi Motore</button>
+            </div>
+            <button class="logic-btn !bg-brand-alert/10 !border-brand-alert !text-brand-alert py-5 text-2xl uppercase font-black hover:!bg-brand-alert hover:!text-white" onclick="goMoto()">
+                <i class="fas fa-forward"></i> Dai Gas e Parti!
+            </button>
+            
+            <button id="l5-next" class="next-level-btn mt-6" onclick="nextSlide()">VITTORIA TOTALE! <i class="fas fa-trophy text-yellow-300 ml-2"></i></button>
+        </div>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="slide" id="slide-6">
+        <div class="text-center max-w-4xl mx-auto">
+            <div class="w-32 h-32 mx-auto rounded-3xl bg-brand-accent/20 border-4 border-brand-accent flex items-center justify-center text-7xl text-brand-accent mb-10 shadow-[0_0_50px_rgba(16,185,129,0.4)] anim-pop">
+                <i class="fas fa-check-double"></i>
+            </div>
+            <h1 class="text-7xl font-display font-black mb-6 text-white tracking-tight">Challenge Superata!</h1>
+            <p class="text-3xl text-slate-300 mb-10 font-light leading-relaxed">
+                Hai appena programmato usando:<br>
+                <span class="text-brand-primary font-bold block mt-4 bg-slate-800/50 py-4 rounded-xl border border-slate-700">Sequenze • Condizioni IF • Variabili • Cicli WHILE • Operatori AND</span>
+            </p>
+            <p class="text-xl text-slate-500 mb-12">Programmare non è magia nera. È solo logica applicata passo passo.</p>
+            
+            <button onclick="location.reload()" class="logic-btn !w-auto inline-flex !px-10 !py-4 !text-xl !rounded-full mx-auto">
+                <i class="fas fa-redo"></i> Rigioca la Sfida
+            </button>
+        </div>
+    </div>
+
+    <!-- LOGICA JAVASCRIPT -->
+    <script>
+        // Navigazione
+        const totalSlides = 7;
+        let currentSlide = 0;
+        
+        function updateProgress() {
+            const progress = ((currentSlide) / (totalSlides - 1)) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        function showSlide(index) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.getElementById(`slide-${index}`).classList.add('active');
+            currentSlide = index;
+            updateProgress();
+        }
+
+        function nextSlide() { if(currentSlide < totalSlides - 1) showSlide(currentSlide + 1); }
+
+        // Core Helper per Errori Divertenti
+        function triggerError(cardId, arenaId, msgHTML, resetCallback) {
+            const card = document.getElementById(cardId);
+            const arena = document.getElementById(arenaId);
+            
+            card.classList.add('error-shake');
+            const originalContent = arena.innerHTML;
+            
+            arena.innerHTML = `<div class="text-center anim-pop flex flex-col items-center"><i class="fas fa-skull-crossbones text-6xl text-brand-alert mb-3"></i><h3 class="text-2xl font-black text-brand-alert uppercase leading-tight">${msgHTML}</h3></div>`;
+            arena.style.borderColor = '#f43f5e';
+            arena.style.backgroundColor = 'rgba(244, 63, 94, 0.1)';
+
+            setTimeout(() => {
+                card.classList.remove('error-shake');
+                arena.innerHTML = originalContent;
+                arena.style.borderColor = '#334155';
+                arena.style.backgroundColor = '#0b1120';
+                if(resetCallback) resetCallback();
+            }, 2500);
+        }
+
+        // === LIV 1: Cereali ===
+        let l1Step = 1;
+        function checkL1(btn) {
+            const val = parseInt(btn.getAttribute('data-val'));
+            const arena = document.getElementById('arena-1');
+            
+            if (val === l1Step) {
+                btn.classList.add('success'); btn.disabled = true;
+                
+                if(l1Step === 1) arena.innerHTML = `<i class="fas fa-inbox text-7xl text-slate-300 anim-pop"></i>`;
+                if(l1Step === 2) arena.innerHTML = `<div class="relative anim-pop"><i class="fas fa-inbox text-7xl text-slate-300"></i><div class="absolute inset-0 top-6 text-center text-amber-600 text-3xl"><i class="fas fa-braille"></i></div></div>`;
+                if(l1Step === 3) arena.innerHTML = `<div class="relative anim-pop"><i class="fas fa-inbox text-7xl text-slate-300"></i><div class="absolute inset-0 top-6 text-center text-white text-3xl"><i class="fas fa-water"></i></div></div>`;
+                if(l1Step === 4) {
+                    arena.innerHTML = `<div class="flex items-center gap-4 anim-pop"><i class="fas fa-smile-beam text-6xl text-brand-accent"></i><i class="fas fa-utensil-spoon text-4xl text-slate-300"></i></div>`;
+                    arena.style.borderColor = '#10b981';
+                    document.getElementById('l1-next').classList.add('visible');
+                }
+                l1Step++;
+            } else {
+                let err = "ERRORE!";
+                if(val === 3 && l1Step === 1) err = "DISASTRO!<br>Hai versato il latte sul tavolo!";
+                if(val === 2 && l1Step === 1) err = "DISASTRO!<br>Cereali sparsi per tutta la cucina!";
+                if(val === 4 && l1Step < 4) err = "ERRORE LOGICO!<br>Stai mangiando il vuoto!";
+                if(val === 3 && l1Step === 2) err = "SINTASSI ERRATA!<br>Il latte prima dei cereali? Eresia pura!";
+                
+                triggerError('card-1', 'arena-1', err, () => {
+                    l1Step = 1;
+                    document.getElementById('arena-1').innerHTML = `<div id="vis-1-msg" class="text-2xl font-black text-slate-600 tracking-widest">TAVOLO VUOTO</div>`;
+                    document.querySelectorAll('#l1-buttons button').forEach(b => { b.classList.remove('success'); b.disabled = false; });
+                });
+            }
+        }
+
+        // === LIV 2: Piove ===
+        let l2Step = 1;
+        function checkL2(btn) {
+            const val = parseInt(btn.getAttribute('data-val'));
+            const person = document.getElementById('vis-2-person');
+            const door = document.getElementById('vis-2-door');
+            
+            if (val === l2Step) {
+                btn.classList.add('success'); btn.disabled = true;
+                
+                if(l2Step === 1) { 
+                    person.innerHTML = `<i class="fas fa-umbrella text-blue-400"></i><span class="text-xs font-bold uppercase tracking-widest text-blue-400">Protetto</span>`; 
+                }
+                if(l2Step === 2) { 
+                    door.className = "fas fa-door-open text-8xl text-amber-600 anim-pop"; 
+                }
+                if(l2Step === 3) { 
+                    person.style.transform = "translateX(250px)";
+                    document.getElementById('arena-2').style.borderColor = '#10b981';
+                    document.getElementById('l2-next').classList.add('visible');
+                }
+                l2Step++;
+            } else {
+                let err = "ERRORE FATALE!";
+                if(val === 2 && l2Step === 1) err = "PIOGGIA IN CASA!<br>Apri la porta senza ombrello?";
+                if(val === 3 && l2Step < 3) err = "SBAM!<br>Hai sbattuto contro la porta chiusa!";
+                if(val === 3 && l2Step === 2) err = "FRADICIO!<br>Sei uscito senza ombrello!";
+                
+                triggerError('card-2', 'arena-2', err, () => {
+                    l2Step = 1;
+                    // Il reset ripristinerà l'HTML originale salvato da triggerError
+                    document.querySelectorAll('#l2-buttons button').forEach(b => { b.classList.remove('success'); b.disabled = false; });
+                });
+            }
+        }
+
+        // === LIV 3: Swap ===
+        let l3Step = 1;
+        function checkL3(btn) {
+            const val = parseInt(btn.getAttribute('data-val'));
+            const a = document.getElementById('liq-a');
+            const b = document.getElementById('liq-b');
+            const c = document.getElementById('liq-c');
+            
+            if (val === l3Step) {
+                btn.classList.add('success'); btn.disabled = true;
+                
+                if(l3Step === 1) { a.style.height = '0%'; c.style.height = '90%'; c.style.background = '#78350f'; }
+                if(l3Step === 2) { b.style.height = '0%'; a.style.height = '90%'; a.style.background = '#f97316'; }
+                if(l3Step === 3) { 
+                    c.style.height = '0%'; b.style.height = '90%'; b.style.background = '#78350f'; 
+                    document.getElementById('arena-3').style.borderColor = '#10b981';
+                    document.getElementById('l3-next').classList.add('visible');
+                }
+                l3Step++;
+            } else {
+                let err = "CRASH DI SISTEMA!";
+                if(val === 2 && l3Step === 1) err = "OVERFLOW!<br>A è pieno, hai mischiato Cola e Aranciata!";
+                if(val === 3 && l3Step === 1) err = "ERRORE LOGICO!<br>C è vuoto, stai versando aria in B!";
+                
+                triggerError('card-3', 'arena-3', err, () => {
+                    l3Step = 1;
+                    // Ripristino manuale liquidi per mantenere riferimenti DOM
+                    document.getElementById('liq-a').style.height = '90%'; document.getElementById('liq-a').style.background = '#78350f';
+                    document.getElementById('liq-b').style.height = '90%'; document.getElementById('liq-b').style.background = '#f97316';
+                    document.getElementById('liq-c').style.height = '0%'; document.getElementById('liq-c').style.background = 'transparent';
+                    document.querySelectorAll('#l3-buttons button').forEach(b => { b.classList.remove('success'); b.disabled = false; });
+                });
+            }
+        }
+
+        // === LIV 4: Loop Salvadanaio ===
+        let coins = 0;
+        function addCoin() {
+            if(coins >= 3) {
+                triggerError('card-4', 'arena-4', 'MEMORIA PIENA!<br>Il salvadanaio si è inceppato!', resetLoop4);
+                return;
+            }
+            coins++;
+            document.getElementById('vis-4-count').innerText = coins;
+            
+            const anim = document.getElementById('vis-4-coin-anim');
+            anim.style.transform = "translateY(50px)";
+            anim.style.opacity = "1";
+            setTimeout(() => { anim.style.transform = "translateY(0)"; anim.style.opacity = "0"; }, 300);
+            
+            const pig = document.getElementById('vis-4-pig');
+            pig.style.transform = `scale(${1 + (coins*0.1)})`;
+        }
+        function buyGame() {
+            if(coins === 3) {
+                document.getElementById('vis-4-pig').className = "fas fa-gamepad text-8xl text-brand-accent anim-pop";
+                document.getElementById('arena-4').style.borderColor = '#10b981';
+                document.getElementById('l4-buttons').style.display = 'none';
+                document.getElementById('l4-next').classList.add('visible');
+            } else {
+                triggerError('card-4', 'arena-4', `TRANSAZIONE NEGATA!<br>Hai ${coins} monete, ne servono esattamente 3.`, resetLoop4);
+            }
+        }
+        function resetLoop4() {
+            coins = 0;
+            // Il DOM originale torna da triggerError, dobbiamo solo riattaccare i ref
+        }
+
+        // === LIV 5: AND Scooter ===
+        let helmet = false; let engine = false;
+        function toggleMoto(type) {
+            if(type === 'casco') { 
+                helmet = true; 
+                document.getElementById('status-casco').classList.replace('opacity-30', 'opacity-100');
+                document.getElementById('btn-casco').classList.add('success');
+            }
+            if(type === 'motore') { 
+                engine = true; 
+                document.getElementById('status-motore').classList.replace('opacity-30', 'opacity-100');
+                document.getElementById('btn-motore').classList.add('success');
+            }
+        }
+        function goMoto() {
+            if(helmet && engine) {
+                document.getElementById('vis-5-moto').style.transform = "translateX(500px)";
+                document.getElementById('vis-5-wind').style.opacity = "1";
+                document.getElementById('arena-5').style.borderColor = '#10b981';
+                document.getElementById('l5-next').classList.add('visible');
+            } else {
+                let err = "";
+                if(!helmet && !engine) err = "SEI PAZZO?<br>Senza casco e a motore spento!";
+                else if(!helmet) err = "SICUREZZA VIOLATA!<br>Mettiti il casco prima di partire!";
+                else if(!engine) err = "ERRORE FISICO!<br>Come parti a motore spento?";
+                
+                triggerError('card-5', 'arena-5', err, () => {
+                    helmet = false; engine = false;
+                    document.getElementById('btn-casco').classList.remove('success');
+                    document.getElementById('btn-motore').classList.remove('success');
+                });
+            }
+        }
+
+        // Init
+        updateProgress();
+    </script>
+</body>
+</html>
