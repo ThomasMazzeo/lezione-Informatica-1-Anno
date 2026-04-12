@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore C++: Evoluzione Logica (Con Consegne)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Nunito:wght@700;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Nunito', 'sans-serif'], mono: ['Fira Code', 'monospace'] },
+                    colors: { brand: { dark: '#0f172a', primary: '#3b82f6', accent: '#10b981', alert: '#f43f5e', purple: '#8b5cf6', orange: '#f97316' } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; user-select: none; }
+        
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.4s ease-in-out, visibility 0.4s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 1.5rem 2%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #090e17);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        .anim-fade-up { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide.active .anim-fade-up.show { opacity: 1; transform: translateY(0); }
+
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); z-index: 50; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #f43f5e, #f97316); width: 0%; transition: width 0.3s ease-out; }
+        #slide-counter { position: absolute; bottom: 20px; right: 30px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #64748b; }
+        
+        /* Modificata altezza per fare spazio al box Consegna */
+        .sim-grid { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 1rem; height: 55vh; }
+        
+        .window-panel { background: #1e1e1e; border-radius: 1rem; border: 1px solid #333; box-shadow: 0 15px 30px -10px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; }
+        .window-header { background: #2d2d2d; padding: 0.5rem 1rem; display: flex; align-items: center; border-bottom: 1px solid #111; gap: 0.5rem; }
+        .window-title { color: #858585; font-size: 0.8rem; text-transform: uppercase; font-weight: 800; margin-left: auto; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; } .dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
+        
+        .visual-panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; gap: 1rem; }
+        
+        .ide-content { padding: 1.2rem; font-family: 'Fira Code', monospace; font-size: 1rem; line-height: 1.6; color: #d4d4d4; flex-grow: 1; overflow-y: auto; }
+        .code-line { padding: 0.1rem 0.5rem; border-radius: 0.25rem; border-left: 3px solid transparent; opacity: 0; display: none; }
+        .code-line.visible { opacity: 1; display: block; animation: slideIn 0.2s forwards; }
+        .code-line.active-debug { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; }
+
+        .right-panel { display: flex; flex-direction: column; gap: 1rem; }
+        .ram-content { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.4rem; background: rgba(15, 23, 42, 0.8); overflow-y: auto; }
+        .ram-var { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; font-family: 'Fira Code', monospace; transition: all 0.3s; }
+        .v-name { color: #8b5cf6; font-weight: bold; } .v-type { color: #569cd6; font-size: 0.8rem; margin-right: 0.5rem; } .v-val { color: #10b981; font-weight: bold; }
+        .term-content { padding: 1rem; flex-grow: 1; background: #000; font-family: 'Fira Code', monospace; color: #10b981; white-space: pre-wrap; font-size: 0.9rem;}
+        
+        .btn-sim { background: linear-gradient(135deg, #f43f5e, #f97316); border: none; padding: 0.8rem 2rem; border-radius: 2rem; font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 900; color: white; cursor: pointer; transition: all 0.2s; margin-top: 1rem; }
+        .btn-sim:hover { transform: scale(1.05); } .btn-sim.exec-mode { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-sim.done-mode { background: #334155; color: #94a3b8; cursor: not-allowed; transform: none; }
+
+        /* Syntax Highlighting Base */
+        .kw { color: #c586c0; font-weight: bold; }
+        .inc { color: #c586c0; } 
+        .ty { color: #569cd6; }
+        .fn { color: #dcdcaa; }
+        .st { color: #ce9178; }
+        .nm { color: #b5cea8; }
+        .vr { color: #9cdcfe; }
+        .op { color: #d4d4d4; font-weight: bold;}
+        .lg { color: #ffbd2e; font-weight: bold; }
+        .cm { color: #6a9955; font-style: italic; }
+        .bl { color: #569cd6; font-weight: bold; }
+        .al { color: #d4d4d4; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+        .var-update { background: rgba(16,185,129,0.2); border-color: #10b981; transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="slide-counter"></div>
+
+    <div id="slides-container">
+        <div class="slide active">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="anim-fade-up show bg-orange-500/10 border border-orange-500/30 text-orange-400 px-4 py-1 rounded-full font-bold uppercase tracking-widest mb-6 inline-block text-sm">
+                    Modulo 2: Flusso e Controllo
+                </div>
+                <h1 class="anim-fade-up show delay-100 text-6xl font-display font-black mb-6 text-white leading-tight">
+                    L'Evoluzione <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-orange-400">Logica</span>
+                </h1>
+                <p class="anim-fade-up show delay-100 text-xl text-slate-300 mb-10">
+                    Dal semplice <code>if</code> alle condizioni multiple, fino allo <code>switch</code>. <br>Leggi bene la tua <strong class="text-white">Consegna</strong> e osserva l'esecuzione passo-passo.
+                </p>
+                <button onclick="nextSlide()" class="anim-fade-up show delay-200 btn-sim mx-auto">Avvia Simulatore <i class="fas fa-code-branch"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === DATABASE ESERCIZI: CON CONSEGNE CHIARE ===
+        const exData = [
+            {
+                title: "1. L'Operatore AND (&&)",
+                consegna: "Scrivi un programma che verifichi se uno studente è promosso. Stampa 'Promosso!' SOLTANTO SE il voto è maggiore o uguale a 6 E contemporaneamente le assenze sono meno di 10.",
+                vis: `<div class="flex items-center gap-4 text-2xl font-bold"><div class="bg-blue-500/20 p-3 rounded border border-blue-500 text-blue-400">Voto >= 6</div><div class="text-yellow-400">&&</div><div class="bg-blue-500/20 p-3 rounded border border-blue-500 text-blue-400">Assenze < 10</div></div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">voto</span> <span class="op">=</span> <span class="nm">7</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">assenze</span> <span class="op">=</span> <span class="nm">5</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">voto</span> <span class="op">>=</span> <span class="nm">6</span> <span class="lg">&&</span> <span class="vr">assenze</span> <span class="op"><</span> <span class="nm">10</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Promosso!"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{voto:7},""], [3,{voto:7, assenze:5},""], 
+                    [4,{voto:7, assenze:5},""], [5,{voto:7, assenze:5},"Promosso!"], [6,{voto:7, assenze:5},"Promosso!"], 
+                    [7,{voto:7, assenze:5},"Promosso!"], [8,{voto:7, assenze:5},"Promosso!\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "2. L'Operatore OR (||)",
+                consegna: "Crea il sistema di ingresso per una discoteca. Stampa 'Entra!' se l'utente possiede il pass VIP (true) OPPURE se ha in tasca almeno 100 monete d'oro.",
+                vis: `<div class="flex items-center gap-4 text-xl font-bold"><div class="bg-emerald-500/20 p-3 rounded border border-emerald-500 text-emerald-400">VIP == true</div><div class="text-yellow-400">||</div><div class="bg-emerald-500/20 p-3 rounded border border-emerald-500 text-emerald-400">Oro >= 100</div></div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">bool</span> <span class="vr">vip</span> <span class="op">=</span> <span class="bl">false</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">oro</span> <span class="op">=</span> <span class="nm">150</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">vip</span> <span class="op">==</span> <span class="bl">true</span> <span class="lg">||</span> <span class="vr">oro</span> <span class="op">>=</span> <span class="nm">100</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Entra!"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{vip:"false"},""], [3,{vip:"false", oro:150},""], 
+                    [4,{vip:"false", oro:150},""], [5,{vip:"false", oro:150},"Entra!"], [6,{vip:"false", oro:150},"Entra!"], 
+                    [7,{vip:"false", oro:150},"Entra!"], [8,{vip:"false", oro:150},"Entra!\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "3. L'Operatore NOT (!)",
+                consegna: "Dichiara una variabile booleana 'bloccato'. Usa l'operatore NOT (!) per controllare se la porta NON è bloccata. In caso positivo, stampa 'Aperto!'.",
+                vis: `<i class="fas fa-door-open text-6xl text-emerald-400 mb-2"></i><div class="text-xl font-bold">Se la porta <span class="text-rose-400">NON</span> è bloccata</div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">bool</span> <span class="vr">bloccato</span> <span class="op">=</span> <span class="bl">false</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="lg">!</span><span class="vr">bloccato</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Aperto!"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{bloccato:"false"},""], [3,{bloccato:"false"},""], 
+                    [4,{bloccato:"false"},"Aperto!"], [5,{bloccato:"false"},"Aperto!"], 
+                    [6,{bloccato:"false"},"Aperto!"], [7,{bloccato:"false"},"Aperto!\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "4. If Annidati (Nested)",
+                consegna: "Progetta una cassaforte a doppio livello. Prima controlla se l'utente possiede la chiave fisica. Se sì, effettua un SECONDO controllo sul PIN digitale. Se anche il PIN è corretto, apri la cassa.",
+                vis: `<div class="text-center"><i class="fas fa-key text-4xl text-yellow-400 mb-2"></i> -> <i class="fas fa-lock-open text-4xl text-emerald-400 mb-2"></i><br>Prima la chiave, poi il PIN.</div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">bool</span> <span class="vr">haChiave</span> <span class="op">=</span> <span class="bl">true</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">pin</span> <span class="op">=</span> <span class="nm">1234</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">haChiave</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">pin</span> <span class="op">==</span> <span class="nm">1234</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Cassa Aperta"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{haChiave:"true"},""], [3,{haChiave:"true", pin:1234},""], 
+                    [4,{haChiave:"true", pin:1234},""], [5,{haChiave:"true", pin:1234},""], 
+                    [6,{haChiave:"true", pin:1234},"Cassa Aperta"], [7,{haChiave:"true", pin:1234},"Cassa Aperta"], 
+                    [8,{haChiave:"true", pin:1234},"Cassa Aperta"], [9,{haChiave:"true", pin:1234},"Cassa Aperta"], 
+                    [10,{haChiave:"true", pin:1234},"Cassa Aperta\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "5. Logica Mista",
+                consegna: "Scrivi una singola condizione logica complessa. Concedi l'accesso SOLO SE si è (livello > 10 E oro > 50) OPPURE se si ha lo status di amministratore.",
+                vis: `<div class="text-lg">Accesso a:<br><span class="text-yellow-400">(Livello > 10 E Oro > 50)</span><br><span class="text-white font-bold">OPPURE</span><br><span class="text-emerald-400">Sei Admin</span></div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">lvl</span> <span class="op">=</span> <span class="nm">5</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">oro</span> <span class="op">=</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="ty">bool</span> <span class="vr">admin</span> <span class="op">=</span> <span class="bl">true</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">if</span> ( (<span class="vr">lvl</span> <span class="op">></span> <span class="nm">10</span> <span class="lg">&&</span> <span class="vr">oro</span> <span class="op">></span> <span class="nm">50</span>) <span class="lg">||</span> <span class="vr">admin</span> ) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Accesso Concesso"</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{lvl:5},""], [3,{lvl:5, oro:0},""], [4,{lvl:5, oro:0, admin:"true"},""], 
+                    [5,{lvl:5, oro:0, admin:"true"},""], [6,{lvl:5, oro:0, admin:"true"},"Accesso Concesso"], 
+                    [7,{lvl:5, oro:0, admin:"true"},"Accesso Concesso"], [8,{lvl:5, oro:0, admin:"true"},"Accesso Concesso"], 
+                    [9,{lvl:5, oro:0, admin:"true"},"Accesso Concesso\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "6. Introduzione allo Switch",
+                consegna: "Costruisci il menu di battaglia di un RPG. In base al numero scelto (1, 2 o 3), stampa a schermo un'azione differente usando il costrutto 'switch'. Ricordati i break!",
+                vis: `<div class="text-left text-xl bg-black/50 p-4 rounded"><div class="text-slate-400 mb-2">MENU RPG:</div>1. Attacca<br><span class="text-rose-400">> 2. Difendi</span><br>3. Fuggi</div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">scelta</span> <span class="op">=</span> <span class="nm">2</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">switch</span> (<span class="vr">scelta</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="nm">1</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Attacco!"</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="nm">2</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Scudo Alzato"</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="nm">3</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Fuga!"</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{scelta:2},""], [3,{scelta:2},""], 
+                    [5,{scelta:2},"Scudo Alzato"], [7,{scelta:2},"Scudo Alzato"], 
+                    [8,{scelta:2},"Scudo Alzato"], [9,{scelta:2},"Scudo Alzato\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "7. Switch e il Default",
+                consegna: "Aggiungi la gestione degli errori al tuo menu. Usa l'istruzione 'default' per stampare 'Errore Comando' se l'utente inserisce un numero non previsto (es. 9).",
+                vis: `<i class="fas fa-question-circle text-6xl text-slate-400 mb-2"></i><div class="text-lg">L'utente preme 9, ma le scelte sono da 1 a 3.</div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">scelta</span> <span class="op">=</span> <span class="nm">9</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">switch</span> (<span class="vr">scelta</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="nm">1</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Nuova Partita"</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">default</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Errore Comando"</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{scelta:9},""], [3,{scelta:9},""], 
+                    [5,{scelta:9},"Errore Comando"], [6,{scelta:9},"Errore Comando"], 
+                    [7,{scelta:9},"Errore Comando"], [8,{scelta:9},"Errore Comando\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "8. Switch con Caratteri (Char)",
+                consegna: "Leggi la pressione di un tasto (W, A, S, D). Implementa uno switch che muova il personaggio 'Avanti' se rileva il carattere 'W'.",
+                vis: `<div class="grid grid-cols-3 gap-2 text-2xl font-bold"><div class="col-start-2 bg-slate-700 p-2 rounded text-emerald-400">W</div><div class="col-start-1 bg-slate-700 p-2 rounded">A</div><div class="bg-slate-700 p-2 rounded">S</div><div class="bg-slate-700 p-2 rounded">D</div></div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">char</span> <span class="vr">tasto</span> <span class="op">=</span> <span class="st">'W'</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">switch</span> (<span class="vr">tasto</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="st">'W'</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Avanti"</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="st">'S'</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Indietro"</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{tasto:"'W'"},""], [3,{tasto:"'W'"},""], 
+                    [4,{tasto:"'W'"},"Avanti"], [6,{tasto:"'W'"},"Avanti"], 
+                    [7,{tasto:"'W'"},"Avanti"], [8,{tasto:"'W'"},"Avanti\n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "9. L'Effetto Cascata (Fall-through)",
+                consegna: "Crea un errore didattico! Ometti volontariamente l'istruzione 'break' nel case 1. Osserva dal debugger come il codice 'scivola' nel case 2 eseguendoli entrambi.",
+                vis: `<i class="fas fa-water text-6xl text-blue-400 mb-2"></i><div class="text-lg">Senza 'break', il codice <br>scivola verso il basso.</div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">giorno</span> <span class="op">=</span> <span class="nm">1</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">switch</span> (<span class="vr">giorno</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="nm">1</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Lune "</span><span class="al">;</span> <span class="cm">// Niente break!</span>`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="nm">2</span>: <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Marte "</span><span class="al">;</span> <span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{giorno:1},""], [3,{giorno:1},""], 
+                    [4,{giorno:1},"Lune "], [5,{giorno:1},"Lune Marte "], 
+                    [6,{giorno:1},"Lune Marte "], [7,{giorno:1},"Lune Marte "], 
+                    [8,{giorno:1},"Lune Marte \n[Processo terminato]"] 
+                ]
+            },
+            {
+                title: "10. Switch e If combinati",
+                consegna: "Crea il negozio! Usa uno 'switch' per capire quale arma l'utente vuole (scelta 1). ALL'INTERNO del 'case', inserisci un 'if' per controllare se l'utente ha abbastanza oro per comprarla.",
+                vis: `<i class="fas fa-shopping-cart text-6xl text-purple-400 mb-2"></i><div class="text-sm">Scelta 1: Spada.<br>Controllo: Hai abbastanza oro?</div>`,
+                lines: [
+                    `<span class="inc">#include</span> <span class="st">&lt;iostream&gt;</span>`,
+                    `<span class="ty">int</span> <span class="fn">main</span>() {`,
+                    `&nbsp;&nbsp;<span class="ty">int</span> <span class="vr">sc</span> <span class="op">=</span> <span class="nm">1</span><span class="al">;</span> <span class="ty">int</span> <span class="vr">oro</span> <span class="op">=</span> <span class="nm">50</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;<span class="kw">switch</span> (<span class="vr">sc</span>) {`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">case</span> <span class="nm">1</span>: `,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="vr">oro</span> <span class="op">>=</span> <span class="nm">100</span>) { <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Spada"</span><span class="al">;</span> }`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">else</span> { <span class="kw">std::cout</span> <span class="op">&lt;&lt;</span> <span class="st">"No oro"</span><span class="al">;</span> }`,
+                    `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">break</span><span class="al">;</span>`,
+                    `&nbsp;&nbsp;}`,
+                    `&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">0</span><span class="al">;</span>`,
+                    `}`
+                ],
+                steps: [ 
+                    [0,{},""], [1,{},""], [2,{sc:1, oro:50},""], [3,{sc:1, oro:50},""], 
+                    [4,{sc:1, oro:50},""], [6,{sc:1, oro:50},"No oro"], 
+                    [7,{sc:1, oro:50},"No oro"], [8,{sc:1, oro:50},"No oro"], 
+                    [9,{sc:1, oro:50},"No oro"], [10,{sc:1, oro:50},"No oro\n[Processo terminato]"] 
+                ]
+            }
+        ];
+
+        // --- INIEZIONE HTML DELLE SLIDE ---
+        const container = document.getElementById('slides-container');
+        
+        exData.forEach((ex, idx) => {
+            let codeHTML = '';
+            ex.lines.forEach((line, i) => { codeHTML += `<div id="code-${idx}-${i}" class="code-line">${line}</div>`; });
+
+            container.innerHTML += `
+            <div class="slide" id="slide-${idx}">
+                <div class="max-w-[95%] mx-auto w-full">
+                    <div class="anim-fade-up flex items-center gap-4 mb-4">
+                        <span class="bg-rose-500/20 text-rose-400 font-bold px-3 py-1 rounded-full text-xs border border-rose-500/30">Lvl ${idx + 1}/10</span>
+                        <h2 class="text-3xl font-display font-black tracking-tight">${ex.title}</h2>
+                    </div>
+                    
+                    <div class="anim-fade-up delay-100 bg-slate-800/80 border-l-4 border-rose-500 p-5 rounded-r-xl mb-6 shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-5 text-6xl"><i class="fas fa-clipboard-list"></i></div>
+                        <h3 class="text-rose-400 font-black uppercase tracking-widest text-xs mb-2">La tua Consegna</h3>
+                        <p class="text-white text-lg font-medium leading-relaxed relative z-10">${ex.consegna}</p>
+                    </div>
+                    
+                    <div class="anim-fade-up delay-200 sim-grid">
+                        <div class="window-panel">
+                            <div class="window-header"><i class="fas fa-eye text-emerald-400"></i><span class="window-title !ml-2 text-emerald-400">Logica Visiva</span></div>
+                            <div class="visual-panel flex-grow">${ex.vis}</div>
+                        </div>
+
+                        <div class="window-panel">
+                            <div class="window-header"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><span class="window-title">main.cpp</span></div>
+                            <div class="ide-content" id="ide-${idx}">${codeHTML}</div>
+                        </div>
+                        
+                        <div class="right-panel">
+                            <div class="window-panel" style="flex: 1;">
+                                <div class="window-header"><i class="fas fa-memory text-purple-400"></i><span class="window-title text-purple-400">RAM</span></div>
+                                <div class="ram-content" id="ram-${idx}"><div class="text-slate-500 text-sm italic text-center mt-2">Memoria Vuota</div></div>
+                            </div>
+                            <div class="window-panel" style="flex: 1;">
+                                <div class="window-header"><i class="fas fa-terminal text-orange-400"></i><span class="window-title text-orange-400">Console</span></div>
+                                <div class="term-content relative"><span id="term-${idx}"></span><span class="cursor-blink">_</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center anim-fade-up delay-200">
+                        <button id="btn-${idx}" class="btn-sim" onclick="handleSimClick(${idx})">
+                            <i class="fas fa-hammer"></i> Costruisci Codice
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        // --- MOTORE SIMULATORE ---
+        let simStates = {};
+        exData.forEach((_, i) => { simStates[i] = { phase: 'build', step: 0, ramState: {} }; });
+
+        function handleSimClick(idx) {
+            const state = simStates[idx];
+            const ex = exData[idx];
+            const btn = document.getElementById(`btn-${idx}`);
+
+            if (state.phase === 'build') {
+                if (state.step < ex.lines.length) {
+                    document.getElementById(`code-${idx}-${state.step}`).classList.add('visible');
+                    state.step++;
+                    if (state.step === ex.lines.length) {
+                        state.phase = 'exec'; state.step = 0;
+                        btn.classList.add('exec-mode'); btn.innerHTML = `<i class="fas fa-bug"></i> Esegui Debug (Passo 1)`;
+                    } else {
+                        btn.innerHTML = `<i class="fas fa-hammer"></i> Scrivi Riga ${state.step + 1}`;
+                    }
+                }
+            } 
+            else if (state.phase === 'exec') {
+                if (state.step < ex.steps.length) {
+                    const [lineIdx, ramData, termOutput] = ex.steps[state.step];
+                    
+                    document.querySelectorAll(`#ide-${idx} .code-line`).forEach(el => el.classList.remove('active-debug'));
+                    document.getElementById(`code-${idx}-${lineIdx}`).classList.add('active-debug');
+                    
+                    const ramDiv = document.getElementById(`ram-${idx}`);
+                    let ramHTML = '';
+                    if (Object.keys(ramData).length === 0) {
+                        ramHTML = `<div class="text-slate-500 text-sm italic text-center mt-2">Memoria Vuota</div>`;
+                    } else {
+                        for (let key in ramData) {
+                            const val = ramData[key];
+                            const isNewOrUpdated = state.ramState[key] !== val;
+                            const updateClass = isNewOrUpdated ? 'var-update' : '';
+                            const tClass = (val === "true" || val === "false") ? 'text-blue-400' : 'text-emerald-400';
+                            let vType = typeof val === 'number' ? 'int' : (val.includes("'") ? 'char' : 'bool');
+                            
+                            ramHTML += `<div class="ram-var ${updateClass}"><div><span class="v-type">${vType}</span><span class="v-name">${key}</span></div><div class="v-val ${tClass}">${val}</div></div>`;
+                        }
+                        state.ramState = {...ramData}; 
+                    }
+                    ramDiv.innerHTML = ramHTML;
+                    document.getElementById(`term-${idx}`).textContent = termOutput;
+
+                    state.step++;
+                    if (state.step === ex.steps.length) {
+                        state.phase = 'done';
+                        btn.classList.remove('exec-mode'); btn.classList.add('done-mode');
+                        
+                        if (idx === exData.length - 1) {
+                            btn.innerHTML = `<i class="fas fa-trophy"></i> Modulo Completato!`;
+                        } else {
+                            btn.innerHTML = `Esercizio Successivo <i class="fas fa-arrow-right"></i>`;
+                            btn.onclick = () => nextSlide();
+                        }
+                    } else {
+                        btn.innerHTML = `<i class="fas fa-step-forward"></i> Esegui Riga ${ex.steps[state.step][0] + 1}`;
+                    }
+                }
+            }
+        }
+
+        // --- SISTEMA DI NAVIGAZIONE ---
+        const totalSlides = exData.length + 1; 
+        let currentSlide = 0;
+        
+        function updateUI() {
+            document.getElementById('progress-bar').style.width = `${(currentSlide / (totalSlides - 1)) * 100}%`;
+            document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function triggerAnimations(slideEl) {
+            const anims = slideEl.querySelectorAll('.anim-fade-up');
+            anims.forEach(el => el.classList.remove('show'));
+            void slideEl.offsetWidth; 
+            setTimeout(() => { anims.forEach(el => el.classList.add('show')); }, 50);
+        }
+
+        function showSlide(index) {
+            if (index < 0 || index >= totalSlides) return;
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(s => s.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+            updateUI();
+            triggerAnimations(slides[index]);
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        window.onload = () => updateUI();
+    </script>
+</body>
+</html>

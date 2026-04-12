@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Livello 2: Logica e Switch (Extended Edition)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Nunito:wght@700;900&family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Nunito', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        brand: { dark: '#0f172a', primary: '#3b82f6', accent: '#10b981', alert: '#f43f5e', purple: '#8b5cf6', orange: '#f97316' },
+                        code: { bg: '#1e1e1e', keyword: '#c586c0', type: '#569cd6', func: '#dcdcaa', str: '#ce9178', comment: '#6a9955', num: '#b5cea8', var: '#9cdcfe', oper: '#d4d4d4' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; user-select: none; }
+        
+        /* Gestione Slide */
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh;
+            opacity: 0; visibility: hidden; transition: opacity 0.6s ease-in-out, visibility 0.6s;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 4rem 8%; box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1e293b, #090e17);
+        }
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* Scroll per schermi piccoli se serve */
+        .slide-content { max-height: 90vh; overflow-y: auto; padding-right: 1rem; }
+        .slide-content::-webkit-scrollbar { width: 8px; }
+        .slide-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        .slide-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        /* Animazioni a cascata */
+        .anim-fade-up { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-scale-in { opacity: 0; transform: scale(0.9); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-slide-right { opacity: 0; transform: translateX(-40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .slide.active .anim-fade-up.show { opacity: 1; transform: translateY(0); }
+        .slide.active .anim-scale-in.show { opacity: 1; transform: scale(1); }
+        .slide.active .anim-slide-right.show { opacity: 1; transform: translateX(0); }
+        
+        /* Ritardi */
+        .delay-100 { transition-delay: 0.1s; }
+        .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; }
+        .delay-400 { transition-delay: 0.4s; }
+        .delay-500 { transition-delay: 0.5s; }
+
+        /* Progress e Controlli */
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); z-index: 50; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981); width: 0%; transition: width 0.5s ease-out; }
+        #slide-counter { position: absolute; bottom: 20px; right: 30px; z-index: 50; font-size: 0.9rem; font-weight: 600; color: #64748b; letter-spacing: 2px; }
+        
+        /* Componenti UI */
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5rem; padding: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .level-badge { display: inline-block; background: rgba(255, 255, 255, 0.1); padding: 0.3rem 1.2rem; border-radius: 2rem; font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 1rem; text-transform: uppercase; }
+        
+        /* Finestra IDE/Codice */
+        .ide-window { background: #1e1e1e; border-radius: 1rem; border: 1px solid #333; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
+        .ide-header { background: #2d2d2d; padding: 0.75rem 1.5rem; display: flex; gap: 0.5rem; align-items: center; border-bottom: 1px solid #111; }
+        .ide-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .ide-dot.red { background: #ff5f56; } .ide-dot.yellow { background: #ffbd2e; } .ide-dot.green { background: #27c93f; }
+        .ide-content { padding: 1.5rem 2rem; font-family: 'Fira Code', monospace; font-size: 1.1rem; line-height: 1.7; color: #d4d4d4; }
+        
+        /* Finestra Terminale */
+        .terminal-window { background: #000; border-radius: 1rem; border: 2px solid #333; padding: 1.5rem; font-family: 'Fira Code', monospace; color: #10b981; position: relative; min-height: 120px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Elementi Interattivi */
+        .logic-btn { background: #1e293b; border: 2px solid #334155; color: #e2e8f0; padding: 1rem 1.5rem; border-radius: 1rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; box-shadow: 0 4px 0 #0f172a; }
+        .logic-btn:hover:not(:disabled) { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 0 #0f172a; }
+        .logic-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 #0f172a; }
+        .logic-btn.success { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; box-shadow: 0 0 0 #0f172a; transform: translateY(4px); cursor: default; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+        .error-shake { animation: shake 0.4s both; border-color: #f43f5e !important; background: rgba(244, 63, 94, 0.1) !important; color: #f43f5e !important; }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .anim-pop { animation: pop 0.4s forwards; }
+
+        .btn-glow { background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; padding: 1.2rem 3rem; border-radius: 3rem; font-family: 'Nunito', sans-serif; font-size: 1.3rem; font-weight: 900; color: white; cursor: pointer; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; }
+        .btn-glow:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6); }
+    </style>
+</head>
+<body>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="slide-counter">1 / 10</div>
+
+    <div class="slide active">
+        <div class="max-w-5xl mx-auto text-center slide-content">
+            <div class="anim-fade-up show inline-flex items-center gap-3 px-5 py-2 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold tracking-widest uppercase mb-10 text-sm shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+                <i class="fas fa-code-branch"></i> C++ Livello 2
+            </div>
+            <h1 class="anim-fade-up show delay-100 text-7xl font-display font-black mb-8 text-white leading-tight tracking-tight">
+                Logica Avanzata e <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-brand-orange">Scelte Multiple</span>
+            </h1>
+            <div class="anim-fade-up show delay-200 glass-card !bg-slate-900/50 border-l-4 border-l-purple-500 !p-8 max-w-3xl mx-auto mb-12 text-left">
+                <p class="text-2xl text-slate-300 font-light leading-relaxed italic">
+                    "Saper prendere una decisione è facile. Saper valutare più condizioni contemporaneamente o gestire 100 alternative richiede gli strumenti giusti. <br>
+                    <strong class="text-white">Oggi impariamo a far ragionare il codice, passo dopo passo.</strong>"
+                </p>
+            </div>
+            <div class="anim-scale-in show delay-300 opacity-70 mt-8">
+                <span class="text-slate-400 font-semibold tracking-widest uppercase text-sm"><i class="fas fa-arrows-alt-h mr-2"></i> Usa le frecce per scorrere</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-blue-400 border border-blue-400/30">Fase 1: Il Problema</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-8 tracking-tight">Il "Doppio Controllo"</h2>
+            <p class="anim-fade-up delay-200 text-lg text-slate-300 mb-8 font-light">L'<code class="text-code-keyword font-mono bg-slate-800 px-2 rounded">if</code> normale controlla una sola cosa. Ma cosa succede se per essere promosso devi avere <strong>sia</strong> il voto alto <strong>sia</strong> poche assenze?</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                <div class="anim-slide-right delay-300 glass-card !bg-red-900/20 border-l-4 border-brand-alert !p-8">
+                    <h3 class="text-xl font-bold text-white mb-4"><i class="fas fa-times-circle text-brand-alert mr-2"></i> Gli "if" Annidati (Scomodi)</h3>
+                    <p class="text-slate-300 text-sm mb-4">Siamo costretti a mettere un `if` dentro un altro `if`. Il codice si sposta sempre più a destra, diventando difficile da leggere e lungo da scrivere.</p>
+                </div>
+
+                <div class="anim-scale-in delay-400 ide-window">
+                    <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">scuola_vecchia.cpp</span></div>
+                    <div class="ide-content text-sm">
+                        <span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span><br><br>
+                        <span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br>
+                        <span class="pl-8 text-code-type">int</span> <span class="text-code-var">voto</span> = <span class="text-code-num">7</span>;<br>
+                        <span class="pl-8 text-code-type">int</span> <span class="text-code-var">assenze</span> = <span class="text-code-num">5</span>;<br><br>
+                        <span class="pl-8 text-code-keyword">if</span> (<span class="text-code-var">voto</span> >= <span class="text-code-num">6</span>) { <span class="text-code-comment">// Primo controllo</span><br>
+                        <span class="pl-16 text-code-keyword">if</span> (<span class="text-code-var">assenze</span> <= <span class="text-code-num">10</span>) { <span class="text-code-comment">// Secondo controllo</span><br>
+                        <span class="pl-24 text-white">std::cout</span> << <span class="text-code-str">"Promosso!"</span>;<br>
+                        <span class="pl-16">}</span><br>
+                        <span class="pl-8">}</span><br><br>
+                        <span class="pl-8 text-code-keyword">return</span> <span class="text-code-num">0</span><span class="text-brand-alert font-bold">;</span><br>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-purple-400 border border-purple-400/30">Fase 2: La Soluzione</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-10 tracking-tight">I Superpoteri Logici</h2>
+            <p class="anim-fade-up delay-200 text-lg text-slate-300 mb-8 font-light">Per evitare l'incubo degli `if` dentro gli `if`, il C++ ci regala tre simboli speciali che uniscono le condizioni in una sola riga.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="anim-fade-up delay-300 glass-card !p-6 border-t-4 border-blue-500 hover:scale-105 transition-transform">
+                    <div class="text-5xl text-blue-400 mb-4 font-mono font-black">&&</div>
+                    <h3 class="font-bold text-white text-xl mb-2">AND (E)</h3>
+                    <p class="text-sm text-slate-300">Tutte le condizioni devono essere VERE. <br><br><i class="text-slate-400">"Esco SE ho finito i compiti <strong>&&</strong> non piove."</i><br><br>Basta che una sia falsa, e il blocco viene saltato.</p>
+                </div>
+                <div class="anim-fade-up delay-400 glass-card !p-6 border-t-4 border-purple-500 hover:scale-105 transition-transform">
+                    <div class="text-5xl text-purple-400 mb-4 font-mono font-black">||</div>
+                    <h3 class="font-bold text-white text-xl mb-2">OR (OPPURE)</h3>
+                    <p class="text-sm text-slate-300">Basta che UNA SOLA condizione sia VERA. <br><br><i class="text-slate-400">"Bevo acqua SE ho sete <strong>||</strong> fa molto caldo."</i><br><br>Si blocca solo se sono tutte false.</p>
+                </div>
+                <div class="anim-fade-up delay-500 glass-card !p-6 border-t-4 border-brand-alert hover:scale-105 transition-transform">
+                    <div class="text-5xl text-brand-alert mb-4 font-mono font-black">!</div>
+                    <h3 class="font-bold text-white text-xl mb-2">NOT (NON)</h3>
+                    <p class="text-sm text-slate-300">Inverte la realtà. Trasforma il Vero in Falso e viceversa.<br><br><i class="text-slate-400">"Gioco <strong>!</strong>(se è ora di cena)."</i></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-emerald-400 border border-emerald-400/30">In Pratica</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-10 tracking-tight">L'Unione fa la Forza</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                <div class="anim-fade-up delay-200">
+                    <div class="glass-card !p-6 border-l-4 border-emerald-500 mb-6">
+                        <p class="text-lg text-slate-300">Guarda come si trasforma il codice di prima usando l'operatore <code class="font-bold text-emerald-400">&&</code>. Ora è pulito, leggibile e compatto.</p>
+                    </div>
+                </div>
+
+                <div class="anim-scale-in delay-300 ide-window border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+                    <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">scuola_nuova.cpp</span></div>
+                    <div class="ide-content text-sm">
+                        <span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span><br><br>
+                        <span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br>
+                        <span class="pl-8 text-code-type">int</span> <span class="text-code-var">voto</span> = <span class="text-code-num">7</span>, <span class="text-code-var">assenze</span> = <span class="text-code-num">5</span>;<br><br>
+                        <span class="pl-8 text-code-keyword">if</span> (<span class="text-code-var">voto</span> >= <span class="text-code-num">6</span> <span class="text-emerald-400 font-bold text-lg mx-1">&&</span> <span class="text-code-var">assenze</span> <= <span class="text-code-num">10</span>) {<br>
+                        <span class="pl-16 text-white">std::cout</span> << <span class="text-code-str">"Promosso!"</span>;<br>
+                        <span class="pl-8">}</span> <span class="text-code-keyword">else</span> {<br>
+                        <span class="pl-16 text-white">std::cout</span> << <span class="text-code-str">"Bocciato o Rimandato."</span>;<br>
+                        <span class="pl-8">}</span><br><br>
+                        <span class="pl-8 text-code-keyword">return</span> <span class="text-code-num">0</span><span class="text-brand-alert font-bold">;</span><br>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-emerald-400 border border-emerald-400/30">Sfida Interattiva 1</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-6 tracking-tight">Assembla il Verdetto</h2>
+            <p class="anim-fade-up delay-200 text-lg text-slate-300 mb-8 font-light">
+                Devi promuovere uno studente. Affinché sia promosso, il <code class="text-code-var">voto</code> deve essere maggiore o uguale a 6 <strong class="text-blue-400">E</strong> le <code class="text-code-var">assenze</code> devono essere minori o uguali a 10. <br><strong class="text-white">Clicca i blocchi nel giusto ordine logico.</strong>
+            </p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="flex flex-col gap-4" id="if-buttons">
+                    <button class="logic-btn" data-val="2" onclick="buildIf(this)"><span class="font-mono text-blue-400 font-black text-2xl">&&</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Operatore</span></button>
+                    <button class="logic-btn" data-val="4" onclick="buildIf(this)"><span class="font-mono text-white">) { std::cout &lt;&lt; <span class="text-code-str">"Promosso!"</span>; }</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Azione</span></button>
+                    <button class="logic-btn" data-val="1" onclick="buildIf(this)"><span class="font-mono text-code-keyword">if</span><span class="font-mono"> (<span class="text-code-var">voto</span> >= <span class="text-code-num">6</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Condizione 1</span></button>
+                    <button class="logic-btn" data-val="3" onclick="buildIf(this)"><span class="font-mono"><span class="text-code-var">assenze</span> <= <span class="text-code-num">10</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Condizione 2</span></button>
+                </div>
+
+                <div class="flex flex-col gap-6">
+                    <div class="ide-window h-64">
+                        <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">giudizio.cpp</span></div>
+                        <div class="ide-content text-sm leading-loose" id="if-code">
+                            <span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span><br>
+                            <span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br>
+                            <span class="pl-8 text-code-type">int</span> <span class="text-code-var">voto</span> = <span class="text-code-num">7</span>, <span class="text-code-var">assenze</span> = <span class="text-code-num">5</span>;<br>
+                            <div class="pl-8 my-2 min-h-[30px]" id="if-code-content"><span class="text-slate-600 italic">// Inserisci la logica if...</span></div>
+                            <span class="pl-8 text-code-keyword">return</span> <span class="text-code-num">0</span><span class="text-brand-alert font-bold">;</span><br>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="terminal-window">
+                        <div class="text-slate-500 text-xs uppercase tracking-widest mb-2 border-b border-slate-800 pb-2">Output Terminale</div>
+                        <div id="if-terminal" class="text-2xl font-bold text-emerald-400 inline-block"></div><span class="cursor-blink text-emerald-400 text-2xl">_</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-brand-orange border border-brand-orange/30">Fase 3: Un nuovo problema</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-8 tracking-tight">L'Incubo dei Menu</h2>
+            <p class="anim-fade-up delay-200 text-lg text-slate-300 mb-8 font-light">Immagina di creare il menu iniziale di un videogioco. Ci sono 4 opzioni. Se usi solo la struttura <code class="text-code-keyword font-mono">else if</code>, crei una scala lunghissima che il computer deve scendere gradino per gradino.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                <div class="anim-slide-right delay-300 glass-card !bg-red-900/20 border-l-4 border-brand-alert !p-8">
+                    <h3 class="text-xl font-bold text-white mb-4">La Cascata Lenta</h3>
+                    <p class="text-slate-300 text-sm mb-4">Se l'utente digita "4", il computer deve comunque controllare se è 1, poi se è 2, poi se è 3... uno spreco di tempo e di righe di codice.</p>
+                </div>
+
+                <div class="anim-scale-in delay-400 ide-window">
+                    <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">menu_lento.cpp</span></div>
+                    <div class="ide-content text-sm">
+                        <span class="text-code-type">int</span> <span class="text-code-var">scelta</span> = <span class="text-code-num">4</span>;<br><br>
+                        <span class="text-code-keyword">if</span> (<span class="text-code-var">scelta</span> == <span class="text-code-num">1</span>) {<br>
+                        <span class="pl-8 text-white">std::cout</span> << <span class="text-code-str">"Nuova Partita"</span>;<br>
+                        } <span class="text-code-keyword">else if</span> (<span class="text-code-var">scelta</span> == <span class="text-code-num">2</span>) {<br>
+                        <span class="pl-8 text-white">std::cout</span> << <span class="text-code-str">"Carica"</span>;<br>
+                        } <span class="text-code-keyword">else if</span> (<span class="text-code-var">scelta</span> == <span class="text-code-num">3</span>) {<br>
+                        <span class="pl-8 text-white">std::cout</span> << <span class="text-code-str">"Opzioni"</span>;<br>
+                        } <span class="text-code-keyword">else if</span> (<span class="text-code-var">scelta</span> == <span class="text-code-num">4</span>) {<br>
+                        <span class="pl-8 text-white">std::cout</span> << <span class="text-code-str">"Esci"</span>;<br>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-brand-orange border border-brand-orange/30">La Soluzione Elegante</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-10 tracking-tight">Lo Scambio Ferroviario</h2>
+            
+            <div class="text-center anim-fade-up delay-200 mb-10">
+                <i class="fas fa-random text-8xl text-brand-orange mb-6 drop-shadow-[0_0_20px_rgba(249,115,22,0.5)]"></i>
+                <h3 class="text-4xl font-display font-black text-white mb-4">Entra in scena lo <span class="text-brand-orange">switch</span></h3>
+                <p class="text-xl text-slate-300 font-light max-w-3xl mx-auto leading-relaxed">
+                    Pensa allo <code class="text-brand-orange font-bold">switch</code> come a uno scambio dei binari. Prende un valore in ingresso e devia <strong>istantaneamente</strong> il treno sul binario corretto, senza dover controllare tutti gli altri ad uno ad uno.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-brand-orange border border-brand-orange/30">Anatomia</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-8 tracking-tight">Smontiamo il Menu</h2>
+            
+            <div class="anim-scale-in delay-200 ide-window mb-8 border-brand-orange shadow-[0_0_30px_rgba(249,115,22,0.15)]">
+                <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">menu_veloce.cpp</span></div>
+                <div class="ide-content !py-6 text-sm">
+                    <span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span><br>
+                    <span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br>
+                    <span class="pl-8 text-code-type">int</span> <span class="text-code-var">scelta</span> = <span class="text-code-num">2</span>;<br><br>
+                    <span class="pl-8 text-code-keyword">switch</span> (<span class="text-code-var">scelta</span>) {<br>
+                    <span class="pl-16 text-code-keyword">case</span> <span class="text-code-num">1</span>:<br>
+                    <span class="pl-24 text-white">std::cout</span> << <span class="text-code-str">"Nuova Partita"</span>; <span class="text-brand-alert font-bold">break;</span><br>
+                    <span class="pl-16 text-code-keyword">case</span> <span class="text-code-num">2</span>:<br>
+                    <span class="pl-24 text-white">std::cout</span> << <span class="text-code-str">"Carica Partita"</span>; <span class="text-brand-alert font-bold">break;</span><br>
+                    <span class="pl-16 text-code-keyword">default</span>:<br>
+                    <span class="pl-24 text-white">std::cout</span> << <span class="text-code-str">"Errore!"</span>;<br>
+                    <span class="pl-8">}</span><br>
+                    <span class="pl-8 text-code-keyword">return</span> <span class="text-code-num">0</span><span class="text-brand-alert font-bold">;</span><br>
+                    }
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="anim-fade-up delay-300 glass-card !p-5 border-t-4 border-blue-500">
+                    <h3 class="font-bold text-white mb-2"><code class="text-code-keyword">case</code> (Il Binario)</h3>
+                    <p class="text-xs text-slate-300">Ogni <code class="text-code-keyword">case</code> è una destinazione. Se <code>scelta</code> vale 2, il C++ salta magicamente a <code>case 2:</code>.</p>
+                </div>
+                <div class="anim-fade-up delay-400 glass-card !p-5 border-t-4 border-brand-alert bg-brand-alert/10">
+                    <h3 class="font-bold text-white mb-2"><code class="text-brand-alert">break;</code> (Il Freno) <i class="fas fa-exclamation-triangle text-brand-alert ml-1"></i></h3>
+                    <p class="text-xs text-slate-300 font-bold mb-1">REGOLA D'ORO.</p>
+                    <p class="text-xs text-slate-300">Senza il break, il treno non si ferma e "schianta" leggendo anche i case sottostanti!</p>
+                </div>
+                <div class="anim-fade-up delay-500 glass-card !p-5 border-t-4 border-slate-500">
+                    <h3 class="font-bold text-white mb-2"><code class="text-code-keyword">default:</code> (Il Paracadute)</h3>
+                    <p class="text-xs text-slate-300">L'equivalente dell'<code>else</code>. Gestisce tutto ciò che non è previsto (es. l'utente preme "9").</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full slide-content">
+            <div class="anim-fade-up level-badge text-emerald-400 border border-emerald-400/30">Sfida Interattiva 2</div>
+            <h2 class="anim-fade-up delay-100 text-5xl font-display font-black mb-8 tracking-tight">Costruisci il Bivio</h2>
+            <p class="anim-fade-up delay-200 text-lg text-slate-300 mb-8 font-light">Costruisci un mini switch sicuro. Ricordati che dopo aver stampato il messaggio, <strong class="text-brand-alert">devi fermare l'esecuzione</strong> prima di chiudere tutto.</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="flex flex-col gap-4" id="switch-buttons">
+                    <button class="logic-btn" data-val="3" onclick="buildSwitch(this)"><span class="font-mono text-brand-alert font-bold">break;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Freno</span></button>
+                    <button class="logic-btn" data-val="1" onclick="buildSwitch(this)"><span class="font-mono"><span class="text-code-keyword">switch</span> (<span class="text-code-var">opzione</span>) {</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Lo Scambio</span></button>
+                    <button class="logic-btn" data-val="4" onclick="buildSwitch(this)"><span class="font-mono"><span class="text-code-keyword">default</span>: std::cout << <span class="text-code-str">"?"</span>; }</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Paracadute</span></button>
+                    <button class="logic-btn" data-val="2" onclick="buildSwitch(this)"><span class="font-mono"><span class="text-code-keyword">case</span> <span class="text-code-num">1</span>: std::cout << <span class="text-code-str">"Play"</span>;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Binario</span></button>
+                </div>
+
+                <div class="flex flex-col gap-6">
+                    <div class="ide-window h-72">
+                        <div class="ide-header"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div><span class="text-slate-400 text-sm ml-4">videogame.cpp</span></div>
+                        <div class="ide-content text-sm leading-loose" id="switch-code">
+                            <span class="text-code-keyword">#include</span> <span class="text-code-str">&lt;iostream&gt;</span><br>
+                            <span class="text-code-type">int</span> <span class="text-code-func">main</span>() {<br>
+                            <span class="pl-8 text-code-type">int</span> <span class="text-code-var">opzione</span> = <span class="text-code-num">1</span>;<br>
+                            <div id="switch-code-content" class="pl-8 my-2 min-h-[50px]"><span class="text-slate-600 italic">// Costruisci lo switch...</span></div>
+                            <span class="pl-8 text-code-keyword">return</span> <span class="text-code-num">0</span><span class="text-brand-alert font-bold">;</span><br>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="terminal-window">
+                        <div class="text-slate-500 text-xs uppercase tracking-widest mb-2 border-b border-slate-800 pb-2">Output Terminale</div>
+                        <div id="switch-terminal" class="text-3xl font-bold text-emerald-400 inline-block"></div><span class="cursor-blink text-emerald-400 text-3xl">_</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <div class="max-w-4xl mx-auto text-center slide-content">
+            <div class="anim-pop w-32 h-32 mx-auto rounded-full bg-purple-500/20 border-4 border-purple-500 flex items-center justify-center text-6xl text-purple-400 mb-10 shadow-[0_0_50px_rgba(139,92,246,0.4)]">
+                <i class="fas fa-sitemap"></i>
+            </div>
+            <h1 class="anim-fade-up delay-100 text-7xl font-display font-black mb-6 text-white tracking-tight">Livello 2 Completato!</h1>
+            <p class="anim-fade-up delay-200 text-2xl text-slate-300 mb-10 font-light leading-relaxed">
+                Ora il tuo codice non esegue solo comandi riga per riga, ma sa <strong class="text-white">ragionare</strong>, prendere decisioni complesse e smistare decine di alternative in modo elegante.
+            </p>
+            
+            <div class="anim-fade-up delay-300 flex flex-wrap justify-center gap-4 mb-12">
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-blue-400 font-bold">&&</span>
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-purple-400 font-bold">||</span>
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-code-keyword">switch()</span>
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-code-keyword">case</span>
+                <span class="bg-brand-alert/20 border border-brand-alert px-4 py-2 rounded-lg font-mono text-brand-alert font-black">break;</span>
+                <span class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg font-mono text-code-keyword">return 0;</span>
+            </div>
+            
+            <button onclick="location.reload()" class="anim-pop delay-400 btn-glow mx-auto">
+                <i class="fas fa-redo mr-2"></i> Ripeti la Lezione
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Navigazione base
+        const totalSlides = 10;
+        let currentSlide = 0;
+        
+        function updateUI() {
+            const progress = ((currentSlide) / (totalSlides - 1)) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function triggerAnimations(slideIndex) {
+            const current = slides[slideIndex];
+            const animElements = current.querySelectorAll('.anim-fade-up, .anim-scale-in, .anim-slide-right, .anim-pop');
+            
+            animElements.forEach(el => el.classList.remove('show'));
+            void current.offsetWidth; // Reflow
+            setTimeout(() => { animElements.forEach(el => el.classList.add('show')); }, 50);
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            if (index === currentSlide && document.querySelector('.slide.active')) return;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            currentSlide = index;
+            updateUI();
+            triggerAnimations(currentSlide);
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // Error Function
+        function triggerError(containerId, btnObj) {
+            btnObj.classList.add('error-shake');
+            setTimeout(() => { btnObj.classList.remove('error-shake'); }, 400);
+        }
+
+        // === ESERCIZIO 1: LOGICA IF ===
+        let ifStep = 1;
+        const ifCodeDiv = document.getElementById('if-code-content');
+        
+        function buildIf(btn) {
+            const val = parseInt(btn.getAttribute('data-val'));
+            
+            if (val === ifStep) {
+                btn.classList.add('success'); btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-check-circle"></i> Fatto`;
+                
+                if(ifStep === 1) ifCodeDiv.innerHTML = `<div class="anim-pop inline-block"><span class="text-code-keyword">if</span> (<span class="text-code-var">voto</span> >= <span class="text-code-num">6</span></div>`;
+                if(ifStep === 2) ifCodeDiv.innerHTML += `<div class="anim-pop inline-block mx-2 text-blue-400 font-bold">&&</div>`;
+                if(ifStep === 3) ifCodeDiv.innerHTML += `<div class="anim-pop inline-block"><span class="text-code-var">assenze</span> <= <span class="text-code-num">10</span>)</div>`;
+                if(ifStep === 4) {
+                    ifCodeDiv.innerHTML += `<div class="anim-pop inline-block"> {<br><span class="pl-8 text-white">std::cout</span> << <span class="text-code-str">"Promosso!"</span>;<br>}</div>`;
+                    
+                    setTimeout(() => {
+                        let term = document.getElementById('if-terminal');
+                        term.innerHTML = "Promosso!";
+                        setTimeout(() => nextSlide(), 2000);
+                    }, 500);
+                }
+                ifStep++;
+            } else {
+                triggerError('if-buttons', btn);
+                ifStep = 1;
+                ifCodeDiv.innerHTML = `<div class="text-brand-alert font-bold mt-2"><i class="fas fa-skull-crossbones"></i> Errore di Logica. Ricomincia.</div>`;
+                setTimeout(() => { ifCodeDiv.innerHTML = `<span class="text-slate-600 italic">// Inserisci la logica if...</span>`; }, 1500);
+                
+                const origBtnsIf = [
+                    '<span class="font-mono text-code-keyword">if</span><span class="font-mono"> (<span class="text-code-var">voto</span> >= <span class="text-code-num">6</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Condizione 1</span>',
+                    '<span class="font-mono text-blue-400 font-black text-2xl">&&</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Operatore</span>',
+                    '<span class="font-mono"><span class="text-code-var">assenze</span> <= <span class="text-code-num">10</span></span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Condizione 2</span>',
+                    '<span class="font-mono text-white">) { std::cout &lt;&lt; <span class="text-code-str">"Promosso!"</span>; }</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Azione</span>'
+                ];
+                
+                const btns = document.querySelectorAll('#if-buttons button');
+                btns.forEach((b) => {
+                    b.classList.remove('success'); b.disabled = false;
+                    if(b.dataset.val == "1") b.innerHTML = origBtnsIf[0];
+                    if(b.dataset.val == "2") b.innerHTML = origBtnsIf[1];
+                    if(b.dataset.val == "3") b.innerHTML = origBtnsIf[2];
+                    if(b.dataset.val == "4") b.innerHTML = origBtnsIf[3];
+                });
+            }
+        }
+
+        // === ESERCIZIO 2: SWITCH ===
+        let switchStep = 1;
+        const switchCodeDiv = document.getElementById('switch-code-content');
+        
+        function buildSwitch(btn) {
+            const val = parseInt(btn.getAttribute('data-val'));
+            
+            if (val === switchStep) {
+                btn.classList.add('success'); btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-check-circle"></i> Inserito`;
+                
+                if(switchStep === 1) switchCodeDiv.innerHTML = `<div class="anim-pop"><span class="text-code-keyword">switch</span> (<span class="text-code-var">opzione</span>) {</div>`;
+                if(switchStep === 2) switchCodeDiv.innerHTML += `<div class="anim-pop pl-8"><span class="text-code-keyword">case</span> <span class="text-code-num">1</span>:<br><span class="pl-8 text-white">std::cout</span> << <span class="text-code-str">"Play"</span>;</div>`;
+                if(switchStep === 3) switchCodeDiv.innerHTML += `<div class="anim-pop pl-16 text-brand-alert font-bold">break;</div>`;
+                if(switchStep === 4) {
+                    switchCodeDiv.innerHTML += `<div class="anim-pop pl-8"><span class="text-code-keyword">default</span>:<br><span class="pl-8 text-white">std::cout</span> << <span class="text-code-str">"?"</span>;<br>}</div>`;
+                    
+                    setTimeout(() => {
+                        document.getElementById('switch-terminal').innerHTML = "Play";
+                        setTimeout(() => nextSlide(), 2000);
+                    }, 500);
+                }
+                switchStep++;
+            } else {
+                triggerError('switch-buttons', btn);
+                switchStep = 1;
+                switchCodeDiv.innerHTML = `<span class="text-brand-alert font-bold mt-2"><i class="fas fa-exclamation-triangle"></i> ERRORE! Hai fatto schiantare il treno.</span>`;
+                setTimeout(() => { switchCodeDiv.innerHTML = `<span class="text-slate-600 italic">// Costruisci lo switch...</span>`; }, 1500);
+                
+                const origBtnsSwitch = [
+                    '<span class="font-mono"><span class="text-code-keyword">switch</span> (<span class="text-code-var">opzione</span>) {</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Lo Scambio</span>',
+                    '<span class="font-mono"><span class="text-code-keyword">case</span> <span class="text-code-num">1</span>: std::cout << <span class="text-code-str">"Play"</span>;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Binario</span>',
+                    '<span class="font-mono text-brand-alert font-bold">break;</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Freno</span>',
+                    '<span class="font-mono"><span class="text-code-keyword">default</span>: std::cout << <span class="text-code-str">"?"</span>; }</span> <span class="text-xs text-slate-500 ml-auto uppercase tracking-widest">Il Paracadute</span>'
+                ];
+                
+                const btns = document.querySelectorAll('#switch-buttons button');
+                btns.forEach(b => {
+                    b.classList.remove('success'); b.disabled = false;
+                    if(b.dataset.val == "1") b.innerHTML = origBtnsSwitch[0];
+                    if(b.dataset.val == "2") b.innerHTML = origBtnsSwitch[1];
+                    if(b.dataset.val == "3") b.innerHTML = origBtnsSwitch[2];
+                    if(b.dataset.val == "4") b.innerHTML = origBtnsSwitch[3];
+                });
+            }
+        }
+
+        // Init
+        window.onload = () => {
+            updateUI();
+            triggerAnimations(currentSlide);
+        };
+    </script>
+</body>
+</html>
