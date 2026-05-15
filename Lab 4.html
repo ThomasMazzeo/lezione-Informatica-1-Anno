@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetGuard Lab – Navigazione e Reti</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #e8ecf3;
+    color: #1a1a2e;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  :root {
+    --darkbg:    #0a1223;
+    --appblue:   #1e5aa0;
+    --appblue2:  #4682c8;
+    --lightblue: #dceaff;
+    --appgreen:  #288050;
+    --appred:    #b42828;
+    --apporange: #dc6400;
+    --gold:      #dcaa00;
+    --lightgray: #f5f7fa;
+    --border:    #c8d2e1;
+    --darkgray:  #3c3c3c;
+    --warnyellow:#c8a000;
+    --appviolet: #6e28b4;
+    --codegreen: #00b464;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* ── HEADER BAR ── */
+  .header-bar {
+    background: var(--darkbg);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 6px 6px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-bar span:first-child { color: var(--codegreen); }
+
+  /* ── COVER ── */
+  .cover-box {
+    background: var(--darkbg);
+    border-radius: 8px;
+    padding: 34px 20px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-box::before {
+    content: '';
+    position: absolute;
+    top: -40px; left: -40px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(30,90,160,0.15);
+    pointer-events: none;
+  }
+  .cover-box::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; right: -30px;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: rgba(0,180,100,0.08);
+    pointer-events: none;
+  }
+  .cover-label {
+    color: var(--codegreen);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    margin-bottom: 12px;
+  }
+  .cover-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .cover-title {
+    color: #fff;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.15;
+  }
+  .cover-subtitle {
+    color: #aac4f0;
+    font-size: 15px;
+    font-weight: 400;
+    margin-top: 8px;
+  }
+  .cover-divider {
+    border: none;
+    border-top: 1px solid #1e3050;
+    width: 50%;
+    margin: 16px auto;
+  }
+  .cover-meta {
+    color: var(--gold);
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .cover-meta span { display: flex; align-items: center; gap: 5px; }
+  .date-input {
+    border: none;
+    border-bottom: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    font-size: 12px;
+    width: 120px;
+    outline: none;
+    text-align: center;
+  }
+
+  /* ── STUDENT HEADER ── */
+  .student-header {
+    background: #fff;
+    border: 1.5px solid var(--appblue);
+    border-radius: 7px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .student-header .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 140px;
+  }
+  .student-header label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--appblue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .student-header input {
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    padding: 5px 2px;
+    font-size: 14px;
+    outline: none;
+    background: transparent;
+    color: var(--darkbg);
+  }
+  .student-header input:focus { border-bottom-color: var(--appblue); }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: rgba(30,90,160,0.07);
+    border: 1px solid var(--appblue);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── OBIETTIVI ── */
+  .obiettivi-box {
+    background: var(--lightblue);
+    border: 1.5px solid var(--appblue);
+    border-radius: 7px;
+    padding: 16px 18px;
+  }
+  .obiettivi-box .box-title {
+    color: var(--appblue);
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .obiettivi-box ul {
+    list-style: none;
+    font-size: 14px;
+    line-height: 1.95;
+  }
+  .obiettivi-box ul li::before {
+    content: '✔ ';
+    color: var(--appblue);
+    font-weight: 700;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    background: var(--lightblue);
+    border-radius: 5px;
+    padding: 10px 16px;
+    color: var(--appblue);
+    font-size: 16px;
+    font-weight: 800;
+    border-left: 5px solid var(--appblue);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── PHASE BOX ── */
+  .phase-box {
+    border-radius: 8px;
+    overflow: visible;
+    position: relative;
+    background: var(--lightgray);
+    padding: 24px 16px 16px;
+    margin-top: 20px;
+  }
+  .phase-tag {
+    position: absolute;
+    top: -14px;
+    left: 16px;
+    padding: 4px 14px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .phase-box.blue   { border: 1.5px solid var(--appblue);   }
+  .phase-box.blue   .phase-tag { background: var(--appblue);   }
+  .phase-box.green  { border: 1.5px solid var(--appgreen);  }
+  .phase-box.green  .phase-tag { background: var(--appgreen);  }
+  .phase-box.red    { border: 1.5px solid var(--appred);    }
+  .phase-box.red    .phase-tag { background: var(--appred);    }
+  .phase-box.dark   { border: 1.5px solid var(--darkbg);    }
+  .phase-box.dark   .phase-tag { background: var(--darkbg);    }
+  .phase-box.yellow { border: 1.5px solid var(--warnyellow); }
+  .phase-box.yellow .phase-tag { background: var(--warnyellow); color:#1a1a2e; }
+  .phase-box.violet { border: 1.5px solid var(--appviolet); }
+  .phase-box.violet .phase-tag { background: var(--appviolet); }
+
+  /* ── VARI BOX COLORATI ── */
+  .box-info {
+    background: rgba(40,128,80,0.07);
+    border: 1px solid var(--appgreen);
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.75;
+    margin: 8px 0;
+  }
+  .box-info .box-title { color: var(--appgreen); font-weight:700; font-size:13px; margin-bottom:6px; }
+
+  .box-danger {
+    background: rgba(180,40,40,0.06);
+    border: 1.5px solid var(--appred);
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.75;
+    margin: 8px 0;
+  }
+  .box-danger .box-title { color: var(--appred); font-weight:700; font-size:13px; margin-bottom:6px; }
+
+  .box-warn {
+    background: rgba(220,170,0,0.10);
+    border: 1px solid var(--warnyellow);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.75;
+    margin: 8px 0;
+  }
+  .box-warn .box-title { color: var(--warnyellow); font-weight:700; font-size:13px; margin-bottom:5px; }
+
+  .box-violet {
+    background: rgba(110,40,180,0.06);
+    border: 1px solid var(--appviolet);
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.75;
+    margin: 8px 0;
+  }
+  .box-violet .box-title { color: var(--appviolet); font-weight:700; font-size:13px; margin-bottom:6px; }
+
+  .box-dark {
+    background: var(--darkbg);
+    border: 1px solid #2a3a5a;
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.75;
+    margin: 8px 0;
+    color: #d0daf0;
+    font-family: 'Courier New', monospace;
+  }
+  .box-dark .box-title { color: var(--codegreen); font-weight:700; font-size:13px; margin-bottom:6px; font-family: 'Segoe UI', Arial, sans-serif; }
+
+  .box-consegna {
+    background: var(--lightgray);
+    border: 1px solid var(--appblue2);
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.75;
+    margin: 8px 0;
+  }
+  .box-consegna .box-title {
+    background: var(--appblue2);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 9px;
+  }
+
+  /* ── SUBSECTION ── */
+  .subsection-title {
+    color: var(--appblue2);
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--appblue2);
+    padding-bottom: 4px;
+    margin: 14px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── ANSWER AREA ── */
+  .answer-area {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 12px 14px;
+    margin: 8px 0;
+  }
+  .answer-area .q-label {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--darkbg);
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  textarea.answer {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    background: #fafbfd;
+    color: var(--darkbg);
+    margin-top: 4px;
+  }
+  textarea.answer:focus { border-color: var(--appblue); }
+
+  /* ── HTTP vs HTTPS TABLE ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .compare-table thead tr { background: var(--darkbg); }
+  .compare-table thead th {
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+  }
+  .compare-table thead th:nth-child(2) { color: #ff9999; }
+  .compare-table thead th:nth-child(3) { color: #99ffcc; }
+  .compare-table tbody tr { border-bottom: 1px solid var(--border); }
+  .compare-table tbody td {
+    padding: 10px 14px;
+    background: #fff;
+    vertical-align: middle;
+    line-height: 1.5;
+  }
+  .compare-table tbody td:first-child {
+    font-weight: 700;
+    color: var(--darkgray);
+    background: var(--lightgray);
+    width: 150px;
+  }
+  .compare-table tbody td:nth-child(2) { color: var(--appred); }
+  .compare-table tbody td:nth-child(3) { color: var(--appgreen); }
+
+  /* ── SCENARIO CARD ── */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .scenario-card {
+    background: #fff;
+    border-radius: 7px;
+    padding: 14px;
+    border: 1.2px solid var(--border);
+    font-size: 13px;
+  }
+  .scenario-card .sc-header {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .scenario-card.safe   { border-color: var(--appgreen); }
+  .scenario-card.unsafe { border-color: var(--appred);   }
+  .scenario-card.safe   .sc-header { color: var(--appgreen); }
+  .scenario-card.unsafe .sc-header { color: var(--appred);   }
+  .scenario-card p { color: #444; line-height: 1.6; }
+
+  /* ── MITM DIAGRAM ── */
+  .mitm-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 14px 0;
+    flex-wrap: wrap;
+  }
+  .mitm-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 90px;
+  }
+  .mitm-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .mitm-icon.blue   { background: var(--appblue);   }
+  .mitm-icon.red    { background: var(--appred);     }
+  .mitm-icon.green  { background: var(--appgreen);   }
+  .mitm-icon.dark   { background: var(--darkbg); border: 2px solid #2a3a5a; }
+  .mitm-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    color: #333;
+    line-height: 1.3;
+    max-width: 88px;
+  }
+  .mitm-arrow {
+    font-size: 24px;
+    color: var(--appred);
+    padding: 0 6px;
+    margin-bottom: 20px;
+    font-weight: 900;
+  }
+  .mitm-arrow.safe { color: var(--appgreen); }
+
+  /* ── WIFI LOCATION CARDS ── */
+  .wifi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 10px 0;
+  }
+  .wifi-card {
+    background: #fff;
+    border-radius: 7px;
+    padding: 14px 12px;
+    text-align: center;
+    border: 1.5px solid var(--appred);
+    position: relative;
+  }
+  .wifi-card .wc-icon { font-size: 28px; margin-bottom: 6px; display: block; }
+  .wifi-card .wc-place { font-weight: 700; font-size: 13px; color: var(--darkbg); margin-bottom: 4px; }
+  .wifi-card .wc-risk  { font-size: 11px; color: var(--appred); font-weight: 600; }
+  .wifi-badge {
+    position: absolute;
+    top: -8px; right: -8px;
+    background: var(--appred);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  /* ── REGOLE CARD ── */
+  .rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .rule-item {
+    background: #fff;
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .rule-item .rule-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .rule-item .rule-text strong { display: block; font-size: 13px; margin-bottom: 2px; }
+  .rule-item .rule-text span   { color: #555; font-size: 13px; }
+  .rule-item.ok     { border-color: var(--appgreen); }
+  .rule-item.ok     .rule-text strong { color: var(--appgreen); }
+  .rule-item.danger { border-color: var(--appred);   }
+  .rule-item.danger .rule-text strong { color: var(--appred);   }
+
+  /* ── MATCHING EXERCISE ── */
+  .match-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 10px 0;
+  }
+  .match-col { display: flex; flex-direction: column; gap: 8px; }
+  .match-col .col-label {
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+  }
+  .match-col.terms  .col-label { background: var(--appblue);  color: #fff; }
+  .match-col.defs   .col-label { background: var(--appgreen); color: #fff; }
+  .match-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 9px 12px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .match-item .badge {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--appblue);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .match-item select {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 12px;
+    width: 50px;
+    outline: none;
+    background: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-right: 4px;
+  }
+  .match-item select:focus { border-color: var(--appblue); }
+
+  /* ── SCENARIO QUIZ ── */
+  .quiz-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 13px 15px;
+    margin: 8px 0;
+    font-size: 14px;
+  }
+  .quiz-item .q-scenario {
+    font-style: italic;
+    color: #444;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: var(--lightgray);
+    border-radius: 4px;
+    border-left: 3px solid var(--appblue2);
+    line-height: 1.6;
+  }
+  .quiz-item .q-text {
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--darkbg);
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 7px; }
+  .quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    font-size: 13px;
+    transition: border-color 0.15s, background 0.15s;
+    background: #fff;
+  }
+  .quiz-option:hover { border-color: var(--appblue2); background: var(--lightblue); }
+  .quiz-option input[type="radio"] {
+    accent-color: var(--appblue);
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  /* ── VPN CARD ── */
+  .vpn-explainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .vpn-side {
+    background: #fff;
+    border-radius: 7px;
+    padding: 14px;
+    border: 1.5px solid var(--border);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .vpn-side .vpn-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .vpn-side.no-vpn  { border-color: var(--appred);   }
+  .vpn-side.yes-vpn { border-color: var(--appgreen);  }
+  .vpn-side.no-vpn  .vpn-title { color: var(--appred);  border-color: var(--appred);  }
+  .vpn-side.yes-vpn .vpn-title { color: var(--appgreen); border-color: var(--appgreen); }
+
+  /* ── CHECKLIST ── */
+  .checklist-area {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 10px 14px;
+    margin: 8px 0;
+  }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item input[type="checkbox"] {
+    margin-top: 2px;
+    width: 16px; height: 16px;
+    accent-color: var(--appblue);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── AUTOVALUTAZIONE ── */
+  .auto-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 10px;
+  }
+  .auto-table thead tr { background: var(--darkbg); }
+  .auto-table thead th {
+    color: #fff;
+    padding: 10px 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .auto-table thead th:first-child { text-align: left; }
+  .auto-table tbody tr { border-bottom: 1px solid var(--border); }
+  .auto-table tbody td {
+    padding: 10px 12px;
+    background: #fff;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .auto-table tbody td:first-child { text-align: left; }
+  .auto-table input[type="radio"] {
+    width: 16px; height: 16px;
+    accent-color: var(--appblue);
+    cursor: pointer;
+  }
+
+  /* ── CONSEGNA FINAL ── */
+  .consegna-final {
+    background: var(--darkbg);
+    border: 2px solid var(--gold);
+    border-radius: 7px;
+    padding: 18px 20px;
+    color: #fff;
+  }
+  .consegna-final h2 {
+    color: var(--gold);
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .consegna-final ol {
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 2.1;
+  }
+
+  /* ── FINAL CHECKLIST ── */
+  .final-checklist {
+    background: rgba(40,128,80,0.07);
+    border: 1.5px solid var(--appgreen);
+    border-radius: 7px;
+    padding: 16px 20px;
+  }
+  .final-checklist h3 { color: var(--appgreen); font-size: 15px; margin-bottom: 10px; }
+  .final-checklist ul { list-style: none; }
+  .final-checklist ul li {
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(40,128,80,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .final-checklist ul li:last-child { border-bottom: none; }
+  .final-checklist input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: var(--appgreen);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── GLOSSARY ── */
+  .glossary-box {
+    background: var(--lightgray);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+  }
+  .glossary-box h3 { color: var(--darkbg); font-size: 15px; margin-bottom: 12px; }
+  .glossary-grid {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 0;
+    font-size: 13px;
+  }
+  .g-term {
+    font-weight: 700;
+    color: var(--darkbg);
+    padding: 7px 10px 7px 0;
+    border-bottom: 1px solid #e0e4ea;
+    align-self: start;
+  }
+  .g-def {
+    color: #333;
+    padding: 7px 0;
+    border-bottom: 1px solid #e0e4ea;
+    line-height: 1.5;
+  }
+
+  /* ── GOLD NOTICE ── */
+  .gold-notice {
+    background: var(--darkbg);
+    border: 1px solid var(--gold);
+    border-radius: 5px;
+    padding: 10px 16px;
+    text-align: center;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* ── SAVE BUTTON ── */
+  .save-btn-wrap { text-align: center; padding: 10px 0 20px; }
+  .save-btn {
+    background: linear-gradient(135deg, var(--appblue), #0d3d80);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 50px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 16px rgba(30,90,160,0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .save-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(30,90,160,0.5); }
+  .save-btn:active { transform: translateY(0); }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .scenario-grid  { grid-template-columns: 1fr; }
+    .match-grid     { grid-template-columns: 1fr; }
+    .vpn-explainer  { grid-template-columns: 1fr; }
+    .wifi-grid      { grid-template-columns: 1fr 1fr; }
+    .glossary-grid  { grid-template-columns: 1fr; }
+    .g-term         { border-bottom: none; padding-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER BAR -->
+  <div class="header-bar">
+    <span>NetGuard Lab</span>
+    <span>NAVIGAZIONE E RETI — SCHEDA LAB &nbsp;|&nbsp; A.S. 2024/2025</span>
+  </div>
+
+  <!-- COVER -->
+  <div class="cover-box">
+    <div class="cover-label">L A B O R A T O R I O &nbsp; D I &nbsp; I N F O R M A T I C A</div>
+    <span class="cover-icon">🔐</span>
+    <div class="cover-title">Navigazione e Reti</div>
+    <div class="cover-subtitle">Wi-Fi · Crittografia · HTTP/HTTPS · Attacchi Man-in-the-Middle</div>
+    <hr class="cover-divider">
+    <div class="cover-meta">
+      <span>⏱ <strong>Durata:</strong> 30 minuti</span>
+      <span>👤 <strong>Modalità:</strong> Individuale</span>
+      <span>📅 <strong>Data:</strong>
+        <input type="date" class="date-input" id="inputData">
+      </span>
+    </div>
+  </div>
+
+  <!-- INCARICO -->
+  <div class="info-box">
+    <strong>📡 Di cosa si tratta:</strong> Ogni volta che il tuo smartphone si connette a una rete Wi-Fi, i tuoi dati viaggiano nell'aria sotto forma di onde radio. Chiunque si trovi nella stessa rete potrebbe, in linea di principio, <strong>intercettarli</strong>. In questa scheda scoprirai come funziona la crittografia in transito, cosa garantisce HTTPS, cos'è un attacco Man-in-the-Middle e perché le reti Wi-Fi pubbliche sono pericolose.
+  </div>
+
+  <!-- STUDENT HEADER -->
+  <div class="student-header">
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="inputNome" placeholder="es. Mario">
+    </div>
+    <div class="field">
+      <label>Cognome</label>
+      <input type="text" id="inputCognome" placeholder="es. Rossi">
+    </div>
+    <div class="field">
+      <label>Classe</label>
+      <input type="text" id="inputClasse" placeholder="es. 2B">
+    </div>
+    <div class="field">
+      <label>Postazione n°</label>
+      <input type="text" id="inputPostazione" placeholder="es. 07">
+    </div>
+  </div>
+
+  <!-- OBIETTIVI -->
+  <div class="obiettivi-box">
+    <div class="box-title">📖 Obiettivi dell'attività</div>
+    <ul>
+      <li>Distinguere il <strong>traffico in chiaro</strong> dal <strong>traffico crittografato</strong></li>
+      <li>Spiegare la differenza tra <strong>HTTP</strong> e <strong>HTTPS</strong> e cosa garantisce il lucchetto nel browser</li>
+      <li>Descrivere il meccanismo di un attacco <strong>Man-in-the-Middle (MitM)</strong></li>
+      <li>Identificare i <strong>rischi reali</strong> delle reti Wi-Fi pubbliche e le contromisure da adottare</li>
+      <li>Comprendere quando e perché usare una <strong>connessione cellulare</strong> o una <strong>VPN</strong></li>
+    </ul>
+  </div>
+
+  <div class="gold-notice">
+    Compila ogni sezione direttamente in questa pagina · Alla fine clicca <strong>SALVA SCHEDA TXT</strong>
+  </div>
+
+  <!-- ═══════ PARTE A ═══════ -->
+  <div class="section-header">🔓 Parte A — Traffico in chiaro vs. Traffico crittografato</div>
+
+  <div class="phase-box blue">
+    <div class="phase-tag">A · Concetti base della crittografia in transito</div>
+
+    <div class="box-info" style="margin-top:8px;">
+      <div class="box-title">ℹ️ Nota importante</div>
+      Quando i dati viaggiano su una rete, possono farlo in due modi:
+      <ul style="padding-left:18px; margin-top:8px; line-height:2; font-size:14px;">
+        <li><strong>Traffico in chiaro (plaintext):</strong> le informazioni sono leggibili da chiunque intercetti il segnale, esattamente come una cartolina postale: chiunque la tocchi può leggerne il contenuto.</li>
+        <li><strong>Traffico crittografato:</strong> i dati vengono trasformati in un codice incomprensibile prima di essere inviati. Solo il destinatario legittimo possiede la "chiave" per decifrarli. È come spedire una lettera in una busta sigillata con un lucchetto.</li>
+      </ul>
+    </div>
+
+    <div class="box-dark" style="margin-top:10px;">
+      <div class="box-title" style="font-family:inherit;">💻 Esempio visivo</div>
+      <span style="color:#ff9999;">IN CHIARO →</span>  utente=mario  password=calcio1999  carta=4532-xxxx-xxxx-1234<br>
+      <span style="color:var(--codegreen);">CRITTOGRAFATO →</span>  aK92!mQ#zP0$vR7@wL3&amp;nX5^cF8*yT1%jH4...
+    </div>
+
+    <div class="subsection-title">✏️ Attività A1 — Comprensione</div>
+
+    <div class="answer-area">
+      <div class="q-label">1. Con parole tue, spiega la differenza tra traffico in chiaro e traffico crittografato. Usa l'analogia della cartolina e della busta con lucchetto per spiegarlo.</div>
+      <textarea class="answer" id="a1q1" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">2. Se sei connesso a un Wi-Fi pubblico e invii una password <em>in chiaro</em>, chi potrebbe leggerla? Fai almeno due esempi di "chi" potrebbe intercettarla.</div>
+      <textarea class="answer" id="a1q2" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+  </div>
+
+  <!-- ═══════ PARTE B ═══════ -->
+  <div class="section-header">🔒 Parte B — HTTP vs HTTPS</div>
+
+  <div class="phase-box green">
+    <div class="phase-tag">B · Il lucchetto nel browser</div>
+
+    <div class="box-info" style="margin-top:8px;">
+      <div class="box-title">ℹ️ Nota importante</div>
+      <strong>HTTP</strong> (HyperText Transfer Protocol) è il protocollo di base del web: invia tutto <em>in chiaro</em>.<br>
+      <strong>HTTPS</strong> (HTTP <em>Secure</em>) aggiunge uno strato di crittografia tramite <strong>TLS</strong> (Transport Layer Security) e garantisce:
+      <ul style="padding-left:18px; margin-top:8px; line-height:2; font-size:14px;">
+        <li>🔒 <strong>Privacy:</strong> nessuno può leggere il contenuto della comunicazione</li>
+        <li>✅ <strong>Integrità:</strong> i dati non possono essere modificati durante il transito</li>
+        <li>🪪 <strong>Autenticità:</strong> il sito è davvero quello che dice di essere (certificato digitale)</li>
+      </ul>
+      Il <strong>lucchetto 🔒</strong> nella barra degli indirizzi del browser indica che la connessione è HTTPS.
+    </div>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Caratteristica</th>
+          <th>❌ HTTP</th>
+          <th>✅ HTTPS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Dati in transito</td>
+          <td>In chiaro, leggibili</td>
+          <td>Crittografati con TLS</td>
+        </tr>
+        <tr>
+          <td>Password inviate</td>
+          <td>Visibili a chiunque intercetti</td>
+          <td>Cifrate, illeggibili</td>
+        </tr>
+        <tr>
+          <td>Verifica identità sito</td>
+          <td>Nessuna</td>
+          <td>Certificato digitale</td>
+        </tr>
+        <tr>
+          <td>Integrità dati</td>
+          <td>Modificabili in transito</td>
+          <td>Garantita da firma crittografica</td>
+        </tr>
+        <tr>
+          <td>Lucchetto nel browser</td>
+          <td>Assente / ⚠️ avviso</td>
+          <td>🔒 Presente</td>
+        </tr>
+        <tr>
+          <td>Uso consigliato per</td>
+          <td>Mai per dati sensibili</td>
+          <td>Login, acquisti, dati personali</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">✏️ Attività B1 — Analisi scenari</div>
+
+    <div class="box-consegna">
+      <div class="box-title">📋 Consegna</div>
+      Osserva i seguenti due scenari e per ognuno spiega se la situazione è sicura o pericolosa e perché.
+    </div>
+
+    <div class="scenario-grid">
+      <div class="scenario-card safe">
+        <div class="sc-header">🟢 Scenario 1</div>
+        <p>Laura apre il browser sul suo smartphone, digita l'indirizzo della sua banca e nota il lucchetto 🔒 nella barra degli indirizzi. Si collega dalla rete di casa.</p>
+      </div>
+      <div class="scenario-card unsafe">
+        <div class="sc-header">🔴 Scenario 2</div>
+        <p>Marco è in stazione, si connette al Wi-Fi gratuito "StazioneFreeWifi" e accede al sito della sua banca, il cui indirizzo inizia con <code>http://</code> (senza la S).</p>
+      </div>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">3. Scenario 1 — Spiega perché la situazione di Laura è sicura. Cosa garantisce esattamente il lucchetto nel browser?</div>
+      <textarea class="answer" id="b1q3" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">4. Scenario 2 — Identifica TUTTI i fattori di rischio nella situazione di Marco (almeno due). Cosa potrebbe succedere ai suoi dati?</div>
+      <textarea class="answer" id="b1q4" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">5. Un sito con il lucchetto 🔒 è automaticamente un sito "buono" e affidabile? Spiega perché sì o perché no.</div>
+      <textarea class="answer" id="b1q5" placeholder="Scrivi qui la tua risposta... (suggerimento: pensa ai siti di phishing)"></textarea>
+    </div>
+
+  </div>
+
+  <!-- ═══════ PARTE C ═══════ -->
+  <div class="section-header">👤 Parte C — Attacco Man-in-the-Middle (MitM)</div>
+
+  <div class="phase-box red">
+    <div class="phase-tag">C · Come funziona l'intercettazione</div>
+
+    <div class="box-danger" style="margin-top:8px;">
+      <div class="box-title">💀 Scenario Critico — Cos'è un attacco MitM</div>
+      In un attacco <strong>Man-in-the-Middle</strong>, un criminale si posiziona <em>in mezzo</em> alla comunicazione tra il tuo dispositivo e il server. Il tuo dispositivo crede di parlare direttamente col server, e il server crede di parlare direttamente con te. In realtà <strong>tutto passa attraverso l'attaccante</strong>, che può leggere, copiare o modificare ogni pacchetto di dati.
+    </div>
+
+    <!-- DIAGRAMMA MitM -->
+    <div style="margin:14px 0;">
+      <p style="font-weight:700; font-size:13px; color:#555; margin-bottom:10px; text-align:center;">📊 Schema dell'attacco Man-in-the-Middle</p>
+
+      <p style="font-size:12px; color:#888; text-align:center; margin-bottom:8px;">🔴 Senza protezione (HTTP / Wi-Fi aperto)</p>
+      <div class="mitm-diagram">
+        <div class="mitm-node">
+          <div class="mitm-icon blue">📱</div>
+          <div class="mitm-label">Il tuo<br>dispositivo</div>
+        </div>
+        <div class="mitm-arrow">⇒</div>
+        <div class="mitm-node">
+          <div class="mitm-icon red">😈</div>
+          <div class="mitm-label">Attaccante<br>(intercetta tutto)</div>
+        </div>
+        <div class="mitm-arrow">⇒</div>
+        <div class="mitm-node">
+          <div class="mitm-icon dark">🌐</div>
+          <div class="mitm-label">Server /<br>Sito web</div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:#888; text-align:center; margin: 12px 0 8px;">🟢 Con protezione (HTTPS + rete sicura)</p>
+      <div class="mitm-diagram">
+        <div class="mitm-node">
+          <div class="mitm-icon blue">📱</div>
+          <div class="mitm-label">Il tuo<br>dispositivo</div>
+        </div>
+        <div class="mitm-arrow safe">⇒🔒⇒</div>
+        <div class="mitm-node">
+          <div class="mitm-icon red">😈</div>
+          <div class="mitm-label">Attaccante<br>(vede solo<br>codice cifrato)</div>
+        </div>
+        <div class="mitm-arrow safe">⇒🔒⇒</div>
+        <div class="mitm-node">
+          <div class="mitm-icon green">🌐</div>
+          <div class="mitm-label">Server /<br>Sito web</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box-warn">
+      <div class="box-title">⚠️ Come avviene concretamente su Wi-Fi pubblico</div>
+      Un criminale crea un hotspot Wi-Fi con un nome convincente (es. <strong>"Airport_Free_WiFi"</strong> o <strong>"McDonald_Guest"</strong>), aspetta che le vittime si colleghino e a quel punto diventa automaticamente il <em>man in the middle</em> tra loro e internet. Questa tecnica si chiama <strong>Evil Twin (gemello malvagio)</strong>.
+    </div>
+
+    <div class="subsection-title">✏️ Attività C1 — Comprensione del meccanismo</div>
+
+    <div class="answer-area">
+      <div class="q-label">6. Descrivi con parole tue come funziona un attacco Man-in-the-Middle. Perché la vittima non si accorge di essere intercettata?</div>
+      <textarea class="answer" id="c1q6" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">7. Perché HTTPS rende molto più difficile (ma non impossibile) un attacco MitM? Cosa dovrebbe fare l'attaccante in più per riuscirci con un sito HTTPS?</div>
+      <textarea class="answer" id="c1q7" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="subsection-title">✏️ Attività C2 — Quiz a scelta multipla</div>
+
+    <div class="quiz-item">
+      <div class="q-scenario">🛜 Sei al bar. Ti connetti al Wi-Fi gratuito "BarCentrale_Free" e apri Instagram per controllare i messaggi.</div>
+      <div class="q-text">Quale delle seguenti affermazioni è CORRETTA?</div>
+      <div class="quiz-options">
+        <label class="quiz-option"><input type="radio" name="qc1" value="A"> Sei al sicuro perché Instagram usa HTTPS</label>
+        <label class="quiz-option"><input type="radio" name="qc1" value="B"> Sei completamente a rischio perché il Wi-Fi è aperto e chiunque può intercettare</label>
+        <label class="quiz-option"><input type="radio" name="qc1" value="C"> Il rischio dipende: se il Wi-Fi non ha password E il sito non usa HTTPS il rischio è massimo; con HTTPS il rischio si riduce molto ma non è zero</label>
+        <label class="quiz-option"><input type="radio" name="qc1" value="D"> Il Wi-Fi gratuito è sempre sicuro perché i gestori lo controllano</label>
+      </div>
+    </div>
+
+    <div class="quiz-item">
+      <div class="q-scenario">🏧 Devi fare un bonifico urgente. Sei in centro commerciale, hai il 4G attivo ma vedi anche un Wi-Fi aperto disponibile.</div>
+      <div class="q-text">Cosa è più sicuro fare?</div>
+      <div class="quiz-options">
+        <label class="quiz-option"><input type="radio" name="qc2" value="A"> Usare il Wi-Fi aperto perché è più veloce</label>
+        <label class="quiz-option"><input type="radio" name="qc2" value="B"> Usare il Wi-Fi aperto ma solo se il sito della banca ha HTTPS</label>
+        <label class="quiz-option"><input type="radio" name="qc2" value="C"> Usare il 4G/5G, che è una connessione privata e cifrata tra il tuo telefono e l'operatore</label>
+        <label class="quiz-option"><input type="radio" name="qc2" value="D"> Non importa quale rete usi, l'app della banca è sempre sicura</label>
+      </div>
+    </div>
+
+    <div class="quiz-item">
+      <div class="q-scenario">📶 In aeroporto vedi due reti disponibili: "AeroportoWiFi" (con password indicata sui cartelli) e "Airport_Free" (aperta, senza password).</div>
+      <div class="q-text">Quale sceglieresti e perché?</div>
+      <div class="quiz-options">
+        <label class="quiz-option"><input type="radio" name="qc3" value="A"> "Airport_Free" perché non devo inserire password</label>
+        <label class="quiz-option"><input type="radio" name="qc3" value="B"> "AeroportoWiFi" perché avere una password WPA2/WPA3 cifra il traffico tra il dispositivo e il router</label>
+        <label class="quiz-option"><input type="radio" name="qc3" value="C"> Sono equivalenti, la password serve solo per limitare l'accesso</label>
+        <label class="quiz-option"><input type="radio" name="qc3" value="D"> "Airport_Free" perché le reti senza password sono più veloci</label>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════ PARTE D ═══════ -->
+  <div class="section-header">📍 Parte D — I rischi reali del Wi-Fi pubblico</div>
+
+  <div class="phase-box yellow">
+    <div class="phase-tag" style="color:#1a1a2e;">D · Luoghi a rischio e comportamenti sicuri</div>
+
+    <div class="box-warn" style="margin-top:8px;">
+      <div class="box-title">⚠️ I luoghi più pericolosi per il Wi-Fi</div>
+      Le reti Wi-Fi aperte e gratuite dei seguenti luoghi rappresentano ambienti ad <strong>alto rischio</strong> per l'intercettazione dei dati:
+    </div>
+
+    <div class="wifi-grid">
+      <div class="wifi-card">
+        <div class="wifi-badge">ALTO RISCHIO</div>
+        <span class="wc-icon">🚉</span>
+        <div class="wc-place">Stazioni</div>
+        <div class="wc-risk">Folla anonima, alto traffico</div>
+      </div>
+      <div class="wifi-card">
+        <div class="wifi-badge">ALTO RISCHIO</div>
+        <span class="wc-icon">☕</span>
+        <div class="wc-place">Bar / Caffè</div>
+        <div class="wc-risk">Rete spesso condivisa e non monitorata</div>
+      </div>
+      <div class="wifi-card">
+        <div class="wifi-badge">ALTO RISCHIO</div>
+        <span class="wc-icon">✈️</span>
+        <div class="wc-place">Aeroporti</div>
+        <div class="wc-risk">Bersaglio preferito degli attaccanti</div>
+      </div>
+      <div class="wifi-card">
+        <div class="wifi-badge">ALTO RISCHIO</div>
+        <span class="wc-icon">🛍️</span>
+        <div class="wc-place">Centri commerciali</div>
+        <div class="wc-risk">Reti non sicure, Evil Twin facile</div>
+      </div>
+      <div class="wifi-card">
+        <div class="wifi-badge">ALTO RISCHIO</div>
+        <span class="wc-icon">🏥</span>
+        <div class="wc-place">Ospedali</div>
+        <div class="wc-risk">Reti aperte per visitatori</div>
+      </div>
+      <div class="wifi-card">
+        <div class="wifi-badge">ALTO RISCHIO</div>
+        <span class="wc-icon">🏨</span>
+        <div class="wc-place">Hotel</div>
+        <div class="wc-risk">Centinaia di utenti sulla stessa rete</div>
+      </div>
+    </div>
+
+    <div class="subsection-title">📋 Regole di comportamento sicuro</div>
+
+    <div class="rules-list">
+      <div class="rule-item danger">
+        <span class="rule-icon">🚫</span>
+        <div class="rule-text">
+          <strong>MAI fare login su siti importanti</strong>
+          <span>Banca, email, social con password importante: su Wi-Fi aperto, le credenziali viaggiano in chiaro se il sito usa HTTP.</span>
+        </div>
+      </div>
+      <div class="rule-item danger">
+        <span class="rule-icon">🚫</span>
+        <div class="rule-text">
+          <strong>MAI fare acquisti online o inserire dati della carta</strong>
+          <span>I numeri della carta di credito sono oro puro per gli attaccanti che sniffano il traffico.</span>
+        </div>
+      </div>
+      <div class="rule-item danger">
+        <span class="rule-icon">🚫</span>
+        <div class="rule-text">
+          <strong>MAI connettersi a reti "Free" non ufficiali o sconosciute</strong>
+          <span>Potrebbero essere reti Evil Twin create apposta per rubare dati.</span>
+        </div>
+      </div>
+      <div class="rule-item ok">
+        <span class="rule-icon">✅</span>
+        <div class="rule-text">
+          <strong>USA il 4G/5G per operazioni sensibili</strong>
+          <span>La connessione cellulare è cifrata tra il tuo dispositivo e la torre dell'operatore. Molto più sicura di un Wi-Fi pubblico.</span>
+        </div>
+      </div>
+      <div class="rule-item ok">
+        <span class="rule-icon">✅</span>
+        <div class="rule-text">
+          <strong>USA una VPN se devi usare il Wi-Fi pubblico</strong>
+          <span>La VPN cifra tutto il traffico uscente dal tuo dispositivo prima che raggiunga il router, rendendo inutile l'intercettazione.</span>
+        </div>
+      </div>
+      <div class="rule-item ok">
+        <span class="rule-icon">✅</span>
+        <div class="rule-text">
+          <strong>Verifica sempre il lucchetto 🔒 e l'indirizzo HTTPS</strong>
+          <span>Prima di inserire qualsiasi dato su un sito, controlla che l'indirizzo inizi con https:// e che ci sia il lucchetto.</span>
+        </div>
+      </div>
+      <div class="rule-item ok">
+        <span class="rule-icon">✅</span>
+        <div class="rule-text">
+          <strong>Disabilita la connessione automatica alle reti Wi-Fi</strong>
+          <span>Impedisce al telefono di connettersi automaticamente a reti Evil Twin che "imitano" reti conosciute.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection-title">🔍 Approfondimento: cos'è una VPN?</div>
+
+    <div class="vpn-explainer">
+      <div class="vpn-side no-vpn">
+        <div class="vpn-title">❌ Senza VPN</div>
+        Il tuo traffico esce dal dispositivo, passa dal router Wi-Fi pubblico e viaggia su internet. Chiunque sulla stessa rete può vedere cosa stai facendo. L'attaccante vede destinatari, contenuti (se HTTP), e pattern di navigazione.
+      </div>
+      <div class="vpn-side yes-vpn">
+        <div class="vpn-title">✅ Con VPN</div>
+        Il tuo traffico viene cifrato <em>prima</em> di uscire dal dispositivo, creando un "tunnel" sicuro. Anche se l'attaccante intercetta i pacchetti, vede solo dati incomprensibili cifrati. Può sapere solo che stai usando una VPN, nient'altro.
+      </div>
+    </div>
+
+    <div class="subsection-title">✏️ Attività D1 — Esercizio di abbinamento</div>
+
+    <div class="box-consegna">
+      <div class="box-title">📋 Consegna</div>
+      Abbina ogni termine (colonna sinistra, numeri) alla definizione corretta (colonna destra, lettere) selezionando la lettera dal menu a tendina.
+    </div>
+
+    <div class="match-grid">
+      <div class="match-col terms">
+        <div class="col-label">Termini</div>
+        <div class="match-item">
+          <div class="badge">1</div>
+          <select id="m1"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option></select>
+          HTTPS
+        </div>
+        <div class="match-item">
+          <div class="badge">2</div>
+          <select id="m2"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option></select>
+          Attacco MitM
+        </div>
+        <div class="match-item">
+          <div class="badge">3</div>
+          <select id="m3"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option></select>
+          Evil Twin
+        </div>
+        <div class="match-item">
+          <div class="badge">4</div>
+          <select id="m4"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option></select>
+          VPN
+        </div>
+        <div class="match-item">
+          <div class="badge">5</div>
+          <select id="m5"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option></select>
+          Traffico in chiaro
+        </div>
+        <div class="match-item">
+          <div class="badge">6</div>
+          <select id="m6"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option></select>
+          TLS
+        </div>
+      </div>
+
+      <div class="match-col defs">
+        <div class="col-label">Definizioni</div>
+        <div class="match-item"><div class="badge" style="background:var(--appgreen);">A</div>Rete Wi-Fi fasulla creata da un attaccante per ingannare le vittime</div>
+        <div class="match-item"><div class="badge" style="background:var(--appgreen);">B</div>Protocollo che cifra il canale tra browser e server garantendo privacy e integrità</div>
+        <div class="match-item"><div class="badge" style="background:var(--appgreen);">C</div>Strumento che crea un tunnel cifrato per tutti i dati uscenti dal dispositivo</div>
+        <div class="match-item"><div class="badge" style="background:var(--appgreen);">D</div>Tecnologia crittografica usata da HTTPS per cifrare la comunicazione</div>
+        <div class="match-item"><div class="badge" style="background:var(--appgreen);">E</div>Dati leggibili da chiunque intercetti il segnale, senza alcuna protezione</div>
+        <div class="match-item"><div class="badge" style="background:var(--appgreen);">F</div>Attacco in cui un criminale si interpone tra vittima e server intercettando tutto</div>
+      </div>
+    </div>
+
+    <div class="subsection-title">✏️ Attività D2 — Caso pratico</div>
+
+    <div class="answer-area">
+      <div class="q-label">8. Sei in aeroporto con il tuo smartphone. La tua valigia è stata smarrita e devi urgentemente accedere al sito della compagnia aerea per fare reclamo. Il sito è HTTPS. Hai sia il Wi-Fi dell'aeroporto (gratuito, aperto) sia il 4G disponibile. Descrivi esattamente cosa fai, passo dopo passo, per essere al sicuro.</div>
+      <textarea class="answer" id="d2q8" placeholder="Scrivi qui la tua risposta passo per passo..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">9. Un tuo amico ti dice: «Uso sempre il Wi-Fi del McDonald's, non ci sono mai stati problemi!». Cosa gli spiegheresti? Usa almeno 3 concetti visti in questa scheda.</div>
+      <textarea class="answer" id="d2q9" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+  </div>
+
+  <!-- ═══════ PARTE E ═══════ -->
+  <div class="section-header">📝 Parte E — Scenario Integrato (Avanzato)</div>
+
+  <div class="phase-box violet">
+    <div class="phase-tag">E · Caso studio finale</div>
+
+    <div class="box-violet" style="margin-top:8px;">
+      <div class="box-title">🔍 Scenario reale da analizzare</div>
+      <strong>Sara, 17 anni, è in centro commerciale.</strong> Si connette al Wi-Fi gratuito "CentroMall_Free" (aperto, senza password). Apre il browser e naviga verso <code>http://negozio-scarpe.it</code> (HTTP, senza lucchetto) per comprare un paio di scarpe. Inserisce nome, indirizzo, email e numero di carta di credito. Sul tavolo vicino, uno sconosciuto con un laptop sta eseguendo un software di packet sniffing.<br><br>
+      Qualche ora dopo Sara riceve un SMS dalla banca: transazione sospetta di 450€ su un sito straniero che non riconosce.
+    </div>
+
+    <div class="box-consegna" style="margin-top:12px;">
+      <div class="box-title">📋 Consegna Finale</div>
+      Gli studenti devono scrivere una <strong>relazione breve</strong> (15–20 righe) che analizzi lo scenario rispondendo a tutti questi punti:
+      <ol style="padding-left:20px; margin-top:8px; line-height:2; font-size:14px;">
+        <li>Quali <strong>errori specifici</strong> ha commesso Sara (elencali tutti)?</li>
+        <li>Come ha potuto lo sconosciuto <strong>intercettare i dati</strong> della carta? Descrivi il meccanismo tecnico.</li>
+        <li>Come avrebbe potuto <strong>HTTPS</strong> cambiare le cose?</li>
+        <li>Come avrebbe potuto <strong>4G o VPN</strong> cambiare le cose?</li>
+        <li>Scrivi le <strong>3 regole d'oro</strong> che Sara avrebbe dovuto seguire per evitare tutto ciò.</li>
+      </ol>
+    </div>
+
+    <div style="background:#fff; border:1.5px solid var(--appviolet); border-radius:6px; padding:12px 14px; margin:10px 0;">
+      <textarea class="answer" id="e_relazione" style="min-height:280px; border:none; background:transparent; width:100%; font-size:14px; font-family:inherit; resize:vertical; outline:none; line-height:1.9; color:var(--darkbg);" placeholder="Scrivi qui la tua relazione (15–20 righe)..."></textarea>
+    </div>
+
+  </div>
+
+  <!-- ═══════ AUTOVALUTAZIONE ═══════ -->
+  <div class="phase-box blue" style="margin-top:22px;">
+    <div class="phase-tag">⭐ Griglia di Autovalutazione</div>
+    <p style="font-size:13px; font-style:italic; margin:8px 0 4px;">Prima di consegnare, compila questa griglia in modo onesto:</p>
+    <table class="auto-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Criterio</th>
+          <th>Sì</th>
+          <th>Parzialmente</th>
+          <th>No</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>So distinguere traffico in chiaro da traffico crittografato</td>
+          <td><input type="radio" name="av1" value="Si"></td>
+          <td><input type="radio" name="av1" value="Parzialmente"></td>
+          <td><input type="radio" name="av1" value="No"></td>
+        </tr>
+        <tr>
+          <td>So spiegare la differenza tra HTTP e HTTPS</td>
+          <td><input type="radio" name="av2" value="Si"></td>
+          <td><input type="radio" name="av2" value="Parzialmente"></td>
+          <td><input type="radio" name="av2" value="No"></td>
+        </tr>
+        <tr>
+          <td>Ho capito come funziona un attacco Man-in-the-Middle</td>
+          <td><input type="radio" name="av3" value="Si"></td>
+          <td><input type="radio" name="av3" value="Parzialmente"></td>
+          <td><input type="radio" name="av3" value="No"></td>
+        </tr>
+        <tr>
+          <td>Conosco i rischi concreti delle reti Wi-Fi pubbliche</td>
+          <td><input type="radio" name="av4" value="Si"></td>
+          <td><input type="radio" name="av4" value="Parzialmente"></td>
+          <td><input type="radio" name="av4" value="No"></td>
+        </tr>
+        <tr>
+          <td>So quando usare 4G o VPN invece del Wi-Fi pubblico</td>
+          <td><input type="radio" name="av5" value="Si"></td>
+          <td><input type="radio" name="av5" value="Parzialmente"></td>
+          <td><input type="radio" name="av5" value="No"></td>
+        </tr>
+        <tr>
+          <td>Ho completato il caso studio con argomentazioni complete</td>
+          <td><input type="radio" name="av6" value="Si"></td>
+          <td><input type="radio" name="av6" value="Parzialmente"></td>
+          <td><input type="radio" name="av6" value="No"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="box-warn" style="margin-top:12px;">
+      <div class="box-title">⚠️ Prima di consegnare verifica che:</div>
+      <ul style="padding-left:18px; line-height:2; font-size:14px;">
+        <li>Nome e classe siano compilati nell'intestazione</li>
+        <li>Tutte le domande aperte (1–9) abbiano una risposta</li>
+        <li>Il quiz a scelta multipla (Parte C) sia completato</li>
+        <li>L'esercizio di abbinamento (Parte D) sia completato</li>
+        <li>La relazione finale (Parte E) sia scritta e completa</li>
+        <li>La griglia di autovalutazione sia compilata</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- CONSEGNA -->
+  <div class="consegna-final">
+    <h2>💾 SALVATAGGIO E CONSEGNA</h2>
+    <ol>
+      <li>Controlla che tutte e cinque le sezioni siano complete.</li>
+      <li>Clicca il pulsante <strong style="color:var(--gold)">SALVA SCHEDA TXT</strong> qui sotto.</li>
+      <li>Consegna il file tramite Google Classroom, email o registro elettronico.</li>
+      <li><strong style="color:var(--gold)">Consegna entro il termine assegnato dall'insegnante.</strong></li>
+    </ol>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="final-checklist">
+    <h3>✅ Checklist finale</h3>
+    <ul>
+      <li><input type="checkbox"> Intestazione: Nome, Cognome, Classe, Postazione e Data compilati</li>
+      <li><input type="checkbox"> <strong>Parte A:</strong> domande 1 e 2 compilate</li>
+      <li><input type="checkbox"> <strong>Parte B:</strong> domande 3, 4 e 5 compilate</li>
+      <li><input type="checkbox"> <strong>Parte C:</strong> domanda 6, 7 e quiz (3 domande) completati</li>
+      <li><input type="checkbox"> <strong>Parte D:</strong> abbinamento e domande 8 e 9 completati</li>
+      <li><input type="checkbox"> <strong>Parte E:</strong> relazione scritta con tutti e 5 i punti affrontati</li>
+      <li><input type="checkbox"> Griglia di autovalutazione compilata</li>
+      <li><input type="checkbox"> File salvato e consegnato</li>
+    </ul>
+  </div>
+
+  <!-- GLOSSARIO -->
+  <div class="glossary-box">
+    <h3>📖 Glossario Operativo</h3>
+    <div class="glossary-grid">
+      <div class="g-term">HTTP</div>
+      <div class="g-def">HyperText Transfer Protocol. Protocollo di base del web. Trasmette i dati in chiaro, senza cifratura.</div>
+      <div class="g-term">HTTPS</div>
+      <div class="g-def">HTTP Secure. Versione sicura di HTTP che cifra la comunicazione con TLS. Garantisce privacy, integrità e autenticità.</div>
+      <div class="g-term">TLS</div>
+      <div class="g-def">Transport Layer Security. Il protocollo crittografico che sta alla base di HTTPS. Sostituisce il vecchio SSL.</div>
+      <div class="g-term">Traffico in chiaro</div>
+      <div class="g-def">Dati trasmessi senza cifratura, leggibili da chiunque li intercetti. Come una cartolina postale.</div>
+      <div class="g-term">Crittografia in transito</div>
+      <div class="g-def">Tecnica che cifra i dati durante il loro trasferimento in rete, rendendoli illeggibili agli intercettatori.</div>
+      <div class="g-term">Man-in-the-Middle</div>
+      <div class="g-def">Attacco in cui un criminale si interpone tra due parti comunicanti, potendo leggere e modificare i dati.</div>
+      <div class="g-term">Evil Twin</div>
+      <div class="g-def">Rete Wi-Fi fasulla creata da un attaccante che imita il nome di una rete legittima per ingannare le vittime.</div>
+      <div class="g-term">Packet Sniffing</div>
+      <div class="g-def">Tecnica di intercettazione che cattura e analizza i pacchetti di dati che transitano su una rete.</div>
+      <div class="g-term">VPN</div>
+      <div class="g-def">Virtual Private Network. Crea un tunnel cifrato tra il dispositivo e un server remoto, proteggendo tutto il traffico.</div>
+      <div class="g-term">Certificato digitale</div>
+      <div class="g-def">Documento elettronico che attesta l'identità di un sito web. Usato da HTTPS per garantire l'autenticità del server.</div>
+      <div class="g-term">WPA2/WPA3</div>
+      <div class="g-def">Standard di sicurezza per reti Wi-Fi. Cifrano il traffico tra dispositivo e router, a differenza delle reti aperte.</div>
+      <div class="g-term">4G/5G</div>
+      <div class="g-def">Reti cellulari che offrono connessione mobile cifrata tra dispositivo e torre dell'operatore. Più sicure del Wi-Fi pubblico.</div>
+    </div>
+  </div>
+
+  <!-- BOTTONE SALVA -->
+  <div class="save-btn-wrap">
+    <button class="save-btn" onclick="saveScheda()">💾 &nbsp; SALVA SCHEDA TXT</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <span>NetGuard Lab — Navigazione e Reti</span>
+    <span>Laboratorio di Informatica · A.S. 2024/2025</span>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+/* ── HELPERS ── */
+function val(id) {
+  const el = document.getElementById(id);
+  if (!el) return '(non compilato)';
+  return el.value.trim() || '(non compilato)';
+}
+function radioVal(name) {
+  const sel = document.querySelector('input[name="' + name + '"]:checked');
+  return sel ? sel.value : '(non selezionato)';
+}
+function selectVal(id) {
+  const el = document.getElementById(id);
+  return (el && el.value) ? el.value : '(non selezionato)';
+}
+function wrapText(text, maxLen) {
+  if (!text) return [''];
+  const words = text.split(/\s+/);
+  const lines = []; let current = '';
+  words.forEach(w => {
+    if ((current + (current ? ' ' : '') + w).length <= maxLen) {
+      current += (current ? ' ' : '') + w;
+    } else {
+      if (current) lines.push(current);
+      while (w.length > maxLen) { lines.push(w.slice(0, maxLen)); w = w.slice(maxLen); }
+      current = w;
+    }
+  });
+  if (current) lines.push(current);
+  return lines.length ? lines : [''];
+}
+function padRight(str, len) {
+  str = str || '';
+  return str.length >= len ? str.slice(0, len) : str + ' '.repeat(len - str.length);
+}
+function box(label, content, width) {
+  width = width || 60;
+  const inner = width - 2;
+  let out = '';
+  const topLine = '─ ' + label + ' ' + '─'.repeat(Math.max(0, width - label.length - 3));
+  out += '  ┌' + topLine + '┐\n';
+  const lines = wrapText(content, inner);
+  lines.forEach(l => { out += '  │ ' + padRight(l, inner) + ' │\n'; });
+  out += '  └' + '─'.repeat(width + 1) + '┘\n';
+  return out;
+}
+function sep(char, n) { return (char || '═').repeat(n || 64); }
+const NL = '\n';
+
+/* ── SALVA ── */
+function saveScheda() {
+  const nome       = document.getElementById('inputNome').value.trim()       || '(non inserito)';
+  const cognome    = document.getElementById('inputCognome').value.trim()    || '(non inserito)';
+  const classe     = document.getElementById('inputClasse').value.trim()     || '(non inserita)';
+  const postazione = document.getElementById('inputPostazione').value.trim() || '(non inserita)';
+  const data       = document.getElementById('inputData').value              || '(non inserita)';
+
+  const a1q1 = val('a1q1');
+  const a1q2 = val('a1q2');
+  const b1q3 = val('b1q3');
+  const b1q4 = val('b1q4');
+  const b1q5 = val('b1q5');
+  const c1q6 = val('c1q6');
+  const c1q7 = val('c1q7');
+  const qc1  = radioVal('qc1');
+  const qc2  = radioVal('qc2');
+  const qc3  = radioVal('qc3');
+  const m1   = selectVal('m1');
+  const m2   = selectVal('m2');
+  const m3   = selectVal('m3');
+  const m4   = selectVal('m4');
+  const m5   = selectVal('m5');
+  const m6   = selectVal('m6');
+  const d2q8 = val('d2q8');
+  const d2q9 = val('d2q9');
+  const eRel = val('e_relazione');
+  const av1  = radioVal('av1'); const av2 = radioVal('av2');
+  const av3  = radioVal('av3'); const av4 = radioVal('av4');
+  const av5  = radioVal('av5'); const av6 = radioVal('av6');
+
+  let txt = '';
+  txt += sep() + NL;
+  txt += '   SCHEDA DI LABORATORIO — NAVIGAZIONE E RETI' + NL;
+  txt += '   Wi-Fi · Crittografia · HTTP/HTTPS · Man-in-the-Middle' + NL;
+  txt += sep() + NL + NL;
+  txt += '  STUDENTE  : ' + nome + ' ' + cognome + NL;
+  txt += '  CLASSE    : ' + classe + NL;
+  txt += '  POSTAZIONE: ' + postazione + NL;
+  txt += '  DATA      : ' + data + NL;
+  txt += NL + sep() + NL + NL;
+
+  /* A */
+  txt += '  PARTE A — TRAFFICO IN CHIARO VS. CRITTOGRAFATO' + NL;
+  txt += '  ' + '─'.repeat(62) + NL + NL;
+  txt += box('Dom. 1 – Traffico in chiaro vs crittografato', a1q1);
+  txt += NL;
+  txt += box('Dom. 2 – Chi potrebbe intercettare su Wi-Fi pubblico?', a1q2);
+  txt += NL + sep() + NL + NL;
+
+  /* B */
+  txt += '  PARTE B — HTTP VS HTTPS' + NL;
+  txt += '  ' + '─'.repeat(62) + NL + NL;
+  txt += box('Dom. 3 – Scenario Laura (HTTPS sicuro)', b1q3);
+  txt += NL;
+  txt += box('Dom. 4 – Scenario Marco (fattori di rischio)', b1q4);
+  txt += NL;
+  txt += box('Dom. 5 – Lucchetto = sito affidabile?', b1q5);
+  txt += NL + sep() + NL + NL;
+
+  /* C */
+  txt += '  PARTE C — ATTACCO MAN-IN-THE-MIDDLE' + NL;
+  txt += '  ' + '─'.repeat(62) + NL + NL;
+  txt += box('Dom. 6 – Come funziona MitM?', c1q6);
+  txt += NL;
+  txt += box('Dom. 7 – Perché HTTPS rende difficile MitM?', c1q7);
+  txt += NL;
+  txt += '  Quiz a scelta multipla:' + NL;
+  txt += '    Quiz 1 (bar / Instagram)       → ' + qc1 + NL;
+  txt += '    Quiz 2 (bonifico urgente)       → ' + qc2 + NL;
+  txt += '    Quiz 3 (aeroporto, due reti)    → ' + qc3 + NL;
+  txt += NL + sep() + NL + NL;
+
+  /* D */
+  txt += '  PARTE D — RISCHI WI-FI PUBBLICO' + NL;
+  txt += '  ' + '─'.repeat(62) + NL + NL;
+  txt += '  Abbinamento termini/definizioni:' + NL;
+  txt += '    1 – HTTPS                → ' + m1 + NL;
+  txt += '    2 – Attacco MitM         → ' + m2 + NL;
+  txt += '    3 – Evil Twin            → ' + m3 + NL;
+  txt += '    4 – VPN                  → ' + m4 + NL;
+  txt += '    5 – Traffico in chiaro   → ' + m5 + NL;
+  txt += '    6 – TLS                  → ' + m6 + NL;
+  txt += NL;
+  txt += box('Dom. 8 – Aeroporto: cosa faccio passo per passo?', d2q8);
+  txt += NL;
+  txt += box('Dom. 9 – Risposta all\'amico che usa McDonald\'s WiFi', d2q9);
+  txt += NL + sep() + NL + NL;
+
+  /* E */
+  txt += '  PARTE E — SCENARIO INTEGRATO (SARA AL CENTRO COMMERCIALE)' + NL;
+  txt += '  ' + '─'.repeat(62) + NL + NL;
+  txt += box('Relazione finale (15–20 righe)', eRel, 62);
+  txt += NL + sep() + NL + NL;
+
+  /* AUTOVALUTAZIONE */
+  txt += '  GRIGLIA DI AUTOVALUTAZIONE' + NL;
+  txt += '  ' + '─'.repeat(62) + NL;
+  txt += '  Traffico in chiaro vs crittografato           → ' + av1 + NL;
+  txt += '  Differenza HTTP / HTTPS                       → ' + av2 + NL;
+  txt += '  Meccanismo attacco Man-in-the-Middle          → ' + av3 + NL;
+  txt += '  Rischi Wi-Fi pubbliche                        → ' + av4 + NL;
+  txt += '  Uso 4G o VPN                                  → ' + av5 + NL;
+  txt += '  Caso studio argomentato                       → ' + av6 + NL;
+  txt += NL + sep() + NL;
+  txt += '  NetGuard Lab — Navigazione e Reti — Laboratorio di Informatica' + NL;
+  txt += sep() + NL;
+
+  const fileName = 'Scheda_Reti_' + nome.replace(/\s+/g,'') + cognome.replace(/\s+/g,'') + '.txt';
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

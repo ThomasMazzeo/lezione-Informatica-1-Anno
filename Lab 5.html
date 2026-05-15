@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sicurezza & Backup – Scheda Laboratorio</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #e8ecf3;
+    color: #1a1a2e;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  :root {
+    --darkbg:    #0a1223;
+    --appblue:   #1e5aa0;
+    --appblue2:  #4682c8;
+    --lightblue: #dceaff;
+    --appgreen:  #288050;
+    --appred:    #b42828;
+    --apporange: #dc6400;
+    --gold:      #dcaa00;
+    --lightgray: #f5f7fa;
+    --border:    #c8d2e1;
+    --darkgray:  #3c3c3c;
+    --warnyellow:#c8a000;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* ── HEADER BAR ── */
+  .header-bar {
+    background: var(--darkbg);
+    color: #fff;
+    text-align: right;
+    padding: 8px 18px;
+    border-radius: 6px 6px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-bar span:first-child { color: #4682c8; }
+
+  /* ── COVER ── */
+  .cover-box {
+    background: var(--darkbg);
+    border-radius: 8px;
+    padding: 32px 20px 26px;
+    text-align: center;
+  }
+  .cover-label {
+    color: #4682c8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+  }
+  .cover-title {
+    color: #fff;
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  .cover-subtitle {
+    color: #aac4f0;
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 6px;
+  }
+  .cover-divider {
+    border: none;
+    border-top: 1px solid #2a3a5a;
+    width: 50%;
+    margin: 14px auto;
+  }
+  .cover-meta {
+    color: var(--gold);
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .cover-meta span { display: flex; align-items: center; gap: 5px; }
+  .date-input {
+    border: none;
+    border-bottom: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    font-size: 12px;
+    width: 110px;
+    outline: none;
+    text-align: center;
+  }
+
+  /* ── STUDENT HEADER ── */
+  .student-header {
+    background: #fff;
+    border: 1.5px solid var(--appblue);
+    border-radius: 7px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .student-header .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 150px;
+  }
+  .student-header label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--appblue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .student-header input {
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    padding: 5px 2px;
+    font-size: 14px;
+    outline: none;
+    background: transparent;
+    color: var(--darkbg);
+  }
+  .student-header input:focus { border-bottom-color: var(--appblue); }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: rgba(30,90,160,0.07);
+    border: 1px solid var(--appblue);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── OBIETTIVI BOX ── */
+  .obiettivi-box {
+    background: var(--lightblue);
+    border: 1.5px solid var(--appblue);
+    border-radius: 7px;
+    padding: 16px 18px;
+  }
+  .obiettivi-box .box-title {
+    color: var(--appblue);
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .obiettivi-box ul {
+    list-style: none;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .obiettivi-box ul li::before {
+    content: '✔ ';
+    color: var(--appblue);
+    font-weight: 700;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    background: var(--lightblue);
+    border-radius: 5px;
+    padding: 10px 16px;
+    color: var(--appblue);
+    font-size: 16px;
+    font-weight: 800;
+    border-left: 5px solid var(--appblue);
+    margin-top: 6px;
+  }
+
+  /* ── SUBSECTION ── */
+  .subsection-title {
+    color: var(--appblue2);
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--appblue2);
+    padding-bottom: 4px;
+    margin: 10px 0 8px;
+  }
+
+  /* ── PHASE BOX ── */
+  .phase-box {
+    border-radius: 8px;
+    overflow: visible;
+    position: relative;
+    background: var(--lightgray);
+    padding: 22px 16px 16px;
+    margin-top: 18px;
+  }
+  .phase-tag {
+    position: absolute;
+    top: -14px;
+    left: 16px;
+    padding: 4px 14px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .phase-box.blue  { border: 1.5px solid var(--appblue);  }
+  .phase-box.blue  .phase-tag { background: var(--appblue);  }
+  .phase-box.green { border: 1.5px solid var(--appgreen); }
+  .phase-box.green .phase-tag { background: var(--appgreen); }
+  .phase-box.red   { border: 1.5px solid var(--appred);   }
+  .phase-box.red   .phase-tag { background: var(--appred);   }
+  .phase-box.dark  { border: 1.5px solid var(--darkbg);   }
+  .phase-box.dark  .phase-tag { background: var(--darkbg);   }
+  .phase-box.yellow{ border: 1.5px solid var(--warnyellow);}
+  .phase-box.yellow .phase-tag { background: var(--warnyellow); color:#1a1a2e;}
+
+  /* ── INFO / NOTE / DANGER / WARN BOXES ── */
+  .box-info {
+    background: rgba(40,128,80,0.07);
+    border: 1px solid var(--appgreen);
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 8px 0;
+  }
+  .box-info .box-title { color: var(--appgreen); font-weight:700; font-size:13px; margin-bottom:6px; }
+
+  .box-danger {
+    background: rgba(180,40,40,0.06);
+    border: 1.5px solid var(--appred);
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 8px 0;
+  }
+  .box-danger .box-title { color: var(--appred); font-weight:700; font-size:13px; margin-bottom:6px; }
+
+  .box-warn {
+    background: rgba(220,170,0,0.10);
+    border: 1px solid var(--warnyellow);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 8px 0;
+  }
+  .box-warn .box-title { color: var(--warnyellow); font-weight:700; font-size:13px; margin-bottom:5px; }
+
+  .box-consegna {
+    background: var(--lightgray);
+    border: 1px solid var(--appblue2);
+    border-radius: 6px;
+    padding: 13px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 8px 0;
+    position: relative;
+  }
+  .box-consegna .box-title {
+    background: var(--appblue2);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 9px;
+  }
+
+  /* ── ANSWER AREA ── */
+  .answer-area {
+    background: #fff;
+    border: 1px solid var(--appblue2);
+    border-radius: 5px;
+    padding: 12px 14px;
+    margin: 8px 0;
+  }
+  .answer-area .q-label {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--darkbg);
+    margin-bottom: 5px;
+  }
+  textarea.answer {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    background: #fafbfd;
+    color: var(--darkbg);
+    margin-top: 4px;
+  }
+  textarea.answer:focus { border-color: var(--appblue); }
+
+  /* ── TWO-COL GRID ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 10px 0;
+  }
+  .col-card {
+    background: #fff;
+    border-radius: 6px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+  .col-card .col-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .col-card.green-col .col-title { color: var(--appgreen); }
+  .col-card.red-col   .col-title { color: var(--appred);   }
+  .col-card ol { padding-left: 20px; }
+  .col-card ol li {
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .col-card ol li:last-child { border-bottom: none; }
+  .col-card ol li input[type="text"] {
+    border: none;
+    border-bottom: 1px solid var(--border);
+    width: 90%;
+    font-size: 13px;
+    padding: 2px 4px;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .col-card ol li input:focus { border-bottom-color: var(--appblue); }
+
+  /* ── 3-2-1 CARD ROW ── */
+  .three21-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  .num-card {
+    background: var(--lightblue);
+    border: 1.5px solid var(--appblue);
+    border-radius: 8px;
+    padding: 18px 12px;
+    text-align: center;
+  }
+  .num-card .big-num {
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .num-card.red-num   { background: rgba(180,40,40,0.07);  border-color: var(--appred);   }
+  .num-card.red-num   .big-num { color: var(--appred); }
+  .num-card.warn-num  { background: rgba(200,160,0,0.09);  border-color: var(--warnyellow); }
+  .num-card.warn-num  .big-num { color: var(--warnyellow); }
+  .num-card.green-num { background: rgba(40,128,80,0.08);  border-color: var(--appgreen);  }
+  .num-card.green-num .big-num { color: var(--appgreen); }
+  .num-card .num-label { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .num-card .num-desc  { font-size: 12px; color: #555; line-height: 1.5; }
+
+  /* ── BACKUP TABLE ── */
+  .backup-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .backup-table thead tr { background: var(--darkbg); }
+  .backup-table thead th {
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+  }
+  .backup-table thead th:first-child { text-align: center; width: 80px; }
+  .backup-table tbody tr { border-bottom: 1px solid var(--border); }
+  .backup-table tbody td {
+    padding: 6px 10px;
+    background: #fff;
+    vertical-align: top;
+  }
+  .backup-table tbody td:first-child {
+    font-weight: 800;
+    text-align: center;
+    color: var(--appblue);
+    font-size: 15px;
+    padding-top: 14px;
+  }
+  .backup-table input.tbl-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 4px;
+    font-size: 13px;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .backup-table input.tbl-input:focus { border-bottom-color: var(--appblue); }
+
+  /* ── CHECKLIST ── */
+  .checklist-area {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item input[type="checkbox"] {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--appblue);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .check-item .radio-group {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+  }
+  .check-item .radio-group label {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin: 14px 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .tl-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 110px;
+  }
+  .tl-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 900;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+  }
+  .tl-circle.blue   { background: var(--appblue);   }
+  .tl-circle.red    { background: var(--appred);    }
+  .tl-circle.yellow { background: var(--warnyellow); }
+  .tl-circle.green  { background: var(--appgreen);  }
+  .tl-circle.done   { background: #555; }
+  .tl-label {
+    font-size: 11px;
+    text-align: center;
+    color: #333;
+    line-height: 1.4;
+    max-width: 100px;
+  }
+  .tl-label select {
+    font-size: 11px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 5px;
+    width: 100px;
+    outline: none;
+    background: #fff;
+    cursor: pointer;
+    margin-bottom: 2px;
+  }
+  .tl-label select:focus { border-color: var(--appblue); }
+  .tl-arrow {
+    flex-shrink: 0;
+    color: #999;
+    font-size: 22px;
+    margin-top: 6px;
+    padding: 0 4px;
+  }
+
+  /* ── FINAL RELAZIONE ── */
+  .relazione-area {
+    background: #fff;
+    border: 1.5px solid var(--appblue2);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 8px 0;
+  }
+  textarea.relazione {
+    width: 100%;
+    border: none;
+    padding: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    min-height: 260px;
+    background: #fafbfd;
+    color: var(--darkbg);
+    line-height: 1.9;
+  }
+
+  /* ── AUTOVALUTAZIONE ── */
+  .auto-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 10px;
+  }
+  .auto-table thead tr { background: var(--darkbg); }
+  .auto-table thead th {
+    color: #fff;
+    padding: 10px 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .auto-table thead th:first-child { text-align: left; }
+  .auto-table tbody tr { border-bottom: 1px solid var(--border); }
+  .auto-table tbody td {
+    padding: 10px 12px;
+    background: #fff;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .auto-table tbody td:first-child { text-align: left; }
+  .auto-table input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--appblue);
+    cursor: pointer;
+  }
+
+  /* ── CONSEGNA BOX ── */
+  .consegna-final {
+    background: var(--darkbg);
+    border: 2px solid var(--gold);
+    border-radius: 7px;
+    padding: 18px 20px;
+    color: #fff;
+  }
+  .consegna-final h2 {
+    color: var(--gold);
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .consegna-final ol {
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 2.1;
+  }
+
+  /* ── CHECKLIST FINALE ── */
+  .final-checklist {
+    background: rgba(40,128,80,0.07);
+    border: 1.5px solid var(--appgreen);
+    border-radius: 7px;
+    padding: 16px 20px;
+  }
+  .final-checklist h3 {
+    color: var(--appgreen);
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+  .final-checklist ul { list-style: none; }
+  .final-checklist ul li {
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(40,128,80,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .final-checklist ul li:last-child { border-bottom: none; }
+  .final-checklist input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--appgreen);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── GLOSSARY ── */
+  .glossary-box {
+    background: var(--lightgray);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+  }
+  .glossary-box h3 {
+    color: var(--darkbg);
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .glossary-grid {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0;
+    font-size: 13px;
+  }
+  .glossary-grid .g-term {
+    font-weight: 700;
+    color: var(--darkbg);
+    padding: 7px 10px 7px 0;
+    border-bottom: 1px solid #e0e4ea;
+    align-self: start;
+  }
+  .glossary-grid .g-def {
+    color: #333;
+    padding: 7px 0;
+    border-bottom: 1px solid #e0e4ea;
+    line-height: 1.5;
+  }
+
+  /* ── SAVE BUTTON ── */
+  .save-btn-wrap {
+    text-align: center;
+    padding: 10px 0 20px;
+  }
+  .save-btn {
+    background: linear-gradient(135deg, var(--appblue), #0d3d80);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 48px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 16px rgba(30,90,160,0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(30,90,160,0.5);
+  }
+  .save-btn:active { transform: translateY(0); }
+
+  /* ── GOLD NOTICE ── */
+  .gold-notice {
+    background: var(--darkbg);
+    border: 1px solid var(--gold);
+    border-radius: 5px;
+    padding: 10px 16px;
+    text-align: center;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .two-col { grid-template-columns: 1fr; }
+    .three21-row { grid-template-columns: 1fr; }
+    .timeline-wrap { flex-direction: column; align-items: flex-start; }
+    .tl-arrow { transform: rotate(90deg); margin: 4px 0; }
+    .glossary-grid { grid-template-columns: 1fr; }
+    .glossary-grid .g-term { border-bottom: none; padding-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER BAR -->
+  <div class="header-bar">
+    <span>Laboratorio di Informatica</span>
+    <span>SICUREZZA &amp; BACKUP — SCHEDA LAB &nbsp;|&nbsp; A.S. 2024/2025</span>
+  </div>
+
+  <!-- COVER -->
+  <div class="cover-box">
+    <div class="cover-label">L A B O R A T O R I O &nbsp; D I &nbsp; I N F O R M A T I C A</div>
+    <div class="cover-title">Sicurezza Informatica<br>e Gestione dei Dati</div>
+    <div class="cover-subtitle">Backup · Sincronizzazione · Vulnerabilità Zero-Day</div>
+    <hr class="cover-divider">
+    <div class="cover-meta">
+      <span>⏱ <strong>Durata:</strong> 30 minuti</span>
+      <span>👤 <strong>Modalità:</strong> Individuale</span>
+      <span>📅 <strong>Data:</strong>
+        <input type="date" class="date-input" id="inputData">
+      </span>
+    </div>
+  </div>
+
+  <!-- INCARICO -->
+  <div class="info-box">
+    <strong>📋 Descrizione attività:</strong> In questa scheda di laboratorio gli studenti affronteranno tre temi fondamentali della sicurezza informatica: la differenza tra <strong>sincronizzazione e backup</strong>, la <strong>regola 3-2-1</strong> per la protezione dei dati e le <strong>vulnerabilità Zero-Day</strong>. Il percorso è articolato in quattro parti: le prime tre prevedono analisi guidate e risposte aperte, l'ultima un caso studio integrato da sviluppare in forma di breve relazione.
+  </div>
+
+  <!-- INTESTAZIONE STUDENTE -->
+  <div class="student-header">
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="inputNome" placeholder="es. Mario">
+    </div>
+    <div class="field">
+      <label>Cognome</label>
+      <input type="text" id="inputCognome" placeholder="es. Rossi">
+    </div>
+    <div class="field">
+      <label>Classe</label>
+      <input type="text" id="inputClasse" placeholder="es. 2B">
+    </div>
+    <div class="field">
+      <label>Postazione n°</label>
+      <input type="text" id="inputPostazione" placeholder="es. 07">
+    </div>
+  </div>
+
+  <!-- OBIETTIVI -->
+  <div class="obiettivi-box">
+    <div class="box-title">📖 Obiettivi dell'attività</div>
+    <ul>
+      <li>Distinguere concettualmente e praticamente la <strong>sincronizzazione</strong> dal <strong>backup</strong></li>
+      <li>Applicare la <strong>regola 3-2-1</strong> per la protezione dei dati personali</li>
+      <li>Comprendere il ciclo di vita di una <strong>vulnerabilità Zero-Day</strong> e il ruolo delle patch</li>
+      <li>Valutare criticamente le strategie di salvataggio dei dati adottate nel quotidiano</li>
+    </ul>
+  </div>
+
+  <div class="gold-notice">
+    Compila ogni sezione direttamente in questa pagina, poi clicca <strong>SALVA SCHEDA TXT</strong> per scaricare il tuo documento.
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PARTE A
+  ═══════════════════════════════════════ -->
+  <div class="section-header">Parte A — Sincronizzazione vs. Backup</div>
+
+  <div class="phase-box blue" style="margin-top:22px;">
+    <div class="phase-tag">A · Concetti chiave</div>
+
+    <div class="box-info">
+      <div class="box-title">ℹ️ Nota importante</div>
+      <ul style="padding-left:18px; line-height:1.9; font-size:14px;">
+        <li>La <strong>sincronizzazione</strong> (es. iCloud, Google Drive, OneDrive) <em>replica le modifiche in tempo reale</em> su tutti i dispositivi collegati: se si cancella un file su un dispositivo, esso sparisce <strong>ovunque</strong>.</li>
+        <li>Il <strong>backup</strong> è una <em>"fotografia" congelata nel tempo</em>: una copia inalterabile dello stato dei dati in un preciso momento. Non risente delle modifiche successive.</li>
+      </ul>
+    </div>
+
+    <div class="box-danger" style="margin-top:10px;">
+      <div class="box-title">💀 Scenario Critico — Leggi con attenzione</div>
+      Marco usa solo iCloud per "salvare" le foto delle vacanze. Un giorno, per errore, seleziona tutte le foto e le elimina dallo smartphone.<br><br>
+      <strong>Risultato:</strong> la cancellazione si propaga istantaneamente a tutti i dispositivi sincronizzati e al cloud. Le foto sono <em>irrecuperabili</em> (salvo il breve periodo del cestino cloud).
+    </div>
+
+    <div class="subsection-title" style="margin-top:16px;">✏️ Attività A1 — Analisi del comportamento</div>
+
+    <div class="answer-area">
+      <div class="q-label">1. Nello scenario di Marco, la sincronizzazione iCloud ha funzionato <em>correttamente</em>? Perché allora Marco ha perso i dati? Spiega la differenza con un backup locale.</div>
+      <textarea class="answer" id="a1q1" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">2. Elenca tre situazioni in cui la sincronizzazione è utile e tre in cui è pericolosa:</div>
+      <div class="two-col">
+        <div class="col-card green-col">
+          <div class="col-title">👍 Sincronizzazione utile</div>
+          <ol>
+            <li><input type="text" placeholder="Situazione 1..."></li>
+            <li><input type="text" placeholder="Situazione 2..."></li>
+            <li><input type="text" placeholder="Situazione 3..."></li>
+          </ol>
+        </div>
+        <div class="col-card red-col">
+          <div class="col-title">👎 Sincronizzazione pericolosa</div>
+          <ol>
+            <li><input type="text" id="a1sync_p1" placeholder="Situazione 1..."></li>
+            <li><input type="text" id="a1sync_p2" placeholder="Situazione 2..."></li>
+            <li><input type="text" id="a1sync_p3" placeholder="Situazione 3..."></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /phase-box A -->
+
+  <!-- ═══════════════════════════════════════
+       PARTE B
+  ═══════════════════════════════════════ -->
+  <div class="section-header">Parte B — La Regola 3-2-1</div>
+
+  <div class="phase-box green" style="margin-top:22px;">
+    <div class="phase-tag">B · Lo standard d'oro della protezione dati</div>
+
+    <div class="three21-row" style="margin-top:8px;">
+      <div class="num-card red-num">
+        <div class="big-num">3</div>
+        <div class="num-label">Copie totali</div>
+        <div class="num-desc">Mantenere almeno 3 copie dei dati importanti</div>
+      </div>
+      <div class="num-card warn-num">
+        <div class="big-num">2</div>
+        <div class="num-label">Supporti diversi</div>
+        <div class="num-desc">Su almeno due tipi di media fisicamente differenti</div>
+      </div>
+      <div class="num-card green-num">
+        <div class="big-num">1</div>
+        <div class="num-label">Copia fuori sede</div>
+        <div class="num-desc">Almeno una copia in luogo diverso o su cloud</div>
+      </div>
+    </div>
+
+    <div class="subsection-title" style="margin-top:16px;">✏️ Attività B1 — Progettazione del piano di backup</div>
+
+    <div class="box-consegna">
+      <div class="box-title">📋 Consegna</div>
+      Gli studenti devono <strong>progettare un piano di backup 3-2-1</strong> per il seguente caso reale:<br><br>
+      <em>«Hai una cartella di 15 GB contenente tutti i tuoi elaborati scolastici degli ultimi 3 anni, le foto di eventi importanti e i tuoi progetti creativi. Come proteggeresti questi dati applicando la regola 3-2-1?»</em><br><br>
+      Compila la tabella indicando <strong>dove</strong>, <strong>come</strong> e <strong>con quale frequenza</strong> si effettuerà ogni copia.
+    </div>
+
+    <table class="backup-table">
+      <thead>
+        <tr>
+          <th>Copia</th>
+          <th>Supporto / Luogo</th>
+          <th>Strumento usato</th>
+          <th>Frequenza</th>
+          <th>Fuori sede?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>#1</td>
+          <td><input type="text" class="tbl-input" id="b1_sup1" placeholder="es. Hard disk esterno..."></td>
+          <td><input type="text" class="tbl-input" id="b1_str1" placeholder="es. Time Machine..."></td>
+          <td><input type="text" class="tbl-input" id="b1_frq1" placeholder="es. Settimanale..."></td>
+          <td><input type="text" class="tbl-input" id="b1_out1" placeholder="Sì / No"></td>
+        </tr>
+        <tr>
+          <td>#2</td>
+          <td><input type="text" class="tbl-input" id="b1_sup2" placeholder="es. Cloud Google Drive..."></td>
+          <td><input type="text" class="tbl-input" id="b1_str2" placeholder="es. Backup automatico..."></td>
+          <td><input type="text" class="tbl-input" id="b1_frq2" placeholder="es. Giornaliera..."></td>
+          <td><input type="text" class="tbl-input" id="b1_out2" placeholder="Sì / No"></td>
+        </tr>
+        <tr>
+          <td>#3</td>
+          <td><input type="text" class="tbl-input" id="b1_sup3" placeholder="es. Pendrive a casa di un amico..."></td>
+          <td><input type="text" class="tbl-input" id="b1_str3" placeholder="es. Copia manuale..."></td>
+          <td><input type="text" class="tbl-input" id="b1_frq3" placeholder="es. Mensile..."></td>
+          <td><input type="text" class="tbl-input" id="b1_out3" placeholder="Sì / No"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title" style="margin-top:16px;">✏️ Attività B2 — Verifica critica del piano</div>
+
+    <div class="answer-area">
+      <div class="q-label">3. Il tuo piano rispetta tutti e tre i criteri della regola 3-2-1? Metti la spunta e rispondi:</div>
+      <div class="checklist-area">
+        <div class="check-item">
+          <input type="checkbox" id="chk321_1">
+          <label for="chk321_1">Ho almeno <strong>3 copie</strong> totali dei dati</label>
+          <div class="radio-group">
+            <label><input type="radio" name="r321_1" value="Si"> Sì</label>
+            <label><input type="radio" name="r321_1" value="No"> No</label>
+          </div>
+        </div>
+        <div class="check-item">
+          <input type="checkbox" id="chk321_2">
+          <label for="chk321_2">Uso almeno <strong>2 supporti fisicamente diversi</strong></label>
+          <div class="radio-group">
+            <label><input type="radio" name="r321_2" value="Si"> Sì</label>
+            <label><input type="radio" name="r321_2" value="No"> No</label>
+          </div>
+        </div>
+        <div class="check-item">
+          <input type="checkbox" id="chk321_3">
+          <label for="chk321_3">Almeno <strong>1 copia si trova fuori sede</strong> (altra location o cloud)</label>
+          <div class="radio-group">
+            <label><input type="radio" name="r321_3" value="Si"> Sì</label>
+            <label><input type="radio" name="r321_3" value="No"> No</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">4. Quale sarebbe il <strong>rischio residuo</strong> del tuo piano (cosa potrebbe ancora andare storto)?</div>
+      <textarea class="answer" id="b2q4" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+  </div><!-- /phase-box B -->
+
+  <!-- ═══════════════════════════════════════
+       PARTE C
+  ═══════════════════════════════════════ -->
+  <div class="section-header">Parte C — Vulnerabilità Zero-Day e Patch</div>
+
+  <div class="phase-box yellow" style="margin-top:22px;">
+    <div class="phase-tag" style="color:#1a1a2e;">C · Il ciclo di vita di una vulnerabilità</div>
+
+    <div class="box-info" style="margin-top:8px;">
+      <div class="box-title">ℹ️ Nota importante</div>
+      <ul style="padding-left:18px; line-height:1.9; font-size:14px;">
+        <li>Una <strong>vulnerabilità Zero-Day</strong> è una falla di sicurezza nel software <em>appena scoperta</em>, di cui il produttore non è ancora a conoscenza (o non ha ancora rilasciato una correzione). Il nome deriva dal fatto che gli sviluppatori hanno <em>zero giorni</em> per prepararsi.</li>
+        <li>Una <strong>patch</strong> (letteralmente "toppa") è un aggiornamento software rilasciato dal produttore per correggere la falla. Il tempo tra la scoperta della vulnerabilità e il rilascio della patch è la <em>finestra di esposizione</em>.</li>
+      </ul>
+    </div>
+
+    <div class="subsection-title" style="margin-top:16px;">✏️ Attività C1 — Completa la linea temporale</div>
+
+    <div class="box-consegna">
+      <div class="box-title">📋 Consegna</div>
+      Gli studenti devono <strong>completare la linea temporale</strong> selezionando dal menu la fase corretta per ogni nodo. Le fasi da collocare sono:<br><br>
+      <em>Scoperta della falla</em> &nbsp;—&nbsp; <em>Attacchi attivi (exploit)</em> &nbsp;—&nbsp; <em>Rilascio della patch</em> &nbsp;—&nbsp; <em>Aggiornamento da parte degli utenti</em>
+    </div>
+
+    <div class="timeline-wrap">
+
+      <div class="tl-node">
+        <div class="tl-circle blue">1</div>
+        <div class="tl-label">
+          <select id="tl1">
+            <option value="">— Seleziona —</option>
+            <option>Scoperta della falla</option>
+            <option>Attacchi attivi (exploit)</option>
+            <option>Rilascio della patch</option>
+            <option>Aggiornamento da parte degli utenti</option>
+          </select>
+        </div>
+      </div>
+      <div class="tl-arrow">→</div>
+
+      <div class="tl-node">
+        <div class="tl-circle red">2</div>
+        <div class="tl-label">
+          <select id="tl2">
+            <option value="">— Seleziona —</option>
+            <option>Scoperta della falla</option>
+            <option>Attacchi attivi (exploit)</option>
+            <option>Rilascio della patch</option>
+            <option>Aggiornamento da parte degli utenti</option>
+          </select>
+        </div>
+      </div>
+      <div class="tl-arrow">→</div>
+
+      <div class="tl-node">
+        <div class="tl-circle yellow">3</div>
+        <div class="tl-label">
+          <select id="tl3">
+            <option value="">— Seleziona —</option>
+            <option>Scoperta della falla</option>
+            <option>Attacchi attivi (exploit)</option>
+            <option>Rilascio della patch</option>
+            <option>Aggiornamento da parte degli utenti</option>
+          </select>
+        </div>
+      </div>
+      <div class="tl-arrow">→</div>
+
+      <div class="tl-node">
+        <div class="tl-circle green">4</div>
+        <div class="tl-label">
+          <select id="tl4">
+            <option value="">— Seleziona —</option>
+            <option>Scoperta della falla</option>
+            <option>Attacchi attivi (exploit)</option>
+            <option>Rilascio della patch</option>
+            <option>Aggiornamento da parte degli utenti</option>
+          </select>
+        </div>
+      </div>
+      <div class="tl-arrow">→</div>
+
+      <div class="tl-node">
+        <div class="tl-circle done">✓</div>
+        <div class="tl-label" style="color:#555; font-style:italic;">Sistema<br>protetto</div>
+      </div>
+
+    </div>
+
+    <div class="subsection-title" style="margin-top:10px;">✏️ Attività C2 — Analisi e riflessione</div>
+
+    <div class="answer-area">
+      <div class="q-label">5. Perché si chiama "Zero-Day"? Spiega il significato del nome con parole tue.</div>
+      <textarea class="answer" id="c2q5" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">6. Alcuni utenti scelgono di <strong>non installare</strong> gli aggiornamenti di sistema perché «il computer funziona bene così». Quali rischi corrono? Argomenta la risposta.</div>
+      <textarea class="answer" id="c2q6" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+    <div class="answer-area">
+      <div class="q-label">7. Un'azienda scopre una vulnerabilità Zero-Day nel proprio gestionale. Ha due scelte: annunciarlo pubblicamente subito oppure attendere la patch prima di comunicarlo. Qual è la scelta più responsabile? Perché?</div>
+      <textarea class="answer" id="c2q7" placeholder="Scrivi qui la tua risposta..."></textarea>
+    </div>
+
+  </div><!-- /phase-box C -->
+
+  <!-- ═══════════════════════════════════════
+       PARTE D
+  ═══════════════════════════════════════ -->
+  <div class="section-header">Parte D — Scenario Integrato (Avanzato)</div>
+
+  <div class="phase-box red" style="margin-top:22px;">
+    <div class="phase-tag">D · Caso Studio</div>
+
+    <div class="box-danger" style="margin-top:8px;">
+      <div class="box-title">💀 Scenario Reale — Aprile 2021</div>
+      <strong>Attacco ransomware a un'azienda manifatturiera italiana:</strong><br><br>
+      Un dipendente clicca su un allegato email infetto. Il malware sfrutta una <em>vulnerabilità Zero-Day</em> di Windows non ancora patchata. Il ransomware <strong>cripta tutti i file</strong> sui server aziendali e si propaga attraverso la rete. I backup automatici, essendo <em>sincronizzati in tempo reale</em> con i server, vengono anch'essi cifrati nel giro di poche ore.<br><br>
+      L'azienda è ferma per <strong>12 giorni</strong>. Il riscatto richiesto è di <strong>800.000 €</strong>.
+    </div>
+
+    <div class="box-consegna" style="margin-top:12px;">
+      <div class="box-title">📋 Consegna Finale</div>
+      Sulla base di tutto ciò che è stato analizzato nelle parti precedenti, gli studenti devono <strong>scrivere una relazione breve</strong> (15–20 righe) che risponda a questi quattro punti:
+      <ol style="padding-left:20px; margin-top:8px; line-height:2; font-size:14px;">
+        <li>Quali <strong>errori specifici</strong> ha commesso l'azienda nella gestione dei backup?</li>
+        <li>Come la <strong>regola 3-2-1</strong> avrebbe potuto limitare i danni?</li>
+        <li>Che ruolo ha giocato la <strong>vulnerabilità Zero-Day</strong> e cosa avrebbe dovuto fare l'azienda in termini di <strong>patch management</strong>?</li>
+        <li>Proponi una <strong>strategia integrata</strong> (backup + aggiornamenti + comportamento utenti) per proteggere un'azienda simile in futuro.</li>
+      </ol>
+    </div>
+
+    <div class="relazione-area">
+      <textarea class="relazione" id="d_relazione" placeholder="Scrivi qui la tua relazione (15–20 righe)..."></textarea>
+    </div>
+
+  </div><!-- /phase-box D -->
+
+  <!-- ═══════════════════════════════════════
+       AUTOVALUTAZIONE
+  ═══════════════════════════════════════ -->
+  <div class="phase-box blue" style="margin-top:22px;">
+    <div class="phase-tag">⭐ Griglia di Autovalutazione</div>
+    <p style="font-size:13px; font-style:italic; margin: 8px 0 4px;">Prima di consegnare, compila questa griglia in modo onesto:</p>
+    <table class="auto-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Criterio</th>
+          <th>Sì</th>
+          <th>Parzialmente</th>
+          <th>No</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ho distinto chiaramente backup e sincronizzazione</td>
+          <td><input type="radio" name="av1" value="Si"></td>
+          <td><input type="radio" name="av1" value="Parzialmente"></td>
+          <td><input type="radio" name="av1" value="No"></td>
+        </tr>
+        <tr>
+          <td>So applicare la regola 3-2-1 a un caso concreto</td>
+          <td><input type="radio" name="av2" value="Si"></td>
+          <td><input type="radio" name="av2" value="Parzialmente"></td>
+          <td><input type="radio" name="av2" value="No"></td>
+        </tr>
+        <tr>
+          <td>Comprendo il concetto di Zero-Day e patch</td>
+          <td><input type="radio" name="av3" value="Si"></td>
+          <td><input type="radio" name="av3" value="Parzialmente"></td>
+          <td><input type="radio" name="av3" value="No"></td>
+        </tr>
+        <tr>
+          <td>Ho completato il caso studio con argomentazioni</td>
+          <td><input type="radio" name="av4" value="Si"></td>
+          <td><input type="radio" name="av4" value="Parzialmente"></td>
+          <td><input type="radio" name="av4" value="No"></td>
+        </tr>
+        <tr>
+          <td>Ho risposto a <em>tutte</em> le domande aperte</td>
+          <td><input type="radio" name="av5" value="Si"></td>
+          <td><input type="radio" name="av5" value="Parzialmente"></td>
+          <td><input type="radio" name="av5" value="No"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="box-warn" style="margin-top:12px;">
+      <div class="box-title">⚠️ Attenzione — Prima di consegnare verificare che:</div>
+      <ul style="padding-left:18px; line-height:1.9; font-size:14px;">
+        <li>Il nome e la classe siano compilati nell'intestazione</li>
+        <li>Tutte le tabelle e gli spazi siano stati compilati</li>
+        <li>La relazione finale (Parte D) sia leggibile e completa</li>
+        <li>La griglia di autovalutazione sia stata compilata</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CONSEGNA FINALE
+  ═══════════════════════════════════════ -->
+  <div class="consegna-final">
+    <h2>💾 SALVATAGGIO E CONSEGNA</h2>
+    <ol>
+      <li>Controlla che tutte e quattro le sezioni siano complete.</li>
+      <li>Clicca il pulsante <strong style="color:var(--gold)">SALVA SCHEDA TXT</strong> qui sotto.</li>
+      <li>Consegna il file tramite Google Classroom, email o registro elettronico.</li>
+      <li><strong style="color:var(--gold)">Attenzione: salva e consegna prima della fine del tempo assegnato.</strong></li>
+    </ol>
+  </div>
+
+  <!-- CHECKLIST FINALE -->
+  <div class="final-checklist">
+    <h3>✅ Checklist finale</h3>
+    <ul>
+      <li><input type="checkbox"> Intestazione corretta con Nome, Cognome, Classe e Postazione</li>
+      <li><input type="checkbox"> <strong>Parte A:</strong> risposta alla domanda 1 e sei situazioni compilate (3+3)</li>
+      <li><input type="checkbox"> <strong>Parte B:</strong> tabella 3-2-1 completata con le tre copie</li>
+      <li><input type="checkbox"> <strong>Parte B:</strong> verifica critica e rischio residuo compilati</li>
+      <li><input type="checkbox"> <strong>Parte C:</strong> linea temporale completata con i 4 nodi</li>
+      <li><input type="checkbox"> <strong>Parte C:</strong> domande 5, 6 e 7 compilate</li>
+      <li><input type="checkbox"> <strong>Parte D:</strong> relazione scritte (tutti e 4 i punti affrontati)</li>
+      <li><input type="checkbox"> Griglia di autovalutazione compilata</li>
+      <li><input type="checkbox"> File salvato e consegnato</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       GLOSSARIO
+  ═══════════════════════════════════════ -->
+  <div class="glossary-box">
+    <h3>📖 Glossario Operativo</h3>
+    <div class="glossary-grid">
+      <div class="g-term">Sincronizzazione</div>
+      <div class="g-def">Replica in tempo reale delle modifiche su tutti i dispositivi collegati. Se si cancella un file, sparisce ovunque.</div>
+      <div class="g-term">Backup</div>
+      <div class="g-def">Copia "fotografica" inalterabile dei dati in un preciso momento. Non risente delle modifiche successive.</div>
+      <div class="g-term">Regola 3-2-1</div>
+      <div class="g-def">Standard di protezione: 3 copie totali, su 2 supporti diversi, di cui 1 conservata fuori sede.</div>
+      <div class="g-term">Zero-Day</div>
+      <div class="g-def">Vulnerabilità appena scoperta per cui il produttore ha zero giorni di preavviso. Può essere sfruttata prima che esista una correzione.</div>
+      <div class="g-term">Patch</div>
+      <div class="g-def">Aggiornamento software rilasciato per correggere una falla di sicurezza. La "toppa" che chiude la vulnerabilità.</div>
+      <div class="g-term">Exploit</div>
+      <div class="g-def">Codice o tecnica che sfrutta attivamente una vulnerabilità per attaccare un sistema.</div>
+      <div class="g-term">Ransomware</div>
+      <div class="g-def">Malware che cifra i file della vittima e richiede un riscatto per restituire l'accesso ai dati.</div>
+      <div class="g-term">Patch Management</div>
+      <div class="g-def">Processo sistematico di applicazione degli aggiornamenti di sicurezza su tutti i sistemi di un'organizzazione.</div>
+      <div class="g-term">Finestra di esposizione</div>
+      <div class="g-def">Intervallo di tempo tra la scoperta di una vulnerabilità e il rilascio (e applicazione) della patch correttiva.</div>
+    </div>
+  </div>
+
+  <!-- BOTTONE SALVA -->
+  <div class="save-btn-wrap">
+    <button class="save-btn" onclick="saveScheda()">💾 &nbsp; SALVA SCHEDA TXT</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <span>Sicurezza Informatica e Gestione dei Dati — Scheda Laboratorio</span>
+    <span>Laboratorio di Informatica · A.S. 2024/2025</span>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+/* ── HELPERS ── */
+function val(id) {
+  const el = document.getElementById(id);
+  if (!el) return '(non compilato)';
+  return el.value.trim() || '(non compilato)';
+}
+function radioVal(name) {
+  const sel = document.querySelector('input[name="' + name + '"]:checked');
+  return sel ? sel.value : '(non selezionato)';
+}
+function wrapText(text, maxLen) {
+  if (!text) return [''];
+  const words = text.split(/\s+/);
+  const lines = []; let current = '';
+  words.forEach(w => {
+    if ((current + (current ? ' ' : '') + w).length <= maxLen) {
+      current += (current ? ' ' : '') + w;
+    } else {
+      if (current) lines.push(current);
+      while (w.length > maxLen) { lines.push(w.slice(0, maxLen)); w = w.slice(maxLen); }
+      current = w;
+    }
+  });
+  if (current) lines.push(current);
+  return lines.length ? lines : [''];
+}
+function padRight(str, len) {
+  str = str || '';
+  return str.length >= len ? str.slice(0, len) : str + ' '.repeat(len - str.length);
+}
+function box(label, content, width) {
+  width = width || 58;
+  const inner = width - 2;
+  let out = '';
+  out += '  ┌─ ' + label + ' ' + '─'.repeat(Math.max(0, width - label.length - 4)) + '┐\n';
+  const lines = wrapText(content, inner);
+  lines.forEach(l => { out += '  │ ' + padRight(l, inner) + ' │\n'; });
+  out += '  └' + '─'.repeat(width) + '┘\n';
+  return out;
+}
+function sep(char, n) { return (char || '═').repeat(n || 62); }
+function nl() { return '\n'; }
+
+/* ── SALVATAGGIO ── */
+function saveScheda() {
+  const nome       = val('inputNome')      === '(non compilato)' ? '(non inserito)' : val('inputNome');
+  const cognome    = val('inputCognome')   === '(non compilato)' ? '(non inserito)' : val('inputCognome');
+  const classe     = val('inputClasse')    === '(non compilato)' ? '(non inserita)' : val('inputClasse');
+  const postazione = val('inputPostazione')=== '(non compilato)' ? '(non inserita)' : val('inputPostazione');
+  const data       = document.getElementById('inputData').value  || '(non inserita)';
+
+  // Parte A
+  const a1q1   = val('a1q1');
+  const syncP1 = val('a1sync_p1');
+  const syncP2 = val('a1sync_p2');
+  const syncP3 = val('a1sync_p3');
+
+  // Parte B
+  const b1_sup1 = val('b1_sup1'); const b1_str1 = val('b1_str1');
+  const b1_frq1 = val('b1_frq1'); const b1_out1 = val('b1_out1');
+  const b1_sup2 = val('b1_sup2'); const b1_str2 = val('b1_str2');
+  const b1_frq2 = val('b1_frq2'); const b1_out2 = val('b1_out2');
+  const b1_sup3 = val('b1_sup3'); const b1_str3 = val('b1_str3');
+  const b1_frq3 = val('b1_frq3'); const b1_out3 = val('b1_out3');
+  const r321_1  = radioVal('r321_1');
+  const r321_2  = radioVal('r321_2');
+  const r321_3  = radioVal('r321_3');
+  const b2q4    = val('b2q4');
+
+  // Parte C
+  const tl1  = document.getElementById('tl1').value  || '(non selezionato)';
+  const tl2  = document.getElementById('tl2').value  || '(non selezionato)';
+  const tl3  = document.getElementById('tl3').value  || '(non selezionato)';
+  const tl4  = document.getElementById('tl4').value  || '(non selezionato)';
+  const c2q5 = val('c2q5');
+  const c2q6 = val('c2q6');
+  const c2q7 = val('c2q7');
+
+  // Parte D
+  const dRel = val('d_relazione');
+
+  // Autovalutazione
+  const av1 = radioVal('av1'); const av2 = radioVal('av2');
+  const av3 = radioVal('av3'); const av4 = radioVal('av4');
+  const av5 = radioVal('av5');
+
+  /* ── COSTRUZIONE TXT ── */
+  let txt = '';
+  txt += sep() + nl();
+  txt += '   SCHEDA DI LABORATORIO — SICUREZZA INFORMATICA E GESTIONE DEI DATI\n';
+  txt += '   Backup · Sincronizzazione · Vulnerabilità Zero-Day\n';
+  txt += sep() + nl() + nl();
+  txt += '  STUDENTE  : ' + nome + ' ' + cognome + nl();
+  txt += '  CLASSE    : ' + classe + nl();
+  txt += '  POSTAZIONE: ' + postazione + nl();
+  txt += '  DATA      : ' + data + nl();
+  txt += nl() + sep() + nl() + nl();
+
+  /* ── PARTE A ── */
+  txt += '  PARTE A — SINCRONIZZAZIONE VS. BACKUP\n';
+  txt += '  ' + '─'.repeat(60) + nl() + nl();
+  txt += box('Dom. 1 – Scenario Marco', a1q1);
+  txt += nl();
+  txt += '  Sincronizzazione UTILE:\n';
+  // recupero le situazioni utili dagli input del DOM
+  const syncU = [];
+  document.querySelectorAll('.col-card.green-col input').forEach(el => syncU.push(el.value.trim() || '(non inserito)'));
+  syncU.forEach((s, i) => { txt += '    ' + (i+1) + '. ' + s + nl(); });
+  txt += nl();
+  txt += '  Sincronizzazione PERICOLOSA:\n';
+  [syncP1, syncP2, syncP3].forEach((s, i) => { txt += '    ' + (i+1) + '. ' + s + nl(); });
+  txt += nl() + sep() + nl() + nl();
+
+  /* ── PARTE B ── */
+  txt += '  PARTE B — LA REGOLA 3-2-1\n';
+  txt += '  ' + '─'.repeat(60) + nl() + nl();
+  txt += '  Piano di Backup:\n';
+  txt += '  ┌──────┬─────────────────┬─────────────────┬──────────────┬──────────────┐\n';
+  txt += '  │ Copia│ Supporto/Luogo  │ Strumento       │ Frequenza    │ Fuori sede?  │\n';
+  txt += '  ├──────┼─────────────────┼─────────────────┼──────────────┼──────────────┤\n';
+  txt += '  │  #1  │ ' + padRight(b1_sup1,15) + ' │ ' + padRight(b1_str1,15) + ' │ ' + padRight(b1_frq1,12) + ' │ ' + padRight(b1_out1,12) + ' │\n';
+  txt += '  │  #2  │ ' + padRight(b1_sup2,15) + ' │ ' + padRight(b1_str2,15) + ' │ ' + padRight(b1_frq2,12) + ' │ ' + padRight(b1_out2,12) + ' │\n';
+  txt += '  │  #3  │ ' + padRight(b1_sup3,15) + ' │ ' + padRight(b1_str3,15) + ' │ ' + padRight(b1_frq3,12) + ' │ ' + padRight(b1_out3,12) + ' │\n';
+  txt += '  └──────┴─────────────────┴─────────────────┴──────────────┴──────────────┘\n';
+  txt += nl();
+  txt += '  Verifica 3-2-1:\n';
+  txt += '    [3 copie totali]          → ' + r321_1 + nl();
+  txt += '    [2 supporti diversi]      → ' + r321_2 + nl();
+  txt += '    [1 copia fuori sede]      → ' + r321_3 + nl();
+  txt += nl();
+  txt += box('Dom. 4 – Rischio residuo', b2q4);
+  txt += nl() + sep() + nl() + nl();
+
+  /* ── PARTE C ── */
+  txt += '  PARTE C — VULNERABILITÀ ZERO-DAY E PATCH\n';
+  txt += '  ' + '─'.repeat(60) + nl() + nl();
+  txt += '  Linea temporale completata:\n';
+  txt += '    [1] ' + tl1 + nl();
+  txt += '    [2] ' + tl2 + nl();
+  txt += '    [3] ' + tl3 + nl();
+  txt += '    [4] ' + tl4 + nl();
+  txt += '    [5] Sistema protetto\n';
+  txt += nl();
+  txt += box('Dom. 5 – Perché si chiama Zero-Day?', c2q5);
+  txt += nl();
+  txt += box('Dom. 6 – Rischi di non aggiornare', c2q6);
+  txt += nl();
+  txt += box('Dom. 7 – Annuncio pubblico o attesa della patch?', c2q7);
+  txt += nl() + sep() + nl() + nl();
+
+  /* ── PARTE D ── */
+  txt += '  PARTE D — SCENARIO INTEGRATO (CASO STUDIO)\n';
+  txt += '  ' + '─'.repeat(60) + nl() + nl();
+  txt += box('Relazione finale (15–20 righe)', dRel, 62);
+  txt += nl() + sep() + nl() + nl();
+
+  /* ── AUTOVALUTAZIONE ── */
+  txt += '  GRIGLIA DI AUTOVALUTAZIONE\n';
+  txt += '  ' + '─'.repeat(60) + nl();
+  txt += '  Distinzione backup / sincronizzazione    → ' + av1 + nl();
+  txt += '  Applicazione regola 3-2-1                → ' + av2 + nl();
+  txt += '  Comprensione Zero-Day e patch            → ' + av3 + nl();
+  txt += '  Caso studio con argomentazioni           → ' + av4 + nl();
+  txt += '  Tutte le domande aperte compilate        → ' + av5 + nl();
+  txt += nl() + sep() + nl();
+  txt += '  Sicurezza Informatica e Gestione dei Dati — Laboratorio di Informatica\n';
+  txt += sep() + nl();
+
+  /* ── DOWNLOAD ── */
+  const fileName = 'Scheda_' + nome.replace(/\s+/g,'') + cognome.replace(/\s+/g,'') + '.txt';
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

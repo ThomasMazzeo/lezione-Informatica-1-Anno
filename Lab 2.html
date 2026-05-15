@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC Analyst – Red Team vs Blue Team</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #e8ecf3;
+    color: #1a1a2e;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  :root {
+    --darkbg:    #0a1223;
+    --blue:      #145abe;
+    --red:       #c82828;
+    --green:     #009b50;
+    --gold:      #dcaa00;
+    --orange:    #d26400;
+    --violet:    #6e28b4;
+    --codegreen: #00b464;
+    --lightgray: #f5f7fa;
+    --border:    #c8d2e1;
+    --blueteam:  #1565c0;
+    --redteam:   #b71c1c;
+    --zerotrust: #4a148c;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── HEADER BAR ── */
+  .header-bar {
+    background: var(--darkbg);
+    color: #fff;
+    text-align: right;
+    padding: 8px 18px;
+    border-radius: 6px 6px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+
+  /* ── COVER ── */
+  .cover-box {
+    background: var(--darkbg);
+    border-radius: 8px;
+    padding: 30px 20px 24px;
+    text-align: center;
+  }
+  .cover-label {
+    color: var(--codegreen);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .cover-icon { font-size: 36px; margin-bottom: 4px; }
+  .cover-title {
+    color: #fff;
+    font-size: 26px;
+    font-weight: 900;
+  }
+  .cover-subtitle {
+    color: #fff;
+    font-size: 19px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .cover-subtitle .fire { color: #ff5722; }
+  .cover-subtitle .shield { color: var(--codegreen); }
+  .cover-divider {
+    border: none;
+    border-top: 1px solid #334;
+    width: 55%;
+    margin: 14px auto;
+  }
+  .cover-meta {
+    color: var(--gold);
+    font-size: 13px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cover-meta .dot { color: #556; }
+  .date-input {
+    border: none;
+    border-bottom: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    font-size: 13px;
+    width: 110px;
+    outline: none;
+    text-align: center;
+  }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: rgba(20,90,190,0.07);
+    border: 1.5px solid var(--blue);
+    border-radius: 7px;
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .info-box .info-icon {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    text-align: center;
+    line-height: 22px;
+    font-weight: 900;
+    font-size: 13px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* ── STUDENTE ── */
+  .student-header {
+    background: #fff;
+    border: 1.5px solid var(--blue);
+    border-radius: 7px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .student-header .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 150px;
+  }
+  .student-header label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .student-header input {
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    padding: 5px 2px;
+    font-size: 14px;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .student-header input:focus { border-bottom-color: var(--blue); }
+
+  /* ── FASE / MISSIONE BOX ── */
+  .mission-box {
+    border-radius: 8px;
+    border: 1.5px solid #333;
+    background: var(--lightgray);
+    padding: 22px 18px 18px;
+    position: relative;
+    margin-top: 20px;
+  }
+  .mission-tag {
+    position: absolute;
+    top: -15px;
+    left: 16px;
+    padding: 4px 16px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mission-box.dark  { border-color: var(--darkbg);   }
+  .mission-box.dark  .mission-tag { background: var(--darkbg);   }
+  .mission-box.blue  { border-color: var(--blueteam); }
+  .mission-box.blue  .mission-tag { background: var(--blueteam); }
+  .mission-box.red   { border-color: var(--redteam);  }
+  .mission-box.red   .mission-tag { background: var(--redteam);  }
+  .mission-box.violet{ border-color: var(--zerotrust);}
+  .mission-box.violet .mission-tag { background: var(--zerotrust);}
+
+  /* ── CODE BOX ── */
+  .code-box {
+    background: var(--darkbg);
+    border: 1px solid var(--codegreen);
+    border-radius: 5px;
+    padding: 10px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12.5px;
+    color: var(--codegreen);
+    margin: 8px 0;
+    line-height: 1.7;
+  }
+
+  /* ── NOTE / HINT BOX ── */
+  .note-box {
+    background: rgba(220,170,0,0.12);
+    border: 1px solid rgba(220,170,0,0.65);
+    border-radius: 5px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+  .rule-box {
+    background: rgba(21,101,192,0.08);
+    border: 1px solid var(--blueteam);
+    border-radius: 5px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    margin: 10px 0;
+  }
+  .rule-box.red-rule {
+    background: rgba(183,28,28,0.06);
+    border-color: var(--redteam);
+  }
+  .rule-box.violet-rule {
+    background: rgba(74,20,140,0.06);
+    border-color: var(--zerotrust);
+  }
+
+  /* ── STEP LIST ── */
+  ol.steps {
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 2.1;
+    margin-top: 6px;
+  }
+  ol.steps li { color: var(--darkbg); }
+  ol.steps.colored li { color: var(--blueteam); font-weight: 600; }
+  ol.steps.colored li span { color: var(--darkbg); font-weight: 400; }
+
+  /* ── GOLD NOTICE ── */
+  .gold-notice {
+    background: var(--darkbg);
+    border: 1.2px solid var(--gold);
+    border-radius: 6px;
+    padding: 12px 18px;
+    text-align: center;
+    color: var(--gold);
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  /* ── URL TABLE ── */
+  .url-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+  .url-table thead tr { background: var(--darkbg); }
+  .url-table thead th {
+    color: #fff;
+    padding: 10px 10px;
+    text-align: left;
+    font-weight: 700;
+  }
+  .url-table thead th:first-child { text-align: center; width: 34px; }
+  .url-table tbody tr { border-bottom: 1px solid var(--border); }
+  .url-table tbody td {
+    padding: 8px 8px;
+    background: #fff;
+    vertical-align: middle;
+  }
+  .url-table tbody td:first-child { text-align: center; font-weight: 700; width: 34px; }
+  .url-table tbody td:nth-child(2) {
+    font-family: monospace;
+    font-size: 11.5px;
+    color: #333;
+    width: 260px;
+    word-break: break-all;
+  }
+
+  select.verdict2 {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 6px;
+    font-size: 12px;
+    width: 100%;
+    background: #fff;
+    cursor: pointer;
+    outline: none;
+    margin-bottom: 4px;
+  }
+  select.verdict2:focus { border-color: var(--blueteam); }
+
+  input.domain-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-size: 12.5px;
+    font-family: monospace;
+    outline: none;
+    background: #fff;
+    margin-bottom: 4px;
+  }
+  input.domain-input:focus { border-color: var(--blueteam); }
+
+  textarea.motive {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-size: 12.5px;
+    resize: vertical;
+    min-height: 52px;
+    font-family: inherit;
+    outline: none;
+  }
+  textarea.motive:focus { border-color: var(--blueteam); }
+
+  /* ── 4 LEVE TABLE ── */
+  .leve-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .leve-table thead tr { background: var(--darkbg); }
+  .leve-table thead th { color: #fff; padding: 9px 12px; text-align: left; font-weight: 700; }
+  .leve-table tbody tr { border-bottom: 1px solid var(--border); }
+  .leve-table tbody td { padding: 10px 12px; background: #fff; vertical-align: middle; }
+  .leve-table tbody td:first-child { font-weight: 800; width: 110px; }
+  .leve-td-urgenza  { color: var(--orange); }
+  .leve-td-paura    { color: var(--red); }
+  .leve-td-autorita { color: var(--blueteam); }
+  .leve-td-curiosita{ color: var(--violet); }
+
+  /* ── SMS FORM ── */
+  .sms-form {
+    background: rgba(183,28,28,0.04);
+    border: 1px solid var(--redteam);
+    border-radius: 6px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 10px;
+  }
+  .field-label {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 5px;
+    display: block;
+  }
+  input.text-field {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    background: #fff;
+  }
+  input.text-field:focus { border-color: var(--redteam); }
+  textarea.text-area {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    background: #fff;
+  }
+  textarea.text-area:focus { border-color: var(--redteam); }
+
+  /* checkboxes leve */
+  .leve-checkgroup {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .leve-check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .leve-check input[type=checkbox] {
+    width: 17px; height: 17px;
+    cursor: pointer;
+    accent-color: var(--redteam);
+  }
+
+  /* SMS esempio */
+  .sms-example {
+    background: #1e272e;
+    border: 1px solid var(--redteam);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #eee;
+    font-style: italic;
+    line-height: 1.7;
+  }
+  .sms-example .mittente { color: var(--codegreen); font-style: normal; font-weight: 700; }
+  .sms-example .leve-note { color: #888; font-size: 12px; font-style: normal; margin-top: 6px; }
+
+  /* ── WHATSAPP SCENARIO ── */
+  .wa-bubble {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0 12px 12px 12px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 14px;
+    font-style: italic;
+    line-height: 1.7;
+    max-width: 90%;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .wa-bubble .wa-header {
+    font-style: normal;
+    font-weight: 700;
+    color: var(--green);
+    font-size: 13px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .wa-bubble .wa-time { color: #999; font-weight: 400; font-size: 12px; }
+  .leve-attive {
+    font-size: 13px;
+    margin-top: 6px;
+    color: #333;
+  }
+  .leve-attive strong { color: var(--redteam); }
+
+  /* ── CONSEGNA ── */
+  .consegna-box {
+    background: var(--darkbg);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    padding: 18px 22px;
+    color: #fff;
+  }
+  .consegna-box h2 {
+    color: var(--gold);
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+  }
+  .consegna-box ol {
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 2.1;
+  }
+  .consegna-box ol li { color: #fff; }
+  .consegna-box ol li strong { color: var(--gold); }
+
+  /* ── CHECKLIST ── */
+  .checklist-box {
+    background: rgba(0,155,80,0.07);
+    border: 1.5px solid var(--green);
+    border-radius: 7px;
+    padding: 16px 22px;
+  }
+  .checklist-box h3 {
+    color: var(--green);
+    font-size: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .checklist-box ul { list-style: none; font-size: 14px; }
+  .checklist-box ul li { padding: 5px 0; border-bottom: 1px solid #d4f0e4; display: flex; gap: 10px; }
+  .checklist-box ul li:last-child { border-bottom: none; }
+  .checklist-box ul li::before { content: '☐'; font-size: 17px; color: var(--green); flex-shrink: 0; }
+
+  /* ── GLOSSARIO ── */
+  .glossary-box {
+    background: var(--lightgray);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 16px 22px;
+  }
+  .glossary-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--lightgray);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 12px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 14px;
+    color: var(--darkbg);
+  }
+  .glossary-box dl { font-size: 13.5px; }
+  .glossary-box dt {
+    font-weight: 700;
+    color: var(--darkbg);
+    float: left;
+    width: 120px;
+    clear: left;
+    padding: 4px 0;
+  }
+  .glossary-box dd {
+    margin-left: 128px;
+    padding: 4px 0;
+    border-bottom: 1px solid #e0e4ea;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  /* ── SAVE BUTTON ── */
+  .save-btn-wrap { text-align: center; padding: 8px 0 24px; }
+  .save-btn {
+    background: linear-gradient(135deg, var(--green), #007a3e);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 15px 50px;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 18px rgba(0,155,80,0.35);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .save-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 24px rgba(0,155,80,0.45); }
+  .save-btn:active { transform: translateY(0); }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #999;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 2px;
+  }
+
+  /* ── SECTION LABEL ── */
+  .sec-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sec-label.blue  { color: var(--blueteam); }
+  .sec-label.red   { color: var(--redteam);  }
+  .sec-label.violet{ color: var(--zerotrust);}
+
+  @media (max-width: 620px) {
+    .url-table thead th:nth-child(2),
+    .url-table tbody td:nth-child(2) { display: none; }
+    .student-header { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER BAR -->
+  <div class="header-bar">🔒 SECURITY LAB – SOC ANALYST</div>
+
+  <!-- COVER -->
+  <div class="cover-box">
+    <div class="cover-label">L A B O R A T O R I O &nbsp; D I &nbsp; I N F O R M A T I C A</div>
+    <div class="cover-icon">🛡️</div>
+    <div class="cover-title">SOC Analyst</div>
+    <div class="cover-subtitle">
+      "Red Team <span class="fire">🔥</span> vs. Blue Team <span class="shield">🛡️</span>"
+    </div>
+    <hr class="cover-divider">
+    <div class="cover-meta">
+      <span>⏱️ <strong>Durata:</strong> 30 min</span>
+      <span class="dot">○</span>
+      <span>💻 <strong>Strumenti:</strong> Browser + Google Docs / Word</span>
+      <span class="dot">○</span>
+      <span><strong>Data:</strong> <input type="date" class="date-input" id="inputData"></span>
+    </div>
+  </div>
+
+  <!-- INFO INCARICO -->
+  <div class="info-box">
+    <span class="info-icon">i</span>
+    <strong>Il tuo incarico:</strong> Sei un analista di primo livello in un
+    <strong>SOC (Security Operations Center)</strong>. Vestirai prima i panni del
+    <strong>difensore (Blue Team)</strong> per smascherare URL trappola, poi passerai
+    all'attacco simulato <strong>(Red Team)</strong> costruendo un SMS truffa, infine
+    applicherai il <strong>protocollo Zero Trust</strong> su uno scenario di crisi reale.
+    Completa le tre missioni nel tuo <em>Log Operativo</em>.
+  </div>
+
+  <!-- INTESTAZIONE STUDENTE -->
+  <div class="student-header">
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="inputNome" placeholder="es. Mario">
+    </div>
+    <div class="field">
+      <label>Cognome</label>
+      <input type="text" id="inputCognome" placeholder="es. Rossi">
+    </div>
+    <div class="field">
+      <label>Classe</label>
+      <input type="text" id="inputClasse" placeholder="es. 3A">
+    </div>
+  </div>
+
+  
+  <!-- ═══════ MISSIONE 1 – BLUE TEAM ═══════ -->
+  <div class="mission-box blue">
+    <div class="mission-tag">🔵 MISSIONE 1 &nbsp;|&nbsp; <span style="font-weight:400">(3 – 13 min) &nbsp; Blue Team – Raggi X sugli URL</span></div>
+
+    <p style="font-size:14px; line-height:1.7; margin-top:8px;">
+      <strong>Contesto:</strong> Il tuo centro ha intercettato 5 URL sospetti.
+      Devi classificarli prima che qualcuno ci clicchi sopra.
+    </p>
+
+    <div class="rule-box" style="margin-top:12px;">
+      <strong>🔑 La Regola d'Oro – Leggi da destra a sinistra</strong><br><br>
+      Il <strong>dominio reale</strong> si trova immediatamente a sinistra del primo
+      <code>/</code> leggendo da destra verso sinistra.<br><br>
+      <strong>Esempio:</strong>
+      <code>https://banca.it.truffa.com/login</code> ⇒ proprietario reale:
+      <span style="color:var(--redteam); font-family:monospace;">truffa.com</span>
+    </div>
+
+    <div class="sec-label blue">📋 Cosa fare – compila la tabella per ogni URL:</div>
+
+    <ol class="steps colored" style="margin-bottom:12px;">
+      <li><span>Per ciascun URL individua il <strong>dominio reale</strong>.</span></li>
+      <li><span>Dichiara se è <strong>LEGITTIMO</strong> o <strong>TRUFFA</strong>.</span></li>
+      <li><span>Scrivi una mezza riga di motivazione.</span></li>
+    </ol>
+
+    <div class="code-box">
+      1. https://www.netflix.com.aggiornamento-pagamento.info/login<br>
+      2. http://sicurezza.postepay.it.verifica-identita.net/sblocco<br>
+      3. https://supporto-apple.com/recupero-password<br>
+      4. https://www.instagram.com/privacy/settings<br>
+      5. https://banca-intesa.it.accesso-clienti.com/auth
+    </div>
+
+    <table class="url-table" style="margin-top:14px;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>URL</th>
+          <th style="width:140px;">Dominio reale</th>
+          <th>Verdetto</th>
+          <th>Motivazione</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- URL 1 -->
+        <tr>
+          <td>1</td>
+          <td>netflix.com.aggiornamento-pagamento<br>.info/login</td>
+          <td><input type="text" class="domain-input" id="d1" placeholder="dominio reale..."></td>
+          <td>
+            <select class="verdict2" id="v1">
+              <option value="">-- Scegli --</option>
+              <option value="LEGITTIMO">✅ LEGITTIMO</option>
+              <option value="TRUFFA">❌ TRUFFA</option>
+            </select>
+          </td>
+          <td><textarea class="motive" id="m1" placeholder="Motivazione..."></textarea></td>
+        </tr>
+        <!-- URL 2 -->
+        <tr>
+          <td>2</td>
+          <td>sicurezza.postepay.it.verifica-identita<br>.net/sblocco</td>
+          <td><input type="text" class="domain-input" id="d2" placeholder="dominio reale..."></td>
+          <td>
+            <select class="verdict2" id="v2">
+              <option value="">-- Scegli --</option>
+              <option value="LEGITTIMO">✅ LEGITTIMO</option>
+              <option value="TRUFFA">❌ TRUFFA</option>
+            </select>
+          </td>
+          <td><textarea class="motive" id="m2" placeholder="Motivazione..."></textarea></td>
+        </tr>
+        <!-- URL 3 -->
+        <tr>
+          <td>3</td>
+          <td>supporto-apple.com/<br>recupero-password</td>
+          <td><input type="text" class="domain-input" id="d3" placeholder="dominio reale..."></td>
+          <td>
+            <select class="verdict2" id="v3">
+              <option value="">-- Scegli --</option>
+              <option value="LEGITTIMO">✅ LEGITTIMO</option>
+              <option value="TRUFFA">❌ TRUFFA</option>
+            </select>
+          </td>
+          <td><textarea class="motive" id="m3" placeholder="Motivazione..."></textarea></td>
+        </tr>
+        <!-- URL 4 -->
+        <tr>
+          <td>4</td>
+          <td>instagram.com/<br>privacy/settings</td>
+          <td><input type="text" class="domain-input" id="d4" placeholder="dominio reale..."></td>
+          <td>
+            <select class="verdict2" id="v4">
+              <option value="">-- Scegli --</option>
+              <option value="LEGITTIMO">✅ LEGITTIMO</option>
+              <option value="TRUFFA">❌ TRUFFA</option>
+            </select>
+          </td>
+          <td><textarea class="motive" id="m4" placeholder="Motivazione..."></textarea></td>
+        </tr>
+        <!-- URL 5 -->
+        <tr>
+          <td>5</td>
+          <td>banca-intesa.it.accesso-clienti<br>.com/auth</td>
+          <td><input type="text" class="domain-input" id="d5" placeholder="dominio reale..."></td>
+          <td>
+            <select class="verdict2" id="v5">
+              <option value="">-- Scegli --</option>
+              <option value="LEGITTIMO">✅ LEGITTIMO</option>
+              <option value="TRUFFA">❌ TRUFFA</option>
+            </select>
+          </td>
+          <td><textarea class="motive" id="m5" placeholder="Motivazione..."></textarea></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note-box" style="margin-top:14px;">
+      💡 <strong>Ricorda:</strong> il dominio reale è <em>sempre</em> quello più vicino al primo
+      <code>/</code> leggendo da destra. Tutto ciò che viene prima è un sottodominio decorativo
+      usato per ingannare.
+    </div>
+  </div>
+
+  <!-- ═══════ MISSIONE 2 – RED TEAM ═══════ -->
+  <div class="mission-box red">
+    <div class="mission-tag">🔴 MISSIONE 2 &nbsp;|&nbsp; <span style="font-weight:400">(13 – 23 min) &nbsp; Red Team – Crea l'Esca</span></div>
+
+    <p style="font-size:14px; line-height:1.7; margin-top:8px;">
+      <strong>Contesto:</strong> Per difendersi dagli attacchi bisogna capirli dall'interno.
+      Costruirai un <strong>SMS truffa simulato</strong> – in ambiente didattico, mai inviato
+      a nessuno – dimostrando di aver compreso le leve psicologiche usate dai criminali informatici.
+    </p>
+
+    <div class="sec-label red">🧠 Le 4 Leve Psicologiche</div>
+
+    <table class="leve-table">
+      <thead><tr><th>Leva</th><th>Come viene sfruttata</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="leve-td-urgenza">URGENZA</td>
+          <td>Crea pressione temporale: la vittima agisce di fretta senza ragionare.</td>
+        </tr>
+        <tr>
+          <td class="leve-td-paura">PAURA</td>
+          <td>Minaccia conseguenze gravi (blocco account, multa) per far perdere lucidità.</td>
+        </tr>
+        <tr>
+          <td class="leve-td-autorita">AUTORITÀ</td>
+          <td>Finge di essere un'istituzione fidata: banca, polizia, Apple, Agenzia delle Entrate.</td>
+        </tr>
+        <tr>
+          <td class="leve-td-curiosita">CURIOSITÀ</td>
+          <td>Promette un premio o un'informazione esclusiva per spingere al clic.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="rule-box red-rule" style="margin-top:12px;">
+      <strong>📏 Vincoli obbligatori</strong> (tutti valutati):
+      <ul style="padding-left:20px; margin-top:6px; line-height:2;">
+        <li><strong>Massimo 3 frasi.</strong></li>
+        <li>Includi un <strong>finto nome mittente</strong> (Spoofing): es. PostePay, Apple Support, Ministero.</li>
+        <li>Usa esattamente <strong>DUE leve psicologiche</strong> combinate (es. Paura + Urgenza).</li>
+        <li>Inserisci un <strong>link accorciato fittizio</strong> (es. <code>bit.ly/sblocco-immediato</code>).</li>
+        <li>Subito sotto l'SMS scrivi obbligatoriamente la frase esplicativa sulle leve usate.</li>
+      </ul>
+    </div>
+
+    <!-- Esempio -->
+    <div class="sec-label red" style="margin-top:14px;">📱 Esempio di struttura (non copiare, crea il tuo):</div>
+    <div class="sms-example">
+      <div><span class="mittente">Mittente: PostePay</span></div>
+      <div style="margin-top:6px;">
+        "Il tuo conto PostePay è stato sospeso per attività sospetta.
+        Devi verificare la tua identità entro 24 ore per evitare il blocco definitivo.
+        Clicca subito: <code style="color:var(--codegreen);">bit.ly/verifica-ora</code>"
+      </div>
+      <div class="leve-note">In questo attacco ho usato la leva della PAURA e dell'URGENZA perché…</div>
+    </div>
+
+    <!-- FORM Missione 2 -->
+    <div class="sec-label red" style="margin-top:16px;">✍️ Compila il tuo SMS truffa:</div>
+    <div class="sms-form">
+
+      <div>
+        <label class="field-label">Mittente finto (Spoofing):</label>
+        <input type="text" class="text-field" id="smsMittente"
+               placeholder="es. PostePay, Apple Support, Ministero Salute...">
+      </div>
+
+      <div>
+        <label class="field-label">Testo dell'SMS (max 3 frasi) – includi il link fittizio:</label>
+        <textarea class="text-area" id="smsText"
+                  placeholder='es. "Il tuo conto è stato sospeso... Clicca: bit.ly/verifica-ora"'></textarea>
+      </div>
+
+      <div>
+        <label class="field-label">Leve psicologiche usate (seleziona esattamente 2):</label>
+        <div class="leve-checkgroup">
+          <label class="leve-check">
+            <input type="checkbox" id="levaUrgenza" value="URGENZA">
+            <span style="color:var(--orange);">URGENZA</span>
+          </label>
+          <label class="leve-check">
+            <input type="checkbox" id="levaPaura" value="PAURA">
+            <span style="color:var(--redteam);">PAURA</span>
+          </label>
+          <label class="leve-check">
+            <input type="checkbox" id="levaAutorita" value="AUTORITÀ">
+            <span style="color:var(--blueteam);">AUTORITÀ</span>
+          </label>
+          <label class="leve-check">
+            <input type="checkbox" id="levaCuriosita" value="CURIOSITÀ">
+            <span style="color:var(--violet);">CURIOSITÀ</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="field-label">Frase esplicativa sulle leve:</label>
+        <textarea class="text-area" id="smsSpiegazione"
+                  placeholder='"In questo attacco ho usato la leva della [LEVA 1] e della [LEVA 2] perché..."'></textarea>
+      </div>
+
+    </div>
+
+    <div class="note-box" style="margin-top:12px;">
+      💡 <strong>Suggerimento tattico:</strong> Mettiti nei panni della vittima.
+      Cosa ti farebbe cliccare senza pensarci? Più l'SMS sembra autentico e urgente,
+      più dimostri di aver capito il meccanismo.
+    </div>
+  </div>
+
+  <!-- ═══════ MISSIONE 3 – ZERO TRUST ═══════ -->
+  <div class="mission-box violet">
+    <div class="mission-tag">🔒 MISSIONE 3 &nbsp;|&nbsp; <span style="font-weight:400">(23 – 28 min) &nbsp; Zero Trust – Protocollo di Verifica</span></div>
+
+    <p style="font-size:14px; line-height:1.7; margin-top:8px;">
+      <strong>Contesto:</strong> Il principio <strong>Zero Trust</strong> significa:
+      <em>non fidarti mai di nessun canale digitale senza una verifica indipendente</em>,
+      nemmeno se il messaggio sembra provenire da un familiare. Gli account di chi conosci
+      possono essere compromessi.
+    </p>
+
+    <div class="rule-box violet-rule" style="margin-top:12px;">
+      <strong>⚠️ Lo Scenario – Leggi con attenzione:</strong><br><br>
+      Ricevi questo messaggio su <strong>WhatsApp</strong> da tua madre:
+
+      <div class="wa-bubble" style="margin-top:12px;">
+        <div class="wa-header">
+          <span>💚 Mamma</span>
+          <span class="wa-time">14:32</span>
+        </div>
+        <div>
+          "Tesoro, ho perso il bancomat e sono bloccata al supermercato senza soldi.
+          Puoi farmi una ricarica urgente di 50 euro su questo IBAN virtuale di una mia amica?
+          Fai in fretta che la cassiera sta aspettando!"
+        </div>
+      </div>
+
+      <div class="leve-attive" style="margin-top:10px;">
+        <strong>Leve attive:</strong>
+        Urgenza <em>("fai in fretta")</em> +
+        Paura <em>("bloccata")</em> +
+        Autorità familiare <em>(tua madre)</em>
+      </div>
+    </div>
+
+    <div class="sec-label violet" style="margin-top:16px;">✅ Cosa scrivere nella Missione 3:</div>
+
+    <div class="rule-box violet-rule">
+      <strong>❓ In massimo 2 righe:</strong><br>
+      Qual è l'<strong>unica mossa tattica</strong> da compiere immediatamente per applicare
+      il protocollo Zero Trust e sventare la truffa?<br>
+      Spiega anche <strong>perché rispondere su WhatsApp non è valido</strong>.
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="field-label" style="color:var(--zerotrust);">
+        La tua risposta Zero Trust (max 2 righe):
+      </label>
+      <textarea class="text-area" id="zeroTrustResp" style="min-height:90px;"
+                placeholder="Scrivi qui la tua risposta tattica e la spiegazione sul perché WhatsApp non è canale valido di verifica..."></textarea>
+    </div>
+
+    <div class="note-box" style="margin-top:12px;">
+      💡 <strong>Suggerimento:</strong> Pensa a cosa significa "verificare <em>fuori canale</em>".
+      Se l'account WhatsApp fosse compromesso, cosa sarebbe impossibile falsificare per un criminale?
+    </div>
+  </div>
+
+  <!-- ═══════ CONSEGNA ═══════ -->
+  <div class="consegna-box">
+    <h2>✈️ SALVATAGGIO E CONSEGNA &nbsp;<span style="font-weight:400; font-size:14px;">(28 – 30 min)</span></h2>
+    <ol>
+      <li>Controlla che tutte e tre le missioni siano complete.</li>
+      <li>Clicca il pulsante <strong>SALVA LOG TXT</strong> qui sotto.</li>
+      <li>Consegnalo tramite Google Classroom, email o registro elettronico.</li>
+      <li><strong>Allo scoccare del 30° minuto la consegna si chiude.</strong></li>
+    </ol>
+  </div>
+
+  <!-- ═══════ CHECKLIST ═══════ -->
+  <div class="checklist-box">
+    <h3>✅ Checklist finale</h3>
+    <ul>
+      <li>Intestazione corretta con Nome, Cognome e Classe</li>
+      <li><strong>Missione 1:</strong> tabella 5 URL con dominio reale, verdetto e motivazione</li>
+      <li><strong>Missione 2:</strong> SMS (max 3 frasi) con mittente finto, link fittizio, due leve</li>
+      <li><strong>Missione 2:</strong> frase esplicativa con le due leve e la motivazione</li>
+      <li><strong>Missione 3:</strong> risposta Zero Trust (max 2 righe) con spiegazione</li>
+      <li>File salvato e consegnato</li>
+    </ul>
+  </div>
+
+  <!-- ═══════ GLOSSARIO ═══════ -->
+  <div class="glossary-box">
+    <div class="glossary-tag">📖 Glossario Operativo</div>
+    <dl>
+      <dt>SOC</dt>
+      <dd>Security Operations Center – centro dove gli analisti monitorano le minacce in tempo reale.</dd>
+      <dt>Phishing</dt>
+      <dd>Inganno via email per sottrarre credenziali fingendo di essere un'entità fidata.</dd>
+      <dt>Smishing</dt>
+      <dd>Variante del phishing via SMS.</dd>
+      <dt>Spoofing</dt>
+      <dd>Falsificazione del nome o dell'identità del mittente.</dd>
+      <dt>Dominio</dt>
+      <dd>Parte centrale dell'URL che identifica il vero proprietario del sito.</dd>
+      <dt>Zero Trust</dt>
+      <dd>Nessun messaggio digitale va considerato affidabile senza verifica indipendente.</dd>
+      <dt>Fuori canale</dt>
+      <dd>Verificare un'informazione tramite un mezzo <strong>diverso</strong> da quello su cui è arrivato il messaggio sospetto.</dd>
+      <dt>Red Team</dt>
+      <dd>Gruppo che simula attacchi reali per testare le difese.</dd>
+      <dt>Blue Team</dt>
+      <dd>Gruppo che difende i sistemi e risponde agli attacchi.</dd>
+    </dl>
+  </div>
+
+  <!-- ═══════ SALVA ═══════ -->
+  <div class="save-btn-wrap">
+    <button class="save-btn" onclick="saveLog()">💾 &nbsp; SALVA LOG TXT</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <span>SOC Analyst Lab</span>
+    <span>Laboratorio di Informatica</span>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+/* ── helpers ── */
+function pad(str, len) {
+  str = String(str || '');
+  return str.length >= len ? str.slice(0, len) : str + ' '.repeat(len - str.length);
+}
+function wrapText(text, maxLen) {
+  if (!text) return [''];
+  const words = text.split(/\s+/);
+  const lines = []; let cur = '';
+  words.forEach(w => {
+    const try_ = cur ? cur + ' ' + w : w;
+    if (try_.length <= maxLen) { cur = try_; }
+    else {
+      if (cur) lines.push(cur);
+      while (w.length > maxLen) { lines.push(w.slice(0, maxLen)); w = w.slice(maxLen); }
+      cur = w;
+    }
+  });
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+function box(label, text, w) {
+  w = w || 56;
+  const lw = w - 2;
+  const lines = wrapText(text, lw);
+  const top    = '  ┌─' + '─'.repeat(lw) + '─┐\n';
+  const bottom = '  └─' + '─'.repeat(lw) + '─┘\n';
+  let mid = '';
+  lines.forEach((l, i) => {
+    const prefix = i === 0 ? ('  │ ' + pad(label + ':', 14)) : ('  │ ' + pad('', 14));
+    mid += prefix + pad(l, lw - 14) + ' │\n';
+  });
+  return top + mid + bottom;
+}
+function simpleBox(text, w) {
+  w = w || 58;
+  const inner = w - 2;
+  const lines = wrapText(text, inner);
+  let out = '  ┌' + '─'.repeat(w) + '┐\n';
+  lines.forEach(l => { out += '  │ ' + pad(l, inner) + ' │\n'; });
+  out += '  └' + '─'.repeat(w) + '┘\n';
+  return out;
+}
+function checkMark(ok) { return ok ? '[✓]' : '[ ]'; }
+function getSelectedLeve() {
+  const leve = [];
+  if (document.getElementById('levaUrgenza').checked)   leve.push('URGENZA');
+  if (document.getElementById('levaPaura').checked)     leve.push('PAURA');
+  if (document.getElementById('levaAutorita').checked)  leve.push('AUTORITÀ');
+  if (document.getElementById('levaCuriosita').checked) leve.push('CURIOSITÀ');
+  return leve;
+}
+
+function saveLog() {
+  /* ── raccolta dati ── */
+  const nome    = document.getElementById('inputNome').value.trim()    || '(non inserito)';
+  const cognome = document.getElementById('inputCognome').value.trim() || '(non inserito)';
+  const classe  = document.getElementById('inputClasse').value.trim()  || '(non inserita)';
+  const data    = document.getElementById('inputData').value           || '(non inserita)';
+
+  const urls = [
+    { url: 'https://www.netflix.com.aggiornamento-pagamento.info/login',
+      d: document.getElementById('d1').value.trim() || '(non inserito)',
+      v: document.getElementById('v1').value || '(non scelto)',
+      m: document.getElementById('m1').value.trim() || '(non compilato)' },
+    { url: 'http://sicurezza.postepay.it.verifica-identita.net/sblocco',
+      d: document.getElementById('d2').value.trim() || '(non inserito)',
+      v: document.getElementById('v2').value || '(non scelto)',
+      m: document.getElementById('m2').value.trim() || '(non compilato)' },
+    { url: 'https://supporto-apple.com/recupero-password',
+      d: document.getElementById('d3').value.trim() || '(non inserito)',
+      v: document.getElementById('v3').value || '(non scelto)',
+      m: document.getElementById('m3').value.trim() || '(non compilato)' },
+    { url: 'https://www.instagram.com/privacy/settings',
+      d: document.getElementById('d4').value.trim() || '(non inserito)',
+      v: document.getElementById('v4').value || '(non scelto)',
+      m: document.getElementById('m4').value.trim() || '(non compilato)' },
+    { url: 'https://banca-intesa.it.accesso-clienti.com/auth',
+      d: document.getElementById('d5').value.trim() || '(non inserito)',
+      v: document.getElementById('v5').value || '(non scelto)',
+      m: document.getElementById('m5').value.trim() || '(non compilato)' },
+  ];
+
+  const smsMittente    = document.getElementById('smsMittente').value.trim()    || '(non inserito)';
+  const smsText        = document.getElementById('smsText').value.trim()         || '(non inserito)';
+  const leve           = getSelectedLeve();
+  const smsSpiegazione = document.getElementById('smsSpiegazione').value.trim() || '(non inserita)';
+  const zeroTrust      = document.getElementById('zeroTrustResp').value.trim()  || '(non inserito)';
+
+  /* ── build TXT ── */
+  const SEP  = '═'.repeat(64);
+  const LINE = '─'.repeat(64);
+  const NL   = '\n';
+  let txt = '';
+
+  txt += SEP + NL;
+  txt += '   LOG OPERATIVO SOC – SOC ANALYST LAB' + NL;
+  txt += '   "Red Team 🔥 vs. Blue Team 🛡️"' + NL;
+  txt += SEP + NL + NL;
+  txt += '  AGENTE  : ' + nome + ' ' + cognome + NL;
+  txt += '  CLASSE  : ' + classe + NL;
+  txt += '  DATA    : ' + data + NL;
+  txt += NL + SEP + NL + NL;
+
+  /* ── MISSIONE 1 ── */
+  txt += '  MISSIONE 1 – BLUE TEAM: RAGGI X SUGLI URL' + NL;
+  txt += LINE + NL + NL;
+
+  const urlLabels = [
+    'netflix.com.aggiornamento-pagamento.info/login',
+    'postepay.it.verifica-identita.net/sblocco',
+    'supporto-apple.com/recupero-password',
+    'instagram.com/privacy/settings',
+    'banca-intesa.it.accesso-clienti.com/auth',
+  ];
+
+  urls.forEach((u, i) => {
+    txt += '  URL #' + (i+1) + ' : ' + u.url + NL;
+    txt += '  ' + LINE.slice(0,60) + NL;
+    // tabella ASCII
+    txt += '  ┌──────────────────┬──────────────┬─────────────────────────┐' + NL;
+    txt += '  │ DOMINIO REALE    │ ' + pad(u.d, 12) + ' │ VERDETTO: ' + pad(u.v, 15) + '│' + NL;
+    txt += '  ├──────────────────┴──────────────┴─────────────────────────┤' + NL;
+    const mLines = wrapText(u.m, 56);
+    mLines.forEach((l, li) => {
+      if (li === 0) txt += '  │ MOTIVAZIONE: ' + pad(l, 47) + ' │' + NL;
+      else          txt += '  │              ' + pad(l, 47) + ' │' + NL;
+    });
+    txt += '  └────────────────────────────────────────────────────────────┘' + NL;
+    txt += NL;
+  });
+
+  txt += SEP + NL + NL;
+
+  /* ── MISSIONE 2 ── */
+  txt += '  MISSIONE 2 – RED TEAM: CREA L\'ESCA (SMS TRUFFA)' + NL;
+  txt += LINE + NL + NL;
+
+  txt += '  MITTENTE FINTO (Spoofing):' + NL;
+  txt += simpleBox(smsMittente, 58);
+  txt += NL;
+
+  txt += '  TESTO SMS (max 3 frasi):' + NL;
+  txt += simpleBox(smsText, 58);
+  txt += NL;
+
+  txt += '  LEVE PSICOLOGICHE USATE:' + NL;
+  txt += simpleBox(leve.length > 0 ? leve.join(' + ') : '(nessuna selezionata)', 58);
+  txt += NL;
+
+  txt += '  FRASE ESPLICATIVA:' + NL;
+  txt += simpleBox(smsSpiegazione, 58);
+  txt += NL;
+
+  txt += SEP + NL + NL;
+
+  /* ── MISSIONE 3 ── */
+  txt += '  MISSIONE 3 – ZERO TRUST: PROTOCOLLO DI VERIFICA' + NL;
+  txt += LINE + NL + NL;
+  txt += '  SCENARIO: Messaggio WhatsApp da "Mamma" che chiede ricarica urgente 50€.' + NL + NL;
+  txt += '  LA TUA RISPOSTA ZERO TRUST (max 2 righe):' + NL;
+  txt += simpleBox(zeroTrust, 58);
+  txt += NL;
+
+  txt += SEP + NL + NL;
+
+  /* ── CHECKLIST ── */
+  txt += '  CHECKLIST FINALE' + NL;
+  txt += LINE + NL + NL;
+  const ok_intestazione = nome !== '(non inserito)' && cognome !== '(non inserito)' && classe !== '(non inserita)';
+  const ok_m1 = urls.every(u => u.v !== '(non scelto)' && u.d !== '(non inserito)' && u.m !== '(non compilato)');
+  const ok_sms = smsMittente !== '(non inserito)' && smsText !== '(non inserito)';
+  const ok_leve = leve.length === 2;
+  const ok_spiega = smsSpiegazione !== '(non inserita)';
+  const ok_zero = zeroTrust !== '(non inserito)';
+
+  txt += '  ' + checkMark(ok_intestazione) + ' Intestazione con Nome, Cognome e Classe' + NL;
+  txt += '  ' + checkMark(ok_m1)           + ' Missione 1: tabella 5 URL completa' + NL;
+  txt += '  ' + checkMark(ok_sms)          + ' Missione 2: SMS con mittente finto e link fittizio' + NL;
+  txt += '  ' + checkMark(ok_leve)         + ' Missione 2: esattamente 2 leve selezionate (' + (leve.join(', ') || 'nessuna') + ')' + NL;
+  txt += '  ' + checkMark(ok_spiega)       + ' Missione 2: frase esplicativa sulle leve' + NL;
+  txt += '  ' + checkMark(ok_zero)         + ' Missione 3: risposta Zero Trust' + NL;
+  txt += NL;
+  txt += SEP + NL;
+  txt += '  SOC Analyst Lab – Laboratorio di Informatica' + NL;
+  txt += SEP + NL;
+
+  /* ── download ── */
+  const fileName = 'Log_' + nome.replace(/\s+/g,'') + cognome.replace(/\s+/g,'') + '.txt';
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
